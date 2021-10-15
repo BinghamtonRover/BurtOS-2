@@ -1,6 +1,15 @@
 # BurtOS-2
 BurtOS encompasses the base station and rover computer applications deployed to operate the Binghamton University Rover Team's Mars rover. This 2.0 version was started in the 2022 competition year and will replace the legacy RoverSystem software. The decision to redevelop the software was reached after evaluating weaknesses and scalability issues in the legacy software. We intend BurtOS 2.0 to be highly modular to rapidly adapt to rover hardware changes.
 
+## Contents
+- [BurtOS 2 Applications](#burtos-2-applications)
+- [Building](#building)
+  - [C++ Compilers](#c-compiler)
+  - [Ubuntu](#ubuntu)
+  - [Windows](#windows)
+  - [MacOS](#macos)
+  - [CMake Usage](#cmake-usage)
+
 ## BurtOS 2 Applications
 BurtOS 2 is a new project and thus this section reflects our design goals.
 
@@ -16,9 +25,9 @@ The video/perception computer program streams video from rover cameras to the ba
 ## Building
 All libraries and applications in BurtOS 2.0 are designed to allow cross-platform development. However, we primarily support Ubuntu-based operating systems for deployment. The rover computer apps may use libraries only present on Raspberry Pi OS, but we will provide options to build without those features for testing purposes.
 
-Clone this git repository to your computer
-
 BurtOS 2 uses CMake, which generates makefiles for many build systems, compilers, and IDEs. Be sure to use CMake 3.16 or newer. Check whether CMake is installed and meets the version requirement with this terminal command: `cmake --version`.
+
+To start, make sure you have a working C++ compiler. Then, clome this repository to your computer and follow the build instructions for your platform.
 
 ### C++ Compiler
 All of the software uses C++, so the first step is installing a C++ compiler.
@@ -46,7 +55,7 @@ Run this command to generate the makefiles: `cmake -S . -B build -G"MinGW Makefi
 ### MacOS
 BurtOS 2 is untested on MacOS, although it is likely similar to the Ubuntu instructions but with the Mac version of `apt`.
 
-### CMake Usage Options
+### CMake Usage
 New source files must be added to the CMakeLists.txt for each target. Note that the selected compiler and build system are cached, so whenever CMake changes (ex. adding source files, changing variables like NO_GFX), you do not need to specify `CXX=...` or `-G"..."`.
 
 To avoid building the base staion and graphics dependencies on Raspberry Pi, run CMake with `-D NO_GFX=ON`.
