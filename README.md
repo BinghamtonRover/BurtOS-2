@@ -27,7 +27,7 @@ All libraries and applications in BurtOS 2.0 are designed to allow cross-platfor
 
 BurtOS 2 uses CMake, which generates makefiles for many build systems, compilers, and IDEs. Be sure to use CMake 3.16 or newer. Check whether CMake is installed and meets the version requirement with this terminal command: `cmake --version`.
 
-To start, make sure you have a working C++ compiler. Then, clome this repository to your computer and follow the build instructions for your platform.
+To start, make sure you have a working C++ compiler. Then, clone this repository to your computer. BurtOS 2 uses git submodules which must be initialzed. In the clone command, append the option `--recurse-submodules` or clone normally and execute `git submodule update --init --recursive`. After cloning, follow the build instructions for your platform.
 
 ### C++ Compiler
 All of the software uses C++, so the first step is installing a C++ compiler.
