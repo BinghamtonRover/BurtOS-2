@@ -1,0 +1,12 @@
+# Exclude the suggested directory
+build/*
+
+# C++ Binaries
+*.so
+*.a
+*.o
+*.exe
+*.dll
+
+# Exclude metadata for common IDEs
+.vscode/*
