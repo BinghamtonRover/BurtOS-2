@@ -7,6 +7,8 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
+add_subdirectory(src/network)
+
 # The graphics libraries for the base station will not be present on the rover subsystem computers
 # Default value is OFF (build everything) but should be overridden when building on a Raspberry Pi
 set(NO_GFX OFF CACHE BOOL "Exclude all graphics libraries and the base station")
