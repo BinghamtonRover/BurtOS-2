@@ -1,17 +1,17 @@
 #pragma once
 
 #if defined(NANOGUI_GLAD)
-    #if defined(NANOGUI_SHARED) && !defined(GLAD_GLAPI_EXPORT)
-        #define GLAD_GLAPI_EXPORT
-    #endif
+	#if defined(NANOGUI_SHARED) && !defined(GLAD_GLAPI_EXPORT)
+		#define GLAD_GLAPI_EXPORT
+	#endif
 
-    #include <glad/glad.h>
+	#include <glad/glad.h>
 #else
-    #if defined(__APPLE__)
-        #define GLFW_INCLUDE_GLCOREARB
-    #else
-        #define GL_GLEXT_PROTOTYPES
-    #endif
+	#if defined(__APPLE__)
+		#define GLFW_INCLUDE_GLCOREARB
+	#else
+		#define GL_GLEXT_PROTOTYPES
+	#endif
 #endif
 
 #include <GLFW/glfw3.h>

@@ -7,5 +7,5 @@ target_link_libraries(basestation nanogui ${NANOGUI_EXTRA_LIBS})
 target_compile_features(basestation PRIVATE cxx_std_17)
 
 if (APPLE)
-   target_link_libraries(basestation "-framework OpenGL")
+	target_link_libraries(basestation "-framework OpenGL")
 endif()
