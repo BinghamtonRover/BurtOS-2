@@ -7,7 +7,7 @@
 int main() {
 	std::cout << "Binghamton University Rover Team - BurtOS 2 - Base Station 2\n";
 	
-	Session basestation = Session();
+	Session basestation;
 	basestation.gui_loop();
 	
 	return 0;

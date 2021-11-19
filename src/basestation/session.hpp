@@ -20,10 +20,13 @@
 
 class Session {
 	public:
-		Session();
-		Session(bool, int, int, int);
-
-		void create_window(bool, int, int, int);
+		/*
+		@param fullscreen
+		@param monitor Monitor used in fullscreen mode. Set to -1 to use the system's primary monitor.
+		@param w Window width in windowed mode. Not used in fullscreen mode.
+		@param h Window height in windowed mode. Not used in fullscreen mode.
+		*/
+		Session(bool fullscreen=true, int monitor=-1, int w=1280, int h=720);
 
 		static void glfw_cursor_pos_callback(GLFWwindow*, double, double);
 		static void glfw_mouse_button_callback(GLFWwindow*, int, int, int);
@@ -33,6 +36,7 @@ class Session {
 		static void glfw_scroll_callback(GLFWwindow*, double, double);
 		static void glfw_framebuffer_size_callback(GLFWwindow*, int, int);
 
+		// Does not return until the GUI should exit
 		void gui_loop();
 
 		static Session& get_main_session();
@@ -48,8 +52,11 @@ class Session {
 		void set_is_glfw_init(bool);
 
 	private:
+		const static char* window_title;
 		static Session* main_session;
 		GLFWwindow* window;
 		nanogui::Screen* screen;
 		bool is_glfw_init;
+
+		void create_window(bool, int, int, int);
 };

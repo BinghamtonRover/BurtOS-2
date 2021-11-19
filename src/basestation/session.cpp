@@ -2,12 +2,9 @@
 
 #include <iostream>
 
-Session* Session::main_session = nullptr;
+const char* Session::window_title = "Base Station 2.0 - Binghamton University Rover Team";
 
-Session::Session() {
-    main_session = this;
-    create_window(true, 0, 0, 0);
-}
+Session* Session::main_session = nullptr;
 
 Session::Session(bool fullscreen, int monitor, int w, int h) {
     main_session = this;
@@ -19,7 +16,7 @@ void Session::create_window(bool fullscreen, int monitor, int w, int h) {
     is_glfw_init = glfwInit();
 
     if (!is_glfw_init) {
-        std::cout << "Error initializing GLFW! Exiting..." << std::endl;
+        std::cerr << "Error initializing GLFW! Exiting..." << std::endl;
         exit(-1);
     }
 
@@ -29,26 +26,23 @@ void Session::create_window(bool fullscreen, int monitor, int w, int h) {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 
-    int monitor_count;
-    GLFWmonitor** monitors = glfwGetMonitors(&monitor_count);
-
+    GLFWmonitor* use_monitor = nullptr;
     if (fullscreen) {
-        if(monitor < monitor_count && 0 <= monitor){
-            const GLFWvidmode* mode = glfwGetVideoMode(monitors[monitor]);
-            window = glfwCreateWindow(mode->width,mode->height,"window",monitors[monitor],NULL);
+        int monitor_count;
+        GLFWmonitor** monitors = glfwGetMonitors(&monitor_count);
+        if(monitor < monitor_count && monitor > 0){
+            use_monitor = monitors[monitor];
         } else {
-            std::cout << "Monitor not valid! Exiting..." << std::endl;
-            exit(-1);
-        }
-    } else {
-        if (w != 0 && h != 0) {
-            window = glfwCreateWindow(w, h, "window", nullptr, nullptr);
-        } else {
-            window = glfwCreateWindow(1280, 720, "window", nullptr, nullptr);
-        }
+            use_monitor = glfwGetPrimaryMonitor();
+        }     
+        const GLFWvidmode* mode = glfwGetVideoMode(use_monitor);
+        w = mode->width;
+        h = mode->height;
     }
-    
+    window = glfwCreateWindow(w, h, window_title, use_monitor, nullptr);
+
     if (!window) {
+        std::cerr << "Error creating main window. Exiting..." << std::endl;
         glfwTerminate();
         exit(-1);
     }

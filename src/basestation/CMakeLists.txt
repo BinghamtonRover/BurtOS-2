@@ -1,4 +1,4 @@
-add_executable(basestation basestation.cpp session.cpp)
+add_executable(basestation basestation.cpp session.hpp session.cpp)
 
 target_include_directories(basestation PUBLIC nanogui)
 target_link_libraries(basestation nanogui ${NANOGUI_EXTRA_LIBS})
