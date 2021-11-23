@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package rover_message;
+
+message Hello {
+	string hello_text_message = 1;
+}
+
+message Henlo {
+	string henlo_text = 1;
+}
