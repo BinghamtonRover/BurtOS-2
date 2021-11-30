@@ -3,12 +3,16 @@
 
 #include <iostream> 
 #include "session.hpp"
+#include "window_module.hpp"
 
 int main() {
 	std::cout << "Binghamton University Rover Team - BurtOS 2 - Base Station 2\n";
 	
-	Session basestation;
-	basestation.gui_loop();
+	//Session basestation;
+	WindowModule window;
+	//window.add_widget();
+	window.window_loop();
+	//basestation.gui_loop();
 	
 	return 0;
 }
