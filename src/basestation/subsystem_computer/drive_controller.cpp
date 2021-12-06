@@ -1,4 +1,5 @@
-#include <iostream>  
+#include <iostream> 
+#include <math.h> 
 using namespace std;
 
 class DriveController {
@@ -15,11 +16,15 @@ class DriveController {
         float right_motor_2 = 0;
         float right_motor_3 = 0;
 
-        float current_angle = 0;
-        float current_acceleration = 0;
 
-        float current_velocity = 0;
-        float target_velocity = 0;
+        float current_angle = 0;
+        float target_velocity_magnitude = 0;
+
+        float current_velocity_x = 0;
+        float current_velocity_y = 0;
+
+        float target_velocity_x = 0;
+        float target_velocity_y = 0;
 
         // max acc = max acc for a specific motor 
         float MAX_ACCELERATION = 15;
@@ -27,54 +32,96 @@ class DriveController {
         float MAX_VELOCITY = 2000;
 
         void halt() {
-            left_motor_1 = 0;
-            left_motor_2 = 0;
-            left_motor_3 = 0;
-
-            right_motor_1 = 0;
-            right_motor_2 = 0;
-            right_motor_3 = 0;
+            accelerate_to(0, 0);
         }
 
-        // Uses globals current_angle, current_acceleration to get motor accs
-        void update_motor_acceleration() {
-
-            float right_scaling = (90 + current_angle) / 180;
-            int sign_acceleration = (current_acceleration > 0) - (current_acceleration < 0);
-
-            current_acceleration = target_velocity - current_velocity;
-            if (abs(max(right_scaling, 1 - right_scaling) * current_acceleration) > MAX_ACCELERATION) {
-                current_acceleration = sign_acceleration * MAX_ACCELERATION / max(right_scaling, 1 - right_scaling);
+        void set_motor_acc(char direction, float acc) { 
+            if (direction == 'L') {
+                left_motor_1 = acc;
+                left_motor_2 = acc;
+                left_motor_3 = acc;
             }
+            if (direction == 'R') {
+                right_motor_1 = acc;
+                right_motor_2 = acc;
+                right_motor_3 = acc;
+            }
+        }
 
-            if(current_acceleration != 0) {
-                current_velocity += current_acceleration;
-                // ideally the motor accelerations produce the target acceleration in current_acceleration 
-                left_motor_1 = sign_acceleration * min(abs((1 - right_scaling) * current_acceleration), MAX_ACCELERATION);
-                left_motor_2 = sign_acceleration * min(abs((1 - right_scaling) * current_acceleration), MAX_ACCELERATION);
-                left_motor_3 = sign_acceleration * min(abs((1 - right_scaling) * current_acceleration), MAX_ACCELERATION);
+        // Called whenever current_angle and target_velocity changes
+        void update_target_velocity() { 
+            target_velocity_y = cos(current_angle) * target_velocity_magnitude;
+            target_velocity_x = cos(90 + current_angle) * target_velocity_magnitude;
+        }
+
+        float get_velocity() { 
+            return sqrt(pow(current_velocity_x, 2) + (current_velocity_y, 2));
+        }
+        
+        // moves to target velocities? has to find angle 
+        void accelerate_to(float target_x, float target_y) { 
+            
+            float acceleration_x = target_x - current_velocity_x;
+            float acceleration_y = target_y - current_velocity_y;
+
+            float target_acceleration = sqrt(pow(acceleration_x, 2) + (acceleration_y, 2));
+            float angle = atan(acceleration_y / acceleration_x);
+
+            if (target_acceleration > 2) {     
+                target_acceleration = 2;
+                acceleration_y = cos(angle) * target_acceleration;
+                acceleration_x = cos(90 + angle) * target_acceleration;
+            }
+            
+            if (acceleration_x != 0 || acceleration_y != 0) {
+                float right_scaling = (90 + angle)/180;
+                set_motor_acc('L', (1 - right_scaling) * target_acceleration);
+                set_motor_acc('R', right_scaling * target_acceleration);
                 
-                right_motor_1 = sign_acceleration * min(abs(right_scaling * current_acceleration), MAX_ACCELERATION);
-                right_motor_2 = sign_acceleration * min(abs(right_scaling * current_acceleration), MAX_ACCELERATION);
-                right_motor_3 = sign_acceleration * min(abs(right_scaling * current_acceleration), MAX_ACCELERATION);
+                current_velocity_x += acceleration_x;
+                current_velocity_y += acceleration_y;
             }
-
-            // change acceleration
-
-
-
-            // if angle > 0 and it's at max acc, set curr acceleration/scaling to max acceleration
+            else { 
+                set_motor_acc('L', 0);
+                set_motor_acc('R', 0);
+            }
         }
+        
+        // Uses globals current_angle, acceleration to get motor accs
+        void update_motor_acceleration() {
+            accelerate_to(target_velocity_x, target_velocity_y);
+        }
+        /* Tried to add something that was better than scaling linearly but this sometimes results in 
+            negative values for motor accelerations 
+        if (left_motor_1 > MAX_ACCELERATION) {
+            left_motor_1 = acceleration_y - acceleration_x;
+            left_motor_2 = acceleration_y - acceleration_x;
+            left_motor_3 = acceleration_y - acceleration_x;
+            
+            right_motor_1 = acceleration_y + acceleration_x;
+            right_motor_2 = acceleration_y + acceleration_x;
+            right_motor_3 = acceleration_y + acceleration_x;
+            // shluld be 1 when angle = 45, -1 when angle = -45 
+            acceleration_y = MAX_ACCELERATION * cos((current_angle - 45) * 2 );
+        }
+        else if (acceleration_y + acceleration_x > MAX_ACCELERATION) {
+            acceleration_x = MAX_ACCELERATION;
+            // shluld be 1 when angle = 45, -1 when angle = -45 
+            acceleration_y = MAX_ACCELERATION * cos((current_angle - 45) * 2 );
+        }
+        */ 
 
         void setForwardVelocity(float mps) {
             // convert meters/second into revolutions per second
-            target_velocity = mps / (2 * 3.14159 * wheel_size / 100);
+            target_velocity_magnitude = mps / (2 * 3.14159 * wheel_size / 100);
+            update_target_velocity();
         } 
         
         
         // -90 = sharp left, 0 = straight, 90 = sharp right
         void setSteeringAngle(int8_t angle) { 
             current_angle = angle;
+            update_target_velocity();
         }
 
 };
@@ -82,7 +129,7 @@ class DriveController {
 
 int main() {
     DriveController d = DriveController();
-    d.setForwardVelocity(10);
+    d.setForwardVelocity(100);
     d.setSteeringAngle(45);
     // d.update_motor_acceleration();
     cout << "Wheel size: " << d.wheel_size << endl;
@@ -103,6 +150,7 @@ int main() {
         d.update_motor_acceleration();
         cout << "Left motor acc: " << d.left_motor_1 << " " << d.left_motor_2 << " " << d.left_motor_3 << endl;
         cout << "Right motor acc: " << d.right_motor_1 << " " << d.right_motor_2 << " " << d.right_motor_3 << endl;
+        cout << "velocities x:" << d.current_velocity_x << " y: " << d.current_velocity_y << endl;
     }
    return 0;
 }
