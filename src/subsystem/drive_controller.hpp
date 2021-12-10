@@ -2,6 +2,7 @@
 
 #include <iostream> 
 #include <cmath>
+#include <math.h>
 
 class DriveController {
 	private:
@@ -27,11 +28,6 @@ class DriveController {
 		float target_velocity_x = 0;
 		float target_velocity_y = 0;
 
-		// max acc = max acc for a specific motor 
-		float MAX_ACCELERATION = 15;
-		// max velocity for rover 
-		float MAX_VELOCITY = 2000;
-
 		void halt() {
 			accelerate_to(0, 0);
 		}
@@ -51,29 +47,26 @@ class DriveController {
 
 		// Called whenever current_angle and target_velocity changes
 		void update_target_velocity() { 
-			target_velocity_y = cos(current_angle) * target_velocity_magnitude;
-			target_velocity_x = cos(90 + current_angle) * target_velocity_magnitude;
+			target_velocity_y = cos(current_angle * M_PI / 180) * target_velocity_magnitude;
+			int sign_angle = (current_angle > 0) - (current_angle < 0);
+			target_velocity_x = sign_angle * sin(current_angle * M_PI / 180) * target_velocity_magnitude;
 		}
 
 		float get_velocity() { 
-			return sqrt(pow(current_velocity_x, 2) + (current_velocity_y, 2));
+			return sqrt(pow(current_velocity_x, 2) + pow(current_velocity_y, 2));
 		}
 		
 		// moves to target velocities? has to find angle 
-		void accelerate_to(float target_x, float target_y) { 
+		void accelerate_to(float velocity_x, float velocity_y) { 
 			
-			float acceleration_x = target_x - current_velocity_x;
-			float acceleration_y = target_y - current_velocity_y;
+			float acceleration_x = velocity_x - current_velocity_x;
+			float acceleration_y = velocity_y - current_velocity_y;
+			float target_acceleration = sqrt(pow(acceleration_x, 2) + pow(acceleration_y, 2));
+			float angle = atan(acceleration_y / acceleration_x) * (180 / M_PI);
+			std::cout << angle << std::endl;
+			std::cout << acceleration_x << " " << acceleration_y << std::endl;
 
-			float target_acceleration = sqrt(pow(acceleration_x, 2) + (acceleration_y, 2));
-			float angle = atan(acceleration_y / acceleration_x);
-
-			if (target_acceleration > 2) {     
-				target_acceleration = 2;
-				acceleration_y = cos(angle) * target_acceleration;
-				acceleration_x = cos(90 + angle) * target_acceleration;
-			}
-			
+			std::cout << get_velocity() << std::endl;
 			if (acceleration_x != 0 || acceleration_y != 0) {
 				float right_scaling = (90 + angle)/180;
 				set_motor_acc('L', (1 - right_scaling) * target_acceleration);
@@ -92,25 +85,6 @@ class DriveController {
 		void update_motor_acceleration() {
 			accelerate_to(target_velocity_x, target_velocity_y);
 		}
-		/* Tried to add something that was better than scaling linearly but this sometimes results in 
-			negative values for motor accelerations 
-		if (left_motor_1 > MAX_ACCELERATION) {
-			left_motor_1 = acceleration_y - acceleration_x;
-			left_motor_2 = acceleration_y - acceleration_x;
-			left_motor_3 = acceleration_y - acceleration_x;
-			
-			right_motor_1 = acceleration_y + acceleration_x;
-			right_motor_2 = acceleration_y + acceleration_x;
-			right_motor_3 = acceleration_y + acceleration_x;
-			// shluld be 1 when angle = 45, -1 when angle = -45 
-			acceleration_y = MAX_ACCELERATION * cos((current_angle - 45) * 2 );
-		}
-		else if (acceleration_y + acceleration_x > MAX_ACCELERATION) {
-			acceleration_x = MAX_ACCELERATION;
-			// shluld be 1 when angle = 45, -1 when angle = -45 
-			acceleration_y = MAX_ACCELERATION * cos((current_angle - 45) * 2 );
-		}
-		*/ 
 
 		void setForwardVelocity(float mps) {
 			// convert meters/second into revolutions per second
