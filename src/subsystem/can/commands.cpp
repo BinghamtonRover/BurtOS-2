@@ -54,7 +54,7 @@ canfd_frame get_can_frame(int modifier, Node device, Command command, int num_by
     frame.len = num_bytes;
     frame.flags = 0;
     frame.__res0 = 0;
-    frame.CAN_LEN8_DLC = 0;
+    frame.__res1 = 0;
     for (int i = 0; i < 8; i++) {
         frame.data[i] = (data >> (8 * (7 - i))) & 0xFF;
     }
