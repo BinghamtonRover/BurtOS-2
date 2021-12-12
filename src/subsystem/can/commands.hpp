@@ -2,6 +2,7 @@
 
 #include <cstring>
 
+#ifdef ONBOARD_CAN_BUS
 #include <unistd.h>
 #include <net/if.h>
 #include <sys/ioctl.h>
@@ -9,6 +10,9 @@
 
 #include <linux/can.h>
 #include <linux/can/raw.h>
+#else
+#warning Compiling rover_can in offline mode
+#endif
 
 #include "constants.hpp"
 
@@ -21,8 +25,10 @@ int can_send(Node device, Command command, int num_bytes, unsigned long data);
 //Recieve a message using can_send
 int can_receive(Node device, Command command);
 
+#ifdef ONBOARD_CAN_BUS
 //Create a can frame
 canfd_frame get_can_frame(int modifier, Node device, Command command, int num_bytes, unsigned long data);
+#endif
 
 //Take the first 4 bytes of an unsigned long, and convert them to big endian
 unsigned long get_big_endian_first_half(unsigned long u);

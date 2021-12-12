@@ -17,6 +17,7 @@ int can_send(Node device, Command command, int data) {
 
 //Send out a can message
 int can_send(Node device, Command command, int num_bytes, unsigned long data) {
+#ifdef ONBOARD_CAN_BUS
     //Socket is not open, nothing can send
     if (!socket_open) { return 1; }
     
@@ -41,11 +42,11 @@ int can_send(Node device, Command command, int num_bytes, unsigned long data) {
         //Failed to write
         return 1;
     }
-
+#endif
     //Successfully sent
     return 0;
 }
-
+#ifdef ONBOARD_CAN_BUS
 //Create a can frame
 canfd_frame get_can_frame(int modifier, Node device, Command command, int num_bytes, unsigned long data) {
     canfd_frame frame;
@@ -59,7 +60,7 @@ canfd_frame get_can_frame(int modifier, Node device, Command command, int num_by
     }
     return frame;
 }
-
+#endif
 
 //Take the first 4 bytes of an unsigned long, and convert them to big endian
 unsigned long get_big_endian_first_half(unsigned long u) {
@@ -68,6 +69,7 @@ unsigned long get_big_endian_first_half(unsigned long u) {
 
 //Open can socket
 bool open_can_socket() {
+#ifdef ONBOARD_CAN_BUS
     //Get socket number
     can_socket = socket(PF_CAN, SOCK_RAW, CAN_RAW);
     if (can_socket < 0) { return false; }
@@ -87,7 +89,7 @@ bool open_can_socket() {
     //Disable recieve filter, then open socket
     setsockopt(can_socket, SOL_CAN_RAW, CAN_RAW_FILTER, NULL, 0);
     if (bind(can_socket, (struct sockaddr *)&addr, sizeof(addr)) < 0) { return false; }
-
+#endif
     //Socket has been successfully opened
     socket_open = true;
     return true;
@@ -95,6 +97,8 @@ bool open_can_socket() {
 
 //Close can socket
 void close_can_socket() {
+#ifdef ONBOARD_CAN_BUS
     close(can_socket);
+#endif
     socket_open = false;
 }
