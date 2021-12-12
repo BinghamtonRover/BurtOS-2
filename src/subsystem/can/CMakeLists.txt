@@ -5,7 +5,7 @@ target_include_directories(rover_can PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 # If ONBOARD_CAN_BUS has been manually defined (or is cached), then don't override it with auto-detection
 if (NOT DEFINED ONBOARD_CAN_BUS)
 	if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
-		set(ONBOARD_CAN_BUS OFF CACHE BOOL "Compile subsystem with Linux CAN bus libraries")
+		set(ONBOARD_CAN_BUS ON CACHE BOOL "Compile subsystem with Linux CAN bus libraries")
 		message(STATUS "rover_can: Building with full CAN functionality")
 	else()
 		set(ONBOARD_CAN_BUS OFF CACHE BOOL "Compile subsystem with Linux CAN bus libraries")
