@@ -1,94 +1,143 @@
-//
-// server.cpp
-// ~~~~~~~~~~
-//
-// Copyright (c) 2003-2008 Christopher M. Kohlhoff (chris at kohlhoff dot com)
-//
-// Distributed under the Boost Software License, Version 1.0. (See accompanying
-// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
-//
+#include "network.hpp"
 
-#include <ctime>
 #include <iostream>
-#include <string>
-#include <boost/array.hpp>
-#include <boost/bind.hpp>
-#include <boost/shared_ptr.hpp>
-#include <boost/asio.hpp>
+#include <limits>
+#include <boost/bind/bind.hpp>
 
-using boost::asio::ip::udp;
+void Network::RemoteDevice::send_bytes(void* data, std::size_t size_bytes) {
+	// Do not allow sending to start while writing to the active buffer
+	// A positive side effect is thread safety for concurrent send_message() calls
+	async_start_lock.lock();
 
-std::string make_daytime_string() {
-	using namespace std; // For time_t, time and ctime;
-	time_t now = time(0);
-	return ctime(&now);
+	std::size_t available_space = b.get_active_buffer().size() - b.usage[b.active];
+
+	if (size_bytes > available_space) {
+		b.get_active_buffer().resize(b.usage[b.active] + size_bytes);
+	}
+
+	for (int i = 0; i < size_bytes; i++) {
+		b.get_active_buffer()[b.usage[b.active] + i] = ((const uint8_t*)data)[i];
+	}
+	b.usage[b.active] += size_bytes;
+
+	async_start_lock.unlock();
+
+	data_available();
 }
 
-class udp_server {
-public:
-	udp_server(boost::asio::io_service& io_service)
-		: socket_(io_service, udp::endpoint(udp::v4(), 13)) {
-		start_receive();
-	}
+void Network::RemoteDevice::send_message(google::protobuf::Message& msg, MessageType type) {
+	// Do not allow sending to start while writing to the active buffer
+	// A positive side effect is thread safety for concurrent send_message() calls
+	async_start_lock.lock();
 
-private:
-	void start_receive() {
-		socket_.async_receive_from(
-			boost::asio::buffer(recv_buffer_),
-			remote_endpoint_,
-			boost::bind(&udp_server::handle_receive, this, boost::asio::placeholders::error, boost::asio::placeholders::bytes_transferred)
-		);
-	}
+	auto& buf = b.get_active_buffer();
+	std::size_t usage = b.usage[b.active];
+	std::size_t available_space = buf.size() - usage;
+	bool success = false;
 
-	void handle_receive(const boost::system::error_code& error, std::size_t transferred) {
-		if (!error || error == boost::asio::error::message_size) {
-			std::cout << "Received a message: (T=" << transferred << ", failstate=" << error << ") {\n\t";
-			for (size_t i = 0; i < transferred && i < recv_buffer_.size(); i++) {
-				char c = recv_buffer_[i];
-				if (c != '\r') {
-					std::cout << c;
-				}
-				if (c == '\n') {
-					std::cout << '\t';
-				}
-			}
-			std::cout << "\n};\n";
-			boost::shared_ptr<std::string> message(
-					new std::string(make_daytime_string()));
-
-			socket_.async_send_to(boost::asio::buffer(*message), remote_endpoint_,
-					boost::bind(&udp_server::handle_send, this, message,
-						boost::asio::placeholders::error,
-						boost::asio::placeholders::bytes_transferred));
-
-			start_receive();
+	// Headers use 16-bit sizes. Packets shouldn't be larger than that anyway
+	if (msg.ByteSizeLong() <= std::numeric_limits<uint16_t>::max()) {
+		// Reallocate if there isn't enough space. 3 bytes needed for message header
+		if (available_space < msg.GetCachedSize() + 3) {
+			// Only resize to the minimum necessary since control message sizes should be constant
+			buf.resize(usage + msg.GetCachedSize() + 3);
 		}
+		
+		success = msg.SerializeWithCachedSizesToArray(&buf[usage + 3]);
+
+		if (success) {
+			// Header format: Little-endian 16-bit size followed by the message type
+			buf[usage] = msg.GetCachedSize();
+			buf[usage + 1] = msg.GetCachedSize() >> 8;
+			buf[usage + 2] = static_cast<uint8_t>(type);
+			b.usage[b.active] += msg.GetCachedSize() + 3;
+		}
+
 	}
 
-	void handle_send(boost::shared_ptr<std::string> /*message*/,
-			const boost::system::error_code& /*error*/,
-			std::size_t /*bytes_transferred*/)
-	{
+	async_start_lock.unlock();
+	if (success) data_available();
+
+}
+
+void Network::RemoteDevice::send_finished_handler(const boost::system::error_code& error, std::size_t bytes_transferred) {
+	std::cout << "event: send_finished<transferred=" << bytes_transferred << " B, error=" << error << ">\n";
+	b.usage[!b.active] = 0;
+	async_send_active = false;
+
+	if (b.usage[b.active] > 0) {
+		data_available();
 	}
 
-	udp::socket socket_;
-	udp::endpoint remote_endpoint_;
-	boost::array<char, 70000> recv_buffer_;
-};
+}
 
-int main()
-{
-	std::cout << "Network test started\n";
-	try
-	{
-		boost::asio::io_service io_service;
-		udp_server server(io_service);
-		io_service.run();
-	}
-	catch (std::exception& e)
-	{
-		std::cerr << e.what() << std::endl;
-	}
+void Network::RemoteDevice::data_available() {
+	if (!async_send_active && async_start_lock.try_lock()) {
+		std::cout << "Starting data transmission\n";
+		async_send_active = true;
+		b.swap();
+		async_start_lock.unlock();
 
-	return 0;
+		auto& to_send = b.get_locked_buffer();
+		std::cout << "Data available to send: " << b.usage[!b.active] << std::endl;
+		socket.async_send_to(boost::asio::buffer(to_send.data(), b.usage[!b.active]), dest, [this](auto error, auto bytes_transferred) {
+			send_finished_handler(error, bytes_transferred);
+		});
+	}
+}
+
+Network::RemoteDevice::RemoteDevice(const Destination& device_ip, boost::asio::io_context& io_context)
+		: dest(device_ip), socket(io_context) {
+
+	socket.open(boost::asio::ip::udp::v4());
+	// Start with buffer length of 100
+	b.buf[0].resize(100);
+	b.buf[1].resize(100);
+}
+
+Network::MessageReceiver::MessageReceiver(boost::asio::ip::port_type listen_port, boost::asio::io_context& io_context)
+		: socket(io_context, boost::asio::ip::udp::endpoint(boost::asio::ip::udp::v4(), listen_port)) {
+	
+	for (int i = 0; i < (int)MessageType::COUNT; i++) {
+		handlers[i] = nullptr;
+	}
+}
+
+void Network::MessageReceiver::open() {
+	socket.async_receive_from(boost::asio::buffer(recv_buffer), remote, [this](auto error, auto bytes_transferred) {
+		std::cout << "received in " << bytes_transferred << "B\n";
+		std::size_t i = 0;
+		while (i + 3 <= bytes_transferred) {
+			uint16_t sz = *(uint16_t*)(&recv_buffer[i]);
+			MessageType t = static_cast<MessageType>(recv_buffer[i + 2]);
+			i += 3;
+
+			std::cout << "message<t=" << (int)t << ", sz=" << sz << ">\n";
+
+			if (t < MessageType::COUNT && i + sz <= bytes_transferred) {
+				Handler h = handlers[(std::size_t)t];
+				if (h != nullptr) {
+					h(&recv_buffer[i], sz);
+				}
+				i += sz;
+			} else {
+				// Buffer too short
+				break;
+			}
+
+		}
+
+		// Reopen socket to receive more
+		open();
+	});
+}
+
+void Network::MessageReceiver::close() {
+	socket.close();
+}
+
+void Network::MessageReceiver::register_handler(MessageType type, Handler handler) {
+	if (type < MessageType::COUNT) {
+		handlers[(std::size_t)type] = handler;
+	}
 }

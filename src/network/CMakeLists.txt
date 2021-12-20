@@ -1,19 +1,15 @@
-add_executable(network network.cpp)
-
-find_package(Boost REQUIRED)
-if (WIN32)
-	message("Boost target is WIN32")
-	target_link_libraries(network wsock32 ws2_32)
-else()
-	message("Boost target is POSIX")
-endif()
-
-target_include_directories(network PUBLIC ${Boost_INCLUDE_DIR})
-target_link_libraries(network PUBLIC ${Boost_LIBRARIES})
+add_library(network network.hpp network.cpp network_util.hpp)
 
 find_package(Protobuf REQUIRED)
 protobuf_generate_cpp(PROTO_SRC PROTO_HDR hello.proto)
 
-add_executable(protobuf_test protobuf_test.cpp ${PROTO_SRC} ${PROTO_HDR})
-target_include_directories(protobuf_test PUBLIC ${Protobuf_INCLUDE_DIRS} ${CMAKE_CURRENT_BINARY_DIR})
-target_link_libraries(protobuf_test PUBLIC ${Protobuf_LIBRARIES})
+find_package(Boost REQUIRED)
+if (WIN32)
+	message(STATUS "network: Boost target is WIN32")
+	target_link_libraries(network PUBLIC wsock32 ws2_32)
+else()
+	message("Boost target is POSIX")
+endif()
+
+target_include_directories(network PUBLIC ${Boost_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR} ${Protobuf_INCLUDE_DIRS})
+target_link_libraries(network PUBLIC ${Boost_LIBRARIES} ${Protobuf_LIBRARIES})
