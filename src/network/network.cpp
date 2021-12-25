@@ -91,7 +91,7 @@ Network::RemoteDevice::RemoteDevice(const Destination& device_ip, boost::asio::i
 	b.buf[1].resize(100);
 }
 
-Network::MessageReceiver::MessageReceiver(boost::asio::ip::port_type listen_port, boost::asio::io_context& io_context)
+Network::MessageReceiver::MessageReceiver(uint_least16_t listen_port, boost::asio::io_context& io_context)
 		: socket(io_context, boost::asio::ip::udp::endpoint(boost::asio::ip::udp::v4(), listen_port)) {
 	
 	for (int i = 0; i < (int)MessageType::COUNT; i++) {

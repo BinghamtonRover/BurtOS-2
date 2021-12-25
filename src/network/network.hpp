@@ -36,7 +36,7 @@ class RemoteDevice {
 
 class MessageReceiver {
 	public:
-		MessageReceiver(boost::asio::ip::port_type listen_port, boost::asio::io_context& io_context);
+		MessageReceiver(uint_least16_t listen_port, boost::asio::io_context& io_context);
 		void open();
 		void close();
 		typedef void(*Handler)(const uint8_t*, std::size_t);
