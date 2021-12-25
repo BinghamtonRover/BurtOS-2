@@ -1,6 +1,5 @@
 #include "network.hpp"
 
-#include <iostream>
 #include <limits>
 #include <boost/bind/bind.hpp>
 
@@ -61,7 +60,6 @@ void Network::RemoteDevice::send_message(google::protobuf::Message& msg, Message
 }
 
 void Network::RemoteDevice::send_finished_handler(const boost::system::error_code& error, std::size_t bytes_transferred) {
-	std::cout << "event: send_finished<transferred=" << bytes_transferred << " B, error=" << error << ">\n";
 	b.usage[!b.active] = 0;
 	async_send_active = false;
 
@@ -73,13 +71,11 @@ void Network::RemoteDevice::send_finished_handler(const boost::system::error_cod
 
 void Network::RemoteDevice::data_available() {
 	if (!async_send_active && async_start_lock.try_lock()) {
-		std::cout << "Starting data transmission\n";
 		async_send_active = true;
 		b.swap();
 		async_start_lock.unlock();
 
 		auto& to_send = b.get_locked_buffer();
-		std::cout << "Data available to send: " << b.usage[!b.active] << std::endl;
 		socket.async_send_to(boost::asio::buffer(to_send.data(), b.usage[!b.active]), dest, [this](auto error, auto bytes_transferred) {
 			send_finished_handler(error, bytes_transferred);
 		});
@@ -105,14 +101,11 @@ Network::MessageReceiver::MessageReceiver(boost::asio::ip::port_type listen_port
 
 void Network::MessageReceiver::open() {
 	socket.async_receive_from(boost::asio::buffer(recv_buffer), remote, [this](auto error, auto bytes_transferred) {
-		std::cout << "received in " << bytes_transferred << "B\n";
 		std::size_t i = 0;
 		while (i + 3 <= bytes_transferred) {
 			uint16_t sz = *(uint16_t*)(&recv_buffer[i]);
 			MessageType t = static_cast<MessageType>(recv_buffer[i + 2]);
 			i += 3;
-
-			std::cout << "message<t=" << (int)t << ", sz=" << sz << ">\n";
 
 			if (t < MessageType::COUNT && i + sz <= bytes_transferred) {
 				Handler h = handlers[(std::size_t)t];
