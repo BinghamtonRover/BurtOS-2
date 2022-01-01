@@ -31,8 +31,8 @@ void net::RemoteDevice::send_message(google::protobuf::Message& msg, MessageType
 	auto& buf = msg_buffer.write_buffer(); 
 	bool success = false;
 
-	// Ensure size isn't larger than supported by the header (or empty, which happens on error)
-	if (msg.ByteSizeLong() <= MessageHeader::MAX_MSG_SIZE && msg.GetCachedSize() > 0) {
+	// Ensure size isn't larger than supported by the header
+	if (msg.ByteSizeLong() <= MessageHeader::MAX_MSG_SIZE) {
 		uint8_t* block = buf.create_block(msg.GetCachedSize() + MessageHeader::HDR_SIZE);
 		
 		success = msg.SerializeWithCachedSizesToArray(&block[MessageHeader::HDR_SIZE]);
