@@ -53,7 +53,7 @@ class MessageReceiver {
 		MessageReceiver(uint_least16_t listen_port, boost::asio::io_context& io_context);
 		void open();
 		void close();
-		typedef void(*Handler)(const uint8_t*, std::size_t);
+		typedef void(*Handler)(const uint8_t*, std::size_t, Destination& sender);
 		void register_handler(MessageType type, Handler handler);
 	private:
 		boost::asio::ip::udp::socket socket;

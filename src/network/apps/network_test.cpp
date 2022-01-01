@@ -38,7 +38,7 @@ int main(int argc, char* argv[]) {
 			}
 		} else if (argc == 1 || 0 == strcmp(argv[1], "-receive")) {
 			MessageReceiver m(receiver_port, ctx);
-			m.register_handler(MessageType::STRING_MESSAGE, [](const uint8_t* buf, std::size_t len) {
+			m.register_handler(MessageType::STRING_MESSAGE, [](const uint8_t* buf, std::size_t len, net::Destination& sender) {
 				extras::StringMessage msg;
 				if (msg.ParseFromArray(buf, len)) {
 					std::cout << "STATUS: " << msg.text() << '\n';

@@ -99,7 +99,7 @@ void net::MessageReceiver::open() {
 			if (hdr.type != MessageType::NONE && i + hdr.size <= bytes_transferred) {
 				Handler h = handlers[(std::size_t)hdr.type];
 				if (h != nullptr) {
-					h(&recv_buffer[i], hdr.size);
+					h(&recv_buffer[i], hdr.size, remote);
 				}
 				i += hdr.size;
 			} else {
