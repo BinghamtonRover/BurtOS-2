@@ -1,56 +1,49 @@
 #include "network.hpp"
 
-#include <limits>
 #include <boost/bind/bind.hpp>
 
-void Network::RemoteDevice::send_bytes(void* data, std::size_t size_bytes) {
-	// Do not allow sending to start while writing to the active buffer
-	// A positive side effect is thread safety for concurrent send_message() calls
-	async_start_lock.lock();
-
-	std::size_t available_space = b.get_active_buffer().size() - b.usage[b.active];
-
-	if (size_bytes > available_space) {
-		b.get_active_buffer().resize(b.usage[b.active] + size_bytes);
-	}
-
-	for (int i = 0; i < size_bytes; i++) {
-		b.get_active_buffer()[b.usage[b.active] + i] = ((const uint8_t*)data)[i];
-	}
-	b.usage[b.active] += size_bytes;
-
-	async_start_lock.unlock();
-
-	data_available();
+net::MessageHeader::MessageHeader(const uint8_t* arr) {
+	read(arr);
 }
 
-void Network::RemoteDevice::send_message(google::protobuf::Message& msg, MessageType type) {
+net::MessageHeader::MessageHeader(MessageType type, int size) : type(type), size(size) { }
+
+void net::MessageHeader::write(uint8_t* arr) const {
+	arr[0] = size;
+	arr[1] = size >> 8;
+	arr[2] = static_cast<uint8_t>(type);
+}
+
+void net::MessageHeader::read(const uint8_t* arr) {
+	size = arr[0];
+	size |= arr[1] << 8;
+	type = static_cast<MessageType>(arr[2]);
+	if (type > MessageType::COUNT) {
+		type = MessageType::NONE;
+	}
+}
+
+void net::RemoteDevice::send_message(google::protobuf::Message& msg, MessageType type) {
 	// Do not allow sending to start while writing to the active buffer
 	// A positive side effect is thread safety for concurrent send_message() calls
 	async_start_lock.lock();
 
-	auto& buf = b.get_active_buffer();
-	std::size_t usage = b.usage[b.active];
-	std::size_t available_space = buf.size() - usage;
+	auto& buf = msg_buffer.write_buffer(); 
 	bool success = false;
 
-	// Headers use 16-bit sizes. Packets shouldn't be larger than that anyway
-	if (msg.ByteSizeLong() <= std::numeric_limits<uint16_t>::max()) {
-		// Reallocate if there isn't enough space. 3 bytes needed for message header
-		if (available_space < msg.GetCachedSize() + 3) {
-			// Only resize to the minimum necessary since control message sizes should be constant
-			buf.resize(usage + msg.GetCachedSize() + 3);
-		}
+	// Ensure size isn't larger than supported by the header (or empty, which happens on error)
+	if (msg.ByteSizeLong() <= MessageHeader::MAX_MSG_SIZE && msg.GetCachedSize() > 0) {
+		uint8_t* block = buf.create_block(msg.GetCachedSize() + MessageHeader::HDR_SIZE);
 		
-		success = msg.SerializeWithCachedSizesToArray(&buf[usage + 3]);
+		success = msg.SerializeWithCachedSizesToArray(&block[MessageHeader::HDR_SIZE]);
 
-		if (success) {
-			// Header format: Little-endian 16-bit size followed by the message type
-			buf[usage] = msg.GetCachedSize();
-			buf[usage + 1] = msg.GetCachedSize() >> 8;
-			buf[usage + 2] = static_cast<uint8_t>(type);
-			b.usage[b.active] += msg.GetCachedSize() + 3;
-		}
+		// On failure, mark the type as NONE and send the invalid data
+		// Block deallocation be impossible if we allow concurrent writers (planned feature)
+		// Failure should never happen, but this solution handles it
+		if (!success) type = MessageType::NONE;
+
+		MessageHeader hdr(type, msg.GetCachedSize());
+		hdr.write(block);
 
 	}
 
@@ -59,39 +52,36 @@ void Network::RemoteDevice::send_message(google::protobuf::Message& msg, Message
 
 }
 
-void Network::RemoteDevice::send_finished_handler(const boost::system::error_code& error, std::size_t bytes_transferred) {
-	b.usage[!b.active] = 0;
+void net::RemoteDevice::send_finished_handler(const boost::system::error_code& error, std::size_t bytes_transferred) {
+	msg_buffer.read_only_buffer().clear();
 	async_send_active = false;
 
-	if (b.usage[b.active] > 0) {
+	if (msg_buffer.write_buffer().usage() > 0) {
 		data_available();
 	}
 
 }
 
-void Network::RemoteDevice::data_available() {
+void net::RemoteDevice::data_available() {
 	if (!async_send_active && async_start_lock.try_lock()) {
 		async_send_active = true;
-		b.swap();
+		msg_buffer.swap();
 		async_start_lock.unlock();
 
-		auto& to_send = b.get_locked_buffer();
-		socket.async_send_to(boost::asio::buffer(to_send.data(), b.usage[!b.active]), dest, [this](auto error, auto bytes_transferred) {
+		auto& to_send = msg_buffer.read_only_buffer();
+		socket.async_send_to(boost::asio::buffer(to_send.data(), to_send.usage()), dest, [this](auto error, auto bytes_transferred) {
 			send_finished_handler(error, bytes_transferred);
 		});
 	}
 }
 
-Network::RemoteDevice::RemoteDevice(const Destination& device_ip, boost::asio::io_context& io_context)
+net::RemoteDevice::RemoteDevice(const Destination& device_ip, boost::asio::io_context& io_context)
 		: dest(device_ip), socket(io_context) {
 
 	socket.open(boost::asio::ip::udp::v4());
-	// Start with buffer length of 100
-	b.buf[0].resize(100);
-	b.buf[1].resize(100);
 }
 
-Network::MessageReceiver::MessageReceiver(uint_least16_t listen_port, boost::asio::io_context& io_context)
+net::MessageReceiver::MessageReceiver(uint_least16_t listen_port, boost::asio::io_context& io_context)
 		: socket(io_context, boost::asio::ip::udp::endpoint(boost::asio::ip::udp::v4(), listen_port)) {
 	
 	for (int i = 0; i < (int)MessageType::COUNT; i++) {
@@ -99,20 +89,19 @@ Network::MessageReceiver::MessageReceiver(uint_least16_t listen_port, boost::asi
 	}
 }
 
-void Network::MessageReceiver::open() {
+void net::MessageReceiver::open() {
 	socket.async_receive_from(boost::asio::buffer(recv_buffer), remote, [this](auto error, auto bytes_transferred) {
 		std::size_t i = 0;
-		while (i + 3 <= bytes_transferred) {
-			uint16_t sz = *(uint16_t*)(&recv_buffer[i]);
-			MessageType t = static_cast<MessageType>(recv_buffer[i + 2]);
-			i += 3;
+		while (i + MessageHeader::HDR_SIZE <= bytes_transferred) {
+			MessageHeader hdr(&recv_buffer[i]);
+			i += MessageHeader::HDR_SIZE;
 
-			if (t < MessageType::COUNT && i + sz <= bytes_transferred) {
-				Handler h = handlers[(std::size_t)t];
+			if (hdr.type != MessageType::NONE && i + hdr.size <= bytes_transferred) {
+				Handler h = handlers[(std::size_t)hdr.type];
 				if (h != nullptr) {
-					h(&recv_buffer[i], sz);
+					h(&recv_buffer[i], hdr.size);
 				}
-				i += sz;
+				i += hdr.size;
 			} else {
 				// Buffer too short
 				break;
@@ -125,11 +114,11 @@ void Network::MessageReceiver::open() {
 	});
 }
 
-void Network::MessageReceiver::close() {
+void net::MessageReceiver::close() {
 	socket.close();
 }
 
-void Network::MessageReceiver::register_handler(MessageType type, Handler handler) {
+void net::MessageReceiver::register_handler(MessageType type, Handler handler) {
 	if (type < MessageType::COUNT) {
 		handlers[(std::size_t)type] = handler;
 	}

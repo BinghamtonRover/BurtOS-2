@@ -5,27 +5,41 @@
 #include <vector>
 #include <mutex>
 #include <cstdint>
+#include <limits>
 #include <google/protobuf/message.h>
 #include <boost/asio.hpp>
 #include <boost/array.hpp>
 #include <messages.hpp>
 
-namespace Network {
+namespace net {
 
 typedef boost::asio::ip::udp::endpoint Destination;
 
+struct MessageHeader {
+	constexpr static std::size_t HDR_SIZE = 3;
+	constexpr static uint16_t MAX_MSG_SIZE = std::numeric_limits<uint16_t>::max();
+	MessageType type;
+	int size;	// Protobuf uses int type for size
+	void write(uint8_t* arr) const;
+	void read(const uint8_t* arr);
+	MessageHeader(const uint8_t* arr);
+	MessageHeader(MessageType type, int size);
+};
+
 /*
 	Maintains a socket and a double-buffered queue for one specific remote device
+
+	Intended for devices with continuous message exchange (ex. rover and base
+	station) rather than temporary connections (ex. true client/server programs)
 */
 class RemoteDevice {
 	public:
 		RemoteDevice(const Destination& device_ip, boost::asio::io_context& io_context);
 		void send_message(google::protobuf::Message& msg, MessageType type);
-		void send_bytes(void* data, std::size_t size_bytes);
 	private:
 		boost::asio::ip::udp::socket socket;
 		Destination dest;
-		DoubleBuffer<uint8_t> b;
+		DoubleBuffer<uint8_t> msg_buffer;
 		std::mutex async_start_lock;
 		bool async_send_active = false;
 
