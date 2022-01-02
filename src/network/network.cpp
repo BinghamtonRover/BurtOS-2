@@ -7,6 +7,11 @@ void net::RemoteDevice::send_message(msg::Message& message) {
 	// A positive side effect is thread safety for concurrent send_message() calls
 	async_start_lock.lock();
 
+	if (_disable) {
+		async_start_lock.unlock();
+		return;
+	}
+
 	auto& buf = msg_buffer.write_buffer(); 
 	bool success = false;
 
@@ -27,32 +32,51 @@ void net::RemoteDevice::send_message(msg::Message& message) {
 
 	}
 
-	async_start_lock.unlock();
-	if (success) data_available();
-
-}
-
-void net::RemoteDevice::send_finished_handler(const boost::system::error_code& error, std::size_t bytes_transferred) {
-	msg_buffer.read_only_buffer().clear();
-	async_send_active = false;
-
-	if (msg_buffer.write_buffer().usage() > 0) {
-		data_available();
+	if (!async_send_active) {
+		begin_sending();
 	}
 
+	async_start_lock.unlock();
+
 }
 
-void net::RemoteDevice::data_available() {
-	if (!async_send_active && async_start_lock.try_lock()) {
-		async_send_active = true;
-		msg_buffer.swap();
+// Function assumes that caller has acquired async_start_lock
+void net::RemoteDevice::begin_sending() {
+
+	async_send_active = true;
+	msg_buffer.swap();
+	auto& to_send = msg_buffer.read_only_buffer();
+	socket.async_send_to(boost::asio::buffer(to_send.data(), to_send.usage()), dest, [this](auto error, auto bytes_transferred) {
+		// On send finished:
+
+		msg_buffer.read_only_buffer().clear();
+		async_start_lock.lock();
+		async_send_active = false;
+		if (msg_buffer.write_buffer().usage() > 0) {
+			begin_sending();
+		}
 		async_start_lock.unlock();
 
-		auto& to_send = msg_buffer.read_only_buffer();
-		socket.async_send_to(boost::asio::buffer(to_send.data(), to_send.usage()), dest, [this](auto error, auto bytes_transferred) {
-			send_finished_handler(error, bytes_transferred);
-		});
+	});
+}
+
+void net::RemoteDevice::wait_finish(boost::asio::io_context& io_context) {
+	disable();
+	// At this point, another send cannot start until enable() is called
+	// If there are any remaining jobs, wait
+
+	while (async_send_active) {
+		io_context.poll();
 	}
+}
+
+void net::RemoteDevice::disable() {
+	async_start_lock.lock();
+
+	_disable = true;
+	msg_buffer.write_buffer().clear();
+
+	async_start_lock.unlock();
 }
 
 net::RemoteDevice::RemoteDevice(const Destination& device_ip, boost::asio::io_context& io_context)

@@ -35,6 +35,7 @@ void host_server() {
 				reply.data.set_reply_port(0);
 				net::RemoteDevice reply_rd(net::Destination(m.remote_sender().address(), rtt_request.reply_port()), ctx);
 				reply_rd.send_message(reply);
+				reply_rd.wait_finish(ctx);
 			}
 		} catch (const std::exception& e) {
 			std::cerr << "Error while hosting server: " << e.what() << '\n';

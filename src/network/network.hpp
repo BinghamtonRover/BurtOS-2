@@ -25,15 +25,24 @@ class RemoteDevice {
 	public:
 		RemoteDevice(const Destination& device_ip, boost::asio::io_context& io_context);
 		void send_message(msg::Message& message);
+
+		// Disable device and block until the remaining operations have finished
+		// Continues dispatching other jobs on io_context until return
+		void wait_finish(boost::asio::io_context& io_context);
+
+		// Stops messages from being queued by send_message(). Clears queues but does not stop dispatched jobs
+		void disable();
+		inline void enable() { _disable = false; }
+		inline bool enabled() { return !_disable; }
 	private:
 		boost::asio::ip::udp::socket socket;
 		Destination dest;
 		DoubleBuffer<uint8_t> msg_buffer;
 		std::mutex async_start_lock;
 		bool async_send_active = false;
+		bool _disable = false;
 
-		void data_available();
-		void send_finished_handler(const boost::system::error_code& error, std::size_t bytes_transferred);
+		void begin_sending();
 
 };
 
