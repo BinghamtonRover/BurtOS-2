@@ -9,11 +9,13 @@
 #include <iostream>
 #include <string>
 #include <boost/program_options.hpp>
-#include <extras.pb.h>
+#include <rtt_messages.pb.h>
 
 namespace opt = boost::program_options;
 
-DEFINE_MESSAGE_TYPE(Rtt, extras::Rtt)
+namespace apps {
+	DEFINE_MESSAGE_TYPE(RttMessage, apps::Rtt)
+}
 
 unsigned int timeout;
 unsigned int trips;
@@ -25,13 +27,12 @@ std::string reply_ip_str;
 void host_server() {
 	static boost::asio::io_context ctx;
 	static net::MessageReceiver m(port, ctx);
-	m.register_handler<Rtt>([](const uint8_t buf[], std::size_t len) {
+	m.register_handler<apps::RttMessage>([](const uint8_t buf[], std::size_t len) {
 		try {
-			extras::Rtt rtt_request;
+			apps::Rtt rtt_request;
 			if (rtt_request.ParseFromArray(buf, len)) {
-				Rtt reply;
-				reply.data.set_reply_port(1);
-				reply.data.set_reply_ip(1);
+				apps::RttMessage reply;
+				reply.data.set_reply_port(0);
 				net::RemoteDevice reply_rd(net::Destination(m.remote_sender().address(), rtt_request.reply_port()), ctx);
 				reply_rd.send_message(reply);
 			}
@@ -47,12 +48,12 @@ void run_tests() {
 	if (trips == 0) return;
 	static boost::asio::io_context ctx;
 	static net::RemoteDevice rd(net::Destination(boost::asio::ip::address::from_string(ip_str), port), ctx);
-	static Rtt rtt_request;
+	static apps::RttMessage rtt_request;
 	static std::chrono::high_resolution_clock::time_point send_time;
 	static std::chrono::high_resolution_clock::time_point reply_time;
 	static net::MessageReceiver m(reply_port, ctx);
 
-	m.register_handler<Rtt>([](const uint8_t buf[], std::size_t len) {
+	m.register_handler<apps::RttMessage>([](const uint8_t buf[], std::size_t len) {
 		reply_time = std::chrono::high_resolution_clock::now();
 		std::cout << (std::chrono::duration_cast<std::chrono::microseconds>(reply_time - send_time).count()) / 1000.0 << " ms\n";
 
@@ -107,7 +108,7 @@ int main(int argc, char* argv[]) {
 		return 0;
 	}
 
-	msg::register_message_type<Rtt>();
+	msg::register_message_type<apps::RttMessage>();
 	if (vm.count("server")) {
 		host_server();
 	} else {

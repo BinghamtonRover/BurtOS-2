@@ -1,0 +1,7 @@
+syntax = "proto3";
+
+package apps;
+
+message Rtt {
+	uint32 reply_port = 1;
+}
