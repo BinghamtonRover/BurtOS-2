@@ -1,7 +1,7 @@
 find_package(Protobuf REQUIRED)
 protobuf_generate_cpp(PROTO_SRC PROTO_HDR extras.proto)
 
-add_library(network network.hpp network.cpp network_util.hpp ${PROTO_SRC} ${PROTO_HDR})
+add_library(network network.hpp network.cpp network_util.hpp messages.hpp messages.cpp ${PROTO_SRC} ${PROTO_HDR})
 
 find_package(Boost 1.71.0 REQUIRED)
 if (WIN32)

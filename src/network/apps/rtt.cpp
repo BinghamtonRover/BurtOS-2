@@ -9,8 +9,11 @@
 #include <iostream>
 #include <string>
 #include <boost/program_options.hpp>
+#include <extras.pb.h>
 
 namespace opt = boost::program_options;
+
+DEFINE_MESSAGE_TYPE(Rtt, extras::Rtt)
 
 unsigned int timeout;
 unsigned int trips;
@@ -21,16 +24,16 @@ std::string reply_ip_str;
 
 void host_server() {
 	static boost::asio::io_context ctx;
-	net::MessageReceiver m(port, ctx);
-	m.register_handler(net::MessageType::RTT, [](const uint8_t buf[], std::size_t len, net::Destination& sender) {
+	static net::MessageReceiver m(port, ctx);
+	m.register_handler<Rtt>([](const uint8_t buf[], std::size_t len) {
 		try {
 			extras::Rtt rtt_request;
 			if (rtt_request.ParseFromArray(buf, len)) {
-				extras::Rtt reply;
-				reply.set_reply_port(1);
-				reply.set_reply_ip(1);
-				net::RemoteDevice reply_rd(net::Destination(sender.address(), rtt_request.reply_port()), ctx);
-				reply_rd.send_message(reply, net::MessageType::RTT);
+				Rtt reply;
+				reply.data.set_reply_port(1);
+				reply.data.set_reply_ip(1);
+				net::RemoteDevice reply_rd(net::Destination(m.remote_sender().address(), rtt_request.reply_port()), ctx);
+				reply_rd.send_message(reply);
 			}
 		} catch (const std::exception& e) {
 			std::cerr << "Error while hosting server: " << e.what() << '\n';
@@ -44,12 +47,12 @@ void run_tests() {
 	if (trips == 0) return;
 	static boost::asio::io_context ctx;
 	static net::RemoteDevice rd(net::Destination(boost::asio::ip::address::from_string(ip_str), port), ctx);
-	static extras::Rtt rtt_request;
+	static Rtt rtt_request;
 	static std::chrono::high_resolution_clock::time_point send_time;
 	static std::chrono::high_resolution_clock::time_point reply_time;
 	static net::MessageReceiver m(reply_port, ctx);
 
-	m.register_handler(net::MessageType::RTT, [](const uint8_t buf[], std::size_t len, net::Destination& sender) {
+	m.register_handler<Rtt>([](const uint8_t buf[], std::size_t len) {
 		reply_time = std::chrono::high_resolution_clock::now();
 		std::cout << (std::chrono::duration_cast<std::chrono::microseconds>(reply_time - send_time).count()) / 1000.0 << " ms\n";
 
@@ -60,14 +63,14 @@ void run_tests() {
 		}
 
 		send_time = std::chrono::high_resolution_clock::now();
-		rd.send_message(rtt_request, net::MessageType::RTT);
+		rd.send_message(rtt_request);
 	});
 	m.open();
 
-	rtt_request.set_reply_port(reply_port);
+	rtt_request.data.set_reply_port(reply_port);
 
 	send_time = std::chrono::high_resolution_clock::now();
-	rd.send_message(rtt_request, net::MessageType::RTT);
+	rd.send_message(rtt_request);
 
 	while (std::chrono::duration_cast<std::chrono::seconds>(std::chrono::high_resolution_clock::now() - send_time).count() < timeout) {
 		ctx.run_for(std::chrono::seconds(timeout));
@@ -104,6 +107,7 @@ int main(int argc, char* argv[]) {
 		return 0;
 	}
 
+	msg::register_message_type<Rtt>();
 	if (vm.count("server")) {
 		host_server();
 	} else {

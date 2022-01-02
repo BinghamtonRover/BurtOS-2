@@ -15,17 +15,6 @@ namespace net {
 
 typedef boost::asio::ip::udp::endpoint Destination;
 
-struct MessageHeader {
-	constexpr static std::size_t HDR_SIZE = 3;
-	constexpr static uint16_t MAX_MSG_SIZE = std::numeric_limits<uint16_t>::max();
-	MessageType type;
-	int size;	// Protobuf uses int type for size
-	void write(uint8_t* arr) const;
-	void read(const uint8_t* arr);
-	MessageHeader(const uint8_t* arr);
-	MessageHeader(MessageType type, int size);
-};
-
 /*
 	Maintains a socket and a double-buffered queue for one specific remote device
 
@@ -35,7 +24,7 @@ struct MessageHeader {
 class RemoteDevice {
 	public:
 		RemoteDevice(const Destination& device_ip, boost::asio::io_context& io_context);
-		void send_message(google::protobuf::Message& msg, MessageType type);
+		void send_message(msg::Message& message);
 	private:
 		boost::asio::ip::udp::socket socket;
 		Destination dest;
@@ -48,19 +37,17 @@ class RemoteDevice {
 
 };
 
-class MessageReceiver {
+class MessageReceiver : public msg::Receiver {
 	public:
-		MessageReceiver(uint_least16_t listen_port, boost::asio::io_context& io_context);
+		MessageReceiver(uint_least16_t listen_port, boost::asio::io_context& io_context, bool open=true);
 		void open();
 		void close();
+		inline Destination& remote_sender() { return remote; }
 		typedef void(*Handler)(const uint8_t*, std::size_t, Destination& sender);
-		void register_handler(MessageType type, Handler handler);
 	private:
 		boost::asio::ip::udp::socket socket;
 		Destination remote;
 		boost::array<uint8_t, 2048> recv_buffer;
-
-		Handler handlers[(std::size_t)MessageType::COUNT];
 		
 };
 
