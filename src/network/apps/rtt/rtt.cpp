@@ -10,6 +10,9 @@
 #include <string>
 #include <boost/program_options.hpp>
 #include <rtt_messages.pb.h>
+#include <vector>
+#include <algorithm>
+#include <limits>
 
 namespace opt = boost::program_options;
 
@@ -18,9 +21,11 @@ namespace apps {
 }
 
 unsigned int timeout;
+unsigned int max_trips;
 unsigned int trips;
 unsigned short int port;
 unsigned short int reply_port;
+bool verbose_print = true;
 std::string ip_str;
 std::string reply_ip_str;
 
@@ -46,6 +51,7 @@ void host_server() {
 }
 
 void run_tests() {
+	trips = max_trips;
 	if (trips == 0) return;
 	static boost::asio::io_context ctx;
 	static net::RemoteDevice rd(net::Destination(boost::asio::ip::address::from_string(ip_str), port), ctx);
@@ -53,10 +59,14 @@ void run_tests() {
 	static std::chrono::high_resolution_clock::time_point send_time;
 	static std::chrono::high_resolution_clock::time_point reply_time;
 	static net::MessageReceiver m(reply_port, ctx);
+	static std::vector<double> all_times;
+	all_times.reserve(max_trips);
 
 	m.register_handler<apps::RttMessage>([](const uint8_t buf[], std::size_t len) {
 		reply_time = std::chrono::high_resolution_clock::now();
-		std::cout << (std::chrono::duration_cast<std::chrono::microseconds>(reply_time - send_time).count()) / 1000.0 << " ms\n";
+		double time_ms = (std::chrono::duration_cast<std::chrono::microseconds>(reply_time - send_time).count()) / 1000.0;
+		all_times.push_back(time_ms);
+		if (verbose_print) std::cout << time_ms << " ms\n";
 
 		trips -= 1;
 		if (trips == 0) {
@@ -76,7 +86,30 @@ void run_tests() {
 
 	while (std::chrono::duration_cast<std::chrono::seconds>(std::chrono::high_resolution_clock::now() - send_time).count() < timeout) {
 		ctx.run_for(std::chrono::seconds(timeout));
-		if (trips == 0) break;
+		if (trips == 0) {
+			double min = std::numeric_limits<double>::infinity();
+			double max = -min;
+			double sum = 0.0;
+			for (auto& x : all_times) {
+				if (x < min) min = x;
+				if (x > max) max = x;
+				sum += x;
+			}
+			std::sort(all_times.begin(), all_times.end());
+			double median;
+			if (all_times.size() % 2 == 0) {
+				median = (all_times[all_times.size() / 2] + all_times[all_times.size() / 2 - 1]) / 2.0;
+			} else {
+				median = all_times[all_times.size() / 2];
+			}
+
+			std::cout << "Average: " << (sum / all_times.size()) << " ms\n";
+			std::cout << "Median: " << median << " ms\n";
+			std::cout << "Min: " << min << " ms\n";
+			std::cout << "Max: " << max << " ms\n";
+
+			break;
+		}
 	}
 	if (trips != 0) {
 		std::cout << "Timed out while waiting for response.\n";
@@ -87,12 +120,13 @@ int main(int argc, char* argv[]) {
 	opt::options_description options("Options");
 	options.add_options()
 		("help,h", "detail program usage")
-		("count,c", opt::value<unsigned int>(&trips)->default_value(5), "number of trips")
-		("timeout,t", opt::value<unsigned int>(&timeout)->default_value(10), "how long to wait before cancelling (client)")
+		("count,c", opt::value<unsigned int>(&max_trips)->default_value(5), "number of trips")
+		("timeout,t", opt::value<unsigned int>(&timeout)->default_value(5), "how long to wait before cancelling (client)")
 		("server,s", "host the RTT server")
 		("ip", opt::value<std::string>(&ip_str), "server to send to")
 		("port", opt::value<unsigned short int>(&port)->default_value(40005), "port to send to (client) or bind to (server)")
 		("replyport", opt::value<unsigned short int>(&reply_port)->default_value(40006), "port for client to listen for response")
+		("stats-only", "only print the summary stats")
 	;
 
 	opt::positional_options_description positional;
@@ -107,6 +141,10 @@ int main(int argc, char* argv[]) {
 		std::cout << "General usage: run 'rtt -s' on the host device and 'rtt [host ip address]' to calculate the round-trip time to that host.\n";
 		std::cout << options << '\n';
 		return 0;
+	}
+
+	if (vm.count("stats-only")) {
+		verbose_print = false;
 	}
 
 	msg::register_message_type<apps::RttMessage>();
