@@ -58,24 +58,6 @@ struct Header {
 
 class Receiver {
 	public:
-		typedef void(*Handler)(const uint8_t*, std::size_t);
-		void create_handlers();
-		void read_messages(const uint8_t*, std::size_t);
-		void register_handler(type_t type, Handler handler);
-
-		template<typename T>
-		inline void register_handler(Handler handler) {
-			register_handler(T::TYPE, handler);
-		}
-	private:
-		std::vector<Handler> receipt_handlers;
-};
-
-// Based on msg::Receiver but uses std::function instead of function pointers
-// std::function calls add additional overhead, which is probably negligible
-// compared to data transmission and serialization/deserialization delays
-class FunctionalReceiver {
-	public:
 		typedef std::function<void(const uint8_t*, std::size_t)> Handler;
 		void create_handlers();
 		void read_messages(const uint8_t*, std::size_t);

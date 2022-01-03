@@ -52,7 +52,6 @@ class MessageReceiver : public msg::Receiver {
 		void open();
 		void close();
 		inline Destination& remote_sender() { return remote; }
-		typedef void(*Handler)(const uint8_t*, std::size_t, Destination& sender);
 	private:
 		boost::asio::ip::udp::socket socket;
 		Destination remote;

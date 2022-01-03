@@ -34,35 +34,6 @@ void msg::Receiver::read_messages(const uint8_t* buf, std::size_t size) {
 		i += Header::HDR_SIZE;
 
 		if (hdr.type != TYPE_NONE && i + hdr.size <= size) {
-			Handler h = receipt_handlers[hdr.type - 1];
-			if (h) h(&buf[i], hdr.size);
-			i += hdr.size;
-		} else {
-			break;
-		}
-	}
-}
-
-void msg::Receiver::register_handler(type_t type, Handler handler) {
-	if (receipt_handlers.size() != MESSAGE_TYPE_COUNT - 1) {
-		create_handlers();
-	}
-	
-	if (type < MESSAGE_TYPE_COUNT && type != TYPE_NONE) {
-		receipt_handlers[type - 1] = handler;
-	}
-}
-
-void msg::FunctionalReceiver::create_handlers() {
-	receipt_handlers.resize(MESSAGE_TYPE_COUNT - 1);
-}
-
-void msg::FunctionalReceiver::read_messages(const uint8_t* buf, std::size_t size) {
-	for (std::size_t i = 0; i + Header::HDR_SIZE <= size; /**/) {
-		Header hdr(&buf[i]);
-		i += Header::HDR_SIZE;
-
-		if (hdr.type != TYPE_NONE && i + hdr.size <= size) {
 			Handler& h = receipt_handlers[hdr.type - 1];
 			if (h) h(&buf[i], hdr.size);
 			i += hdr.size;
@@ -72,7 +43,7 @@ void msg::FunctionalReceiver::read_messages(const uint8_t* buf, std::size_t size
 	}
 }
 
-void msg::FunctionalReceiver::register_handler(type_t type, Handler handler) {
+void msg::Receiver::register_handler(type_t type, Handler handler) {
 	if (receipt_handlers.size() != MESSAGE_TYPE_COUNT - 1) {
 		create_handlers();
 	}
