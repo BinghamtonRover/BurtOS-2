@@ -32,15 +32,15 @@ std::string reply_ip_str;
 void host_server() {
 	static boost::asio::io_context ctx;
 	static net::MessageReceiver m(port, ctx);
+	static net::MessageSender reply_rd(ctx);
 	m.register_handler<apps::RttMessage>([](const uint8_t buf[], std::size_t len) {
 		try {
 			apps::Rtt rtt_request;
 			if (rtt_request.ParseFromArray(buf, len)) {
 				apps::RttMessage reply;
 				reply.data.set_reply_port(0);
-				net::RemoteDevice reply_rd(net::Destination(m.remote_sender().address(), rtt_request.reply_port()), ctx);
+				reply_rd.set_destination_endpoint(net::Destination(m.remote_sender().address(), rtt_request.reply_port()));
 				reply_rd.send_message(reply);
-				reply_rd.wait_finish(ctx);
 			}
 		} catch (const std::exception& e) {
 			std::cerr << "Error while hosting server: " << e.what() << '\n';
@@ -54,7 +54,7 @@ void run_tests() {
 	trips = max_trips;
 	if (trips == 0) return;
 	static boost::asio::io_context ctx;
-	static net::RemoteDevice rd(net::Destination(boost::asio::ip::address::from_string(ip_str), port), ctx);
+	static net::MessageSender rd(ctx, net::Destination(boost::asio::ip::address::from_string(ip_str), port));
 	static apps::RttMessage rtt_request;
 	static std::chrono::high_resolution_clock::time_point send_time;
 	static std::chrono::high_resolution_clock::time_point reply_time;

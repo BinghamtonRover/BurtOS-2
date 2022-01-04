@@ -21,10 +21,15 @@ typedef boost::asio::ip::udp::endpoint Destination;
 	Intended for devices with continuous message exchange (ex. rover and base
 	station) rather than temporary connections (ex. true client/server programs)
 */
-class RemoteDevice {
+class MessageSender {
 	public:
-		RemoteDevice(const Destination& device_ip, boost::asio::io_context& io_context);
+		MessageSender(boost::asio::io_context& io_context, const Destination& device_ip);
+		MessageSender(boost::asio::io_context& io_context);
 		void send_message(msg::Message& message);
+
+		// Change the destination. If the device was constructed without a destination, this enables the device.
+		// Otherwise, enabled/disabled state is unchanged.
+		void set_destination_endpoint(const Destination& endpoint);
 
 		// Disable device and block until the remaining operations have finished
 		// Continues dispatching other jobs on io_context until return
@@ -34,6 +39,9 @@ class RemoteDevice {
 		void disable();
 		inline void enable() { _disable = false; }
 		inline bool enabled() { return !_disable; }
+
+		// Close and reopen the socket
+		void reset();
 	private:
 		boost::asio::ip::udp::socket socket;
 		Destination dest;
@@ -41,6 +49,7 @@ class RemoteDevice {
 		std::mutex async_start_lock;
 		bool async_send_active = false;
 		bool _disable = false;
+		bool destination_provided;
 
 		void begin_sending();
 

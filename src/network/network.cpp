@@ -2,12 +2,12 @@
 
 #include <boost/bind/bind.hpp>
 
-void net::RemoteDevice::send_message(msg::Message& message) {
+void net::MessageSender::send_message(msg::Message& message) {
 	// Do not allow sending to start while writing to the active buffer
 	// A positive side effect is thread safety for concurrent send_message() calls
 	async_start_lock.lock();
 
-	if (_disable) {
+	if (_disable || !destination_provided) {
 		async_start_lock.unlock();
 		return;
 	}
@@ -41,7 +41,7 @@ void net::RemoteDevice::send_message(msg::Message& message) {
 }
 
 // Function assumes that caller has acquired async_start_lock
-void net::RemoteDevice::begin_sending() {
+void net::MessageSender::begin_sending() {
 
 	async_send_active = true;
 	msg_buffer.swap();
@@ -60,7 +60,7 @@ void net::RemoteDevice::begin_sending() {
 	});
 }
 
-void net::RemoteDevice::wait_finish(boost::asio::io_context& io_context) {
+void net::MessageSender::wait_finish(boost::asio::io_context& io_context) {
 	disable();
 	// At this point, another send cannot start until enable() is called
 	// If there are any remaining jobs, wait
@@ -70,7 +70,7 @@ void net::RemoteDevice::wait_finish(boost::asio::io_context& io_context) {
 	}
 }
 
-void net::RemoteDevice::disable() {
+void net::MessageSender::disable() {
 	async_start_lock.lock();
 
 	_disable = true;
@@ -79,9 +79,26 @@ void net::RemoteDevice::disable() {
 	async_start_lock.unlock();
 }
 
-net::RemoteDevice::RemoteDevice(const Destination& device_ip, boost::asio::io_context& io_context)
-		: dest(device_ip), socket(io_context) {
+net::MessageSender::MessageSender(boost::asio::io_context& io_context, const Destination& device_ip)
+		: dest(device_ip), socket(io_context), destination_provided(true) {
 
+	socket.open(boost::asio::ip::udp::v4());
+}
+
+net::MessageSender::MessageSender(boost::asio::io_context& io_context)
+		: socket(io_context), destination_provided(false) {
+
+	socket.open(boost::asio::ip::udp::v4());
+}
+
+void net::MessageSender::set_destination_endpoint(const Destination& endpoint) {
+	dest = endpoint;
+	destination_provided = true;
+}
+
+void net::MessageSender::reset() {
+	disable();
+	socket.close();
 	socket.open(boost::asio::ip::udp::v4());
 }
 

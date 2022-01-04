@@ -84,7 +84,7 @@ int main(int argc, char* argv[]) {
 
 		net::Destination d(boost::asio::ip::address::from_string(destination_ip_str), destination_port);
 
-		static net::RemoteDevice client(d, ctx);
+		static net::MessageSender client(ctx, d);
 		net::MessageReceiver receiver(listen_port, ctx);
 
 		receiver.register_handler<Chat>([](const uint8_t buf[], std::size_t len) {

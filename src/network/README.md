@@ -68,10 +68,10 @@ int main() {
 ```
 
 #### Sending messages
-Use the `net::RemoteDevice` object for sending messages to a specific device. This documentation is not a [Boost.Asio](https://www.boost.org/doc/libs/1_76_0/doc/html/boost_asio/overview.html) tutorial substitute.
+Use the `net::MessageSender` object for sending messages to a specific device. This documentation is not a [Boost.Asio](https://www.boost.org/doc/libs/1_76_0/doc/html/boost_asio/overview.html) tutorial substitute.
 ```c++
 boost::asio::io_context ctx;
-net::RemoteDevice rover_subsystem(net::Destination(boost::asio::ip::address::from_string("192.168.1.10"), 12308), ctx); // No, the ip/port are not accurate to our system
+net::MessageSender rover_subsystem(net::Destination(boost::asio::ip::address::from_string("192.168.1.10"), 12308), ctx); // No, the ip/port are not accurate to our system
 
 HelloMessage outgoing_message;
 // Use the <MessageWrapperType>.data member to access the original protobuf class
