@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package apps;
+
+message Chat {
+	string text = 1;
+}
+
+message Join {
+	string name = 1;
+}
+
+message Here {
+	string name = 1;
+}
+
+message Leave {
+	string name = 1;
+	string reason = 2;
+}
