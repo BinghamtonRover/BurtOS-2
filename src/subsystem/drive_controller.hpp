@@ -6,7 +6,6 @@
 
 class DriveController {
 	private:
-	public:
 		static constexpr float WHEEL_SIZE = 15; // In cm 
 
 		// accelerations for each motor
@@ -34,6 +33,7 @@ class DriveController {
 		float get_velocity();
 		void accelerate_to(float velocity_x, float velocity_y);
 		void update_motor_acceleration();
-		void set_forward_velocity(float mps);
+		void set_forward_velocity(float rps);
 		void set_steering_angle(int8_t angle);
+	public:
 };

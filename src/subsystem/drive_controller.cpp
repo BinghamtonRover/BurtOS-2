@@ -38,12 +38,6 @@ void DriveController::accelerate_to(float velocity_x, float velocity_y) {
     float target_acceleration = sqrt(pow(acceleration_x, 2) + pow(acceleration_y, 2));
     float angle = atan(acceleration_y / acceleration_x) * (180 / M_PI);
     
-    /*
-    std::cout << angle << std::endl;
-    std::cout << acceleration_x << " " << acceleration_y << std::endl;
-    std::cout << get_velocity() << std::endl;
-    */ 
-
     if (acceleration_x != 0 || acceleration_y != 0) {
         float right_scaling = (90 + angle)/180;
         set_motor_acc('L', (1 - right_scaling) * target_acceleration);
@@ -63,12 +57,12 @@ void DriveController::update_motor_acceleration() {
     accelerate_to(target_velocity_x, target_velocity_y);
 }
 
-void DriveController::set_forward_velocity(float mps) {
-    // convert meters/second into revolutions per second
-    target_velocity_mps = mps;
-    target_velocity_rps = mps / (2 * 3.14159 * WHEEL_SIZE / 100);
+void DriveController::set_forward_velocity(float rps) {
+    // convert revs/second into meters per second
+    target_velocity_rps = rps;
+    target_velocity_mps = (rps / 6.923) * M_PI * .271;
     update_target_velocity();
-} 
+}
 
 // -90 = sharp left, 0 = straight, 90 = sharp right
 void DriveController::set_steering_angle(int8_t angle) { 
@@ -78,26 +72,4 @@ void DriveController::set_steering_angle(int8_t angle) {
 
 ostream& operator << (ostream &os, const DriveController &s) {
     return os << "velocities (x, y): (" << s.current_velocity_x << ", " << s.current_velocity_y << ")";
-}
-
-int main() { 
-    DriveController drive = DriveController();
-    drive.current_angle = 10; 
-    drive.set_forward_velocity(10);
-    cout << drive.current_velocity_x << drive.current_velocity_y << endl;
-    for(int i=0;i<2;i++) {
-        drive.update_motor_acceleration();
-        cout << drive << endl;
-        //cout << "velocities (x, y): (" << drive.current_velocity_x << ", " << drive.current_velocity_y << ")" << endl;
-    }
-    
-    DriveController drive_negative_angle = DriveController();
-    drive_negative_angle.current_angle = -10; 
-    drive_negative_angle.set_forward_velocity(10);
-
-    drive_negative_angle.update_motor_acceleration();
-    cout << drive_negative_angle << endl;
-    drive_negative_angle.halt();
-    cout << drive_negative_angle << endl;
-
 }
