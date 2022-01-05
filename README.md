@@ -43,6 +43,8 @@ While you are not locked to a specific toolchain, the process suggested below wi
 * Install Boost libraries: `sudo apt install libboost-dev libboost-program-options-dev`
   * You need at least Boost 1.71. Older versions will not work.
 * Install Protocol Buffers: `sudo apt install protobuf-compiler`
+<p id="build"> </p>
+
 * Generate the build files with CMake by running this command in the repository root: `CXX=g++ cmake -S . -B build -GNinja`
   * CMake caches options like `GXX=g++` and `-GNinja` in the build directory. To change a CMake variable definition (ex. change build type to Release), you do not need to supply the other options. In this example, `cmake -B build -DCMAKE_BUILD_TYPE=Release` will work.
   * See the [CMake Variables](#cmake-variables) section for additional options.
@@ -63,8 +65,18 @@ The [Ubuntu](#ubuntu) section provides more context for each command, so read ov
 * Build the project: `ninja -C build`
 
 ### macOS
-Section expansion needed. Installation is likely similar to the Ubuntu instructions but with a macOS package manager (Homebrew?).
-
+Must have [Xcode](https://apps.apple.com/us/app/xcode/id497799835?mt=12), otherwise a compile error will occur as some of Xcode's command line tools are necessary.
+* When installing Xcode your MacOS must be fully updated.
+#### Suggested Toolchain
+  * Installing git: `brew install git`
+  * Installing CMake: `brew install cmake`
+  * Installing a C++ should not be required as Xcode contains one suited for C/C++ files.
+  * Installing a build system tool. `Make or Ninja`. We recommend `Ninja` as it is newer, faster, and designed for automated generation by tools like CMake. These instructions always show Ninja. However, wherever ninja appears, it can be replaced with make to accomplish the same task (except for installation). 
+    * Installation: `brew install ninja` or `brew install make`.
+#### Required Dependencies
+* Install Protocol Buffers: `brew install protobuf`
+* Install Boost Libraries: `brew install boost`
+* You can follow Ubuntu's <a href="#build">section</a> for instructions on building.
 ### CMake Variables
 Set variables with CMake on the command line by adding: `-DVARIABLE_NAME=VALUE`
 #### NO_GFX
