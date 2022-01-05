@@ -40,11 +40,13 @@ While you are not locked to a specific toolchain, the process suggested below wi
 * Install a C++ compiler. We typically recommended g++ (`sudo apt install g++`), though Clang should work too.
 * Install a build system tool like [Make](https://www.gnu.org/software/make/) or [Ninja](https://ninja-build.org/). Though Make is fairly ubiquitous, Ninja is newer, faster, and designed for automated generation by tools like CMake. We recommend Ninja, and these instructions always show Ninja. However, wherever `ninja` appears, it can be replaced with `make` to accomplish the same task (except for installation). Installation: `sudo apt install ninja-build` or `sudo apt install make`.
 #### Required Dependencies
+<p id="build"> </p>
+
 * Install Boost libraries: `sudo apt install libboost-dev libboost-program-options-dev`
   * You need at least Boost 1.71. Older versions will not work.
 * Install Protocol Buffers: `sudo apt install protobuf-compiler`
-<p id="build"> </p>
 
+#### Building
 * Generate the build files with CMake by running this command in the repository root: `CXX=g++ cmake -S . -B build -GNinja`
   * CMake caches options like `GXX=g++` and `-GNinja` in the build directory. To change a CMake variable definition (ex. change build type to Release), you do not need to supply the other options. In this example, `cmake -B build -DCMAKE_BUILD_TYPE=Release` will work.
   * See the [CMake Variables](#cmake-variables) section for additional options.
