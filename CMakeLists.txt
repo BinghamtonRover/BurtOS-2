@@ -14,6 +14,24 @@ add_subdirectory(src/network)
 set(NO_GFX OFF CACHE BOOL "Exclude all graphics libraries and the base station")
 
 if (NOT NO_GFX)
+	find_package(OpenGL)
+	if (OPENGL_FOUND)
+		if (NOT EXISTS ext/nanogui/CMakeLists.txt AND NOT NO_GFX)
+			message(FATAL_ERROR
+				"Base station required submodules are missing! Either explicilty set "
+				"NO_GFX=ON to exclude the base station or clone all submodules (run:"
+				" git submodule update --init --recursive)"
+			)
+		endif()
+	elseif(NOT NO_GFX)
+		message(WARNING
+			"No graphics support. Excluding base station and building in onboard mode. To"
+			" disable this warning, explicitly set NO_GFX=ON"
+		)
+	endif()
+endif()
+
+if (NOT NO_GFX AND OPENGL_FOUND)
 	set(NANOGUI_BUILD_EXAMPLES	OFF CACHE BOOL " " FORCE)
 	set(NANOGUI_BUILD_PYTHON	OFF CACHE BOOL " " FORCE)
 	set(NANOGUI_INSTALL			OFF CACHE BOOL " " FORCE)
@@ -23,5 +41,5 @@ if (NOT NO_GFX)
 
 	add_subdirectory(src/basestation)
 else()
-	message("NO_GFX is ON. Base Station is excluded from this build.")
+	message(STATUS "NO_GFX is ON. Base Station is excluded from this build.")
 endif()
