@@ -1,12 +1,10 @@
 #include "drive_controller.hpp"
-#include <stdio.h>
-
-// Separate the implementation from drive_controller.hpp and place here
 
 void DriveController::halt() {
     target_left_speed = 0;
     target_right_speed = 0;
-    target_angle = 0; 
+    target_angle = 0;
+    update_target_velocity();
 }
 
 void DriveController::set_motor_acc(char direction, float acc) { 
@@ -22,7 +20,6 @@ void DriveController::set_motor_acc(char direction, float acc) {
     }
 }
 
-// Called whenever target_angle or target_velocity changes
 void DriveController::update_target_velocity() { 
     target_left_speed = target_velocity_rps; 
     target_right_speed = target_velocity_rps; 
@@ -35,11 +32,10 @@ void DriveController::update_target_velocity() {
     }
 }
 
-float DriveController::get_velocity() { 
-    return target_velocity_rps;
+float DriveController::get_target_velocity() { 
+    return target_velocity_mps;
 }
 
-// Uses globals target_angle, acceleration to get motor accs
 void DriveController::update_motor_acceleration() {
     float difference_left = target_left_speed - left_speed;
     float difference_right = target_right_speed - right_speed;
@@ -61,8 +57,4 @@ void DriveController::set_forward_velocity(float mps) {
 void DriveController::set_steering_angle(int8_t angle) { 
     target_angle = angle;
     update_target_velocity();
-}
-
-std::ostream& operator << (std::ostream &os, const DriveController &s) {
-    return os << "speeds (left, right): (" << s.left_speed << ", " << s.right_speed << ")";
 }
