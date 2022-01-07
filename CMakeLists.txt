@@ -16,7 +16,7 @@ set(NO_GFX OFF CACHE BOOL "Exclude all graphics libraries and the base station")
 if (NOT NO_GFX)
 	find_package(OpenGL)
 	if (OPENGL_FOUND)
-		if (NOT EXISTS ext/nanogui/CMakeLists.txt AND NOT NO_GFX)
+		if (NOT EXISTS ${PROJECT_SOURCE_DIR}/ext/nanogui/CMakeLists.txt AND NOT NO_GFX)
 			message(FATAL_ERROR
 				"Base station required submodules are missing! Either explicilty set "
 				"NO_GFX=ON to exclude the base station or clone all submodules (run:"
