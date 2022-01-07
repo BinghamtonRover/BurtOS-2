@@ -32,12 +32,12 @@ void DriveController::update_motor_acceleration() {
 
 void DriveController::set_forward_velocity(float mps) {
 	target_velocity_mps = mps;
-	target_velocity_rps = (mps / 6.923F) * M_PI * .271F;
+	target_velocity_rps = (GEARBOX_RATIO * mps) / (static_cast<float>(M_PI) * WHEEL_DIAMETER_METERS);
 	update_target_velocity();
 }
 
 // -90 = sharp left, 0 = straight, 90 = sharp right
-void DriveController::set_steering_angle(int8_t angle) { 
+void DriveController::set_steering_angle(float angle) { 
 	target_angle = angle;
 	update_target_velocity();
 }
