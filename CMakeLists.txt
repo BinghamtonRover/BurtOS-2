@@ -43,3 +43,5 @@ if (NOT NO_GFX AND OPENGL_FOUND)
 else()
 	message(STATUS "NO_GFX is ON. Base Station is excluded from this build.")
 endif()
+
+add_subdirectory(src/subsystem)
