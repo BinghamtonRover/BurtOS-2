@@ -4,6 +4,8 @@
 
 class DriveController {
 	private:
+		constexpr static float GEARBOX_RATIO = 6.923F;
+		constexpr static float WHEEL_DIAMETER_METERS = 0.271F;
 
 		// Desired movement parameters for primary drive mode
 		float target_velocity_mps = 0.0F;
@@ -22,7 +24,7 @@ class DriveController {
 		void update_target_velocity();		
 	public:
 		void set_forward_velocity(float mps);
-		void set_steering_angle(int8_t angle);
+		void set_steering_angle(float angle);
 		
 		// Update and apply target speeds and apply acceleration rate limits
 		void update_motor_acceleration();
