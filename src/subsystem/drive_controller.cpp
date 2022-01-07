@@ -1,5 +1,7 @@
 #include "drive_controller.hpp"
 
+#include <cmath>
+
 void DriveController::halt() {
     target_left_speed = 0;
     target_right_speed = 0;
@@ -30,7 +32,7 @@ void DriveController::update_motor_acceleration() {
 
 void DriveController::set_forward_velocity(float mps) {
     target_velocity_mps = mps;
-    target_velocity_rps = (mps / 6.923) * M_PI * .271;
+    target_velocity_rps = (mps / 6.923F) * M_PI * .271F;
     update_target_velocity();
 }
 
