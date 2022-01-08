@@ -5,6 +5,7 @@
 #include <roversystem/logger.hpp>
 #include <roversystem/simpleconfig.hpp>
 #include <roversystem/util.hpp>
+#include <network.hpp>
 
 #include "camera.hpp"
 
@@ -22,8 +23,6 @@ const int TICK_INTERVAL = 1000;
 
 const int NETWORK_UPDATE_INTERVAL = 1000 / 2;
 
-const int CAMERA_MESSAGE_FRAME_DATA_MAX_SIZE = network::MAX_MESSAGE_SIZE - network::CameraMessage::HEADER_SIZE;
-
 struct Config
 {
     int base_station_port;
@@ -38,16 +37,14 @@ struct Config
 
 class Session{
 private:
+    boost::asio::io_context& ctx;
+    net::MessageReceiver control_message_receiver;
 public:
     util::Clock global_clock;
     Config config;
 
     unsigned int frame_counter;
     camera::CaptureSession* streams[MAX_STREAMS] = {0};
-
-    network::Feed r_feed;
-    network::Feed bs_feed;
-    network::Feed v_feed;
 
     util::Timer camera_update_timer;
     util::Timer tick_timer;
@@ -60,11 +57,9 @@ public:
 
     unsigned int jpeg_quality;
     bool greyscale;
-    network::CameraControlMessage::sendType streamTypes[MAX_STREAMS];
+    bool stream_enabled[MAX_STREAMS];
 
-    network::FocusModeMessage::FocusMode video_focus_mode;
-
-    Session();
+    Session(boost::asio::io_context& ctx);
     ~Session();
 
     void stderr_handler(logger::Level level, std::string message);

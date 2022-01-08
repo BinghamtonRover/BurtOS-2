@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "include/roversystem/simpleconfig.h"
+#include "include/roversystem/simpleconfig.hpp"
 
 namespace sc {
 

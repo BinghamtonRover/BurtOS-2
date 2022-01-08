@@ -15,7 +15,8 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
 
 			add_subdirectory(roversystem_utils)
 			add_executable(video camera.hpp camera.cpp session.hpp session.cpp main.cpp)
-			target_link_libraries(video roversystem_utils PkgConfig::PKG_LIBJPEG_TURBO)
+			target_link_libraries(video roversystem_utils PkgConfig::PKG_LIBJPEG_TURBO network rover_system_messages)
+			target_include_directories(video PUBLIC rover_system_messages)
 			set(VIDEO_BUILT ON)
 
 		endif()

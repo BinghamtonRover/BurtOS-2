@@ -1,14 +1,35 @@
 #include "session.hpp"
 
 #include <cstring>
+#include <rover_system_messages.hpp>
 
-Session::Session(){
+Session::Session(boost::asio::io_context& ctx) : ctx(ctx), control_message_receiver(config.video_port, ctx) {
     this->frame_counter = 0;
     this->ticks = 0;
     this->compressor = tjInitCompress();
     this->decompressor = tjInitDecompress();
     this->jpeg_quality = 30;
     this->greyscale = false;
+
+    for (int i = 0; i < MAX_STREAMS; i++) {
+        stream_enabled[i] = false;
+    }
+
+    control_message_receiver.register_handler<video_msg::Quality>([this](const uint8_t data[], std::size_t len){ 
+        video::Quality msg;
+        if (msg.ParseFromArray(data, len)) {
+            jpeg_quality = msg.jpeg_quality();
+            greyscale = msg.grayscale();
+        }
+    });
+
+    control_message_receiver.register_handler<video_msg::Switch>([this](const uint8_t data[], std::size_t len) {
+        video::Switch msg;
+        if (msg.ParseFromArray(data, len)) {
+            stream_enabled[msg.stream()] = msg.enabled();
+        }
+    });
+
 }
 
 Session::~Session() {}
