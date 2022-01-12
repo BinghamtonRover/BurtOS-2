@@ -1,10 +1,12 @@
 #include "session.hpp"
 #include <stream.hpp>
 
-net::StreamSender net_streams;
-
 int main(){
     boost::asio::io_context ctx;
+
+    net::StreamSender video_feeds(ctx);
+    video_feeds.create_streams(MAX_STREAMS);
+
     Session video_session(ctx);
     logger::register_handler(logger::stderr_handler);
     util::Clock::init(&video_session.global_clock);
@@ -81,7 +83,7 @@ int main(){
                     video_session.jpeg_quality,
                     TJFLAG_NOREALLOC);
             }
-            net_streams.send_frame(i, frame_buffer, frame_size);
+            video_feeds.send_frame(i, frame_buffer, frame_size);
             camera::return_buffer(cs);
         }
 

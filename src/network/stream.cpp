@@ -64,7 +64,7 @@ void net::StreamSender::send_frame(int stream, uint8_t* data, std::size_t len) {
 }
 
 void net::StreamSender::set_max_section_size(uint32_t max) {
-	if (max < 0x00FFFFFF) max_section_size = max;
+	if (max < 0x00FFFFFF && max > 0) max_section_size = max;
 }
 
 void net::FrameHeader::write(uint8_t* arr) const {
