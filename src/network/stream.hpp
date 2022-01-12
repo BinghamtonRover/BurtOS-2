@@ -11,8 +11,8 @@
 #include <shared_mutex>
 #include <functional>
 #include <stdexcept>
+#include <memory>
 #include <boost/asio.hpp>
-#include <boost/array.hpp>
 
 namespace net {
 
@@ -22,10 +22,13 @@ struct StreamMetadata {
 	uint8_t frame_index = 0;
 };
 
+// Simple stream sender for transmitting frames associated with a stream index.
+// StreamSender is not designed for concurrent sends
 class StreamSender {
 public:
 	StreamSender(boost::asio::io_context& io_context);
 	void set_destination_endpoint(const boost::asio::ip::udp::endpoint& endpoint);
+	// Blocking send
 	void send_frame(int stream, uint8_t* data, std::size_t len);
 	void create_streams(int stream_count);
 	void set_max_section_size(uint32_t max);
@@ -40,14 +43,20 @@ private:
 
 // Forward declaration for Frame (small cross-dependency for "friend" declaration)
 class StreamReceiver;
+
 // Provides thread-safe, RAII-style access to completed frames
+// Data is valid until calling release() or until going out of scope
+// Object cannot be copied
 class Frame {
 public:
 	Frame() = default;
 	Frame(Frame&& src);
+
+	// Since Frame owns the completion_lock, do not allow copying
 	Frame(const Frame&) = delete;
 	~Frame();
 
+	// Unlock the completion_lock, allowing StreamReceiver to overwrite this frame buffer if needed
 	void release();
 
 	inline std::size_t size() const { return len; }
@@ -89,6 +98,19 @@ private:
 		Stream();
 		~Stream();
 
+		// Buffering design:
+		// Use n equal-sized frame buffers to place sections when they are received
+		// When all sections of a frame are received into a buffer, mark that buffer as complete
+		// The complete buffer is not overwritten until another buffer becomes complete
+		// 
+		// Thread safety:
+		// Certain operations (decoding) must be assured the complete buffer is not overwritten while in use
+		// Lock completion_lock before changing complete_buffer -or- accessing FrameBuf[complete_buffer]
+		// The Frame object hides this from users:
+		//	- StreamReceiver::get_complete_frame locks the completion_lock and packages it in a Frame obj
+		//	- Users have exclusive access to Frame while in scope
+		//	- Frame's destructor releases the lock
+
 		// All buffer sizes are equal, so allocate as one contiguous block
 		std::size_t indv_buffer_size;
 		uint8_t* all_data = nullptr;
@@ -104,35 +126,57 @@ private:
 public:
 
 	// Placeholder aliases for frame receipt callback
+	// @param stream_index Stream with a complete frame
+	// @param frame The completed frame
 	struct args {
 		typedef decltype(std::placeholders::_1) stream_index;
+		typedef decltype(std::placeholders::_2) frame;
 	};
 
 	StreamReceiver(boost::asio::io_context& io_context);
 	void set_listen_port(uint16_t port);
 	void begin(uint16_t port);
+
+	// Open stream and allocate buffers if needed
 	void open_stream(int stream);
+	// Close stream but leave buffers
 	void close_stream(int stream);
+	// Close stream and free buffers
 	void destroy_stream(int stream);
+
+	void set_frame_buffer_params(std::size_t size, unsigned level);
+	// Set the size of each stream's frame buffer
+	inline void set_frame_buffer_size(std::size_t size) { set_frame_buffer_params(size, _frame_buffer_level); }
+	// Set the number of buffers each stream uses for reconstructing frames
+	inline void set_frame_buffer_level(unsigned level) { set_frame_buffer_params(_frame_buffer_size, level); }
+
+	inline std::size_t frame_buffer_size() const { return _frame_buffer_size; }
+	inline unsigned frame_buffer_level() const { return _frame_buffer_level; }
+
+	// Set the buffer size used for receiving incoming sections
+	void set_section_buffer_size(std::size_t);
+	inline std::size_t section_buffer_size() const { return recv_buffer_size; };
 
 	// Get exclusive access to the latest completed frame.
 	// throws std::out_of_range if stream is invalid
 	// throws std::range_error if no frame is available
 	Frame get_complete_frame(int stream);
-	inline void on_frame_received(std::function<void(int stream)> handler) { frame_handler = handler; }
+	inline void on_frame_received(std::function<void(int stream, Frame& frame)> handler) { frame_handler = handler; }
 
 private:
 	boost::asio::io_context& ctx;
 	boost::asio::ip::udp::socket socket;
 	boost::asio::ip::udp::endpoint remote;
-	boost::array<uint8_t, 2048> recv_buffer;
+	std::unique_ptr<uint8_t> recv_buffer;
+	// start with default size; allocates on write
+	std::size_t recv_buffer_size = 2048;
 	std::vector<Stream> streams;
 	// Reader-writer lock: stream vector cannot be reallocated while being read
 	std::shared_mutex streams_lock;
-	std::function<void(int stream)> frame_handler;
+	std::function<void(int stream, Frame& frame)> frame_handler;
 	// Default size: 4MB
-	unsigned frame_buffer_size = 4 * 1024 * 1024;
-	unsigned frame_buffer_level = 3;
+	unsigned _frame_buffer_size = 4 * 1024 * 1024;
+	unsigned _frame_buffer_level = 3;
 	uint16_t port;
 	void receive();
 

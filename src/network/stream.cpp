@@ -1,9 +1,12 @@
 #include "stream.hpp"
 
 #include <cstring>
+#include <limits>
 #include <iostream>
+#include <boost/array.hpp>
 
 net::StreamSender::StreamSender(boost::asio::io_context& io_context) : ctx(io_context), socket(ctx) {
+	stream_info.reserve(8);
 	socket.open(boost::asio::ip::udp::v4());
 }
 
@@ -43,10 +46,10 @@ void net::StreamSender::send_frame(int stream, uint8_t* data, std::size_t len) {
 
 		
 		auto io_section_buffer = boost::asio::buffer(data, n_sent);
-		boost::asio::mutable_buffers_1 io_buffers[] = {io_header_buffer, io_section_buffer};
+		boost::array<decltype(io_header_buffer), 2> io_buffers = {io_header_buffer, io_section_buffer};
 
 		try {
-			std::size_t act_sent = socket.send_to(io_section_buffer, destination) - FrameHeader::SIZE;
+			std::size_t act_sent = socket.send_to(io_buffers, destination) - FrameHeader::SIZE;
 			if (act_sent != n_sent) break;
 			len -= n_sent;
 			data = &data[n_sent];
@@ -114,7 +117,10 @@ net::StreamReceiver::Stream::~Stream() {
 }
 
 void net::StreamReceiver::Stream::alloc_buffers(std::size_t buf_size, int buf_level) {
-	completion_lock.lock();
+	// Do not reallocate if they are the same size
+	if (all_data && buf_level == frame_buffers.size() && buf_size == indv_buffer_size) return;
+
+	std::lock_guard lock(completion_lock);
 
 	if (all_data) {
 		delete[] all_data;
@@ -133,12 +139,10 @@ void net::StreamReceiver::Stream::alloc_buffers(std::size_t buf_size, int buf_le
 		offset += buf_size;
 	}
 	complete_buffer = -1;
-
-	completion_lock.unlock();
 }
 
 void net::StreamReceiver::Stream::free_buffers() {
-	completion_lock.lock();
+	std::lock_guard locked(completion_lock);
 
 	delete[] all_data;
 	all_data = nullptr;
@@ -146,7 +150,6 @@ void net::StreamReceiver::Stream::free_buffers() {
 
 	frame_buffers.clear();
 
-	completion_lock.unlock();
 }
 
 net::StreamReceiver::StreamReceiver(boost::asio::io_context& io_context) : ctx(io_context), socket(io_context) {
@@ -164,25 +167,22 @@ void net::StreamReceiver::set_listen_port(uint16_t port) {
 void net::StreamReceiver::begin(uint16_t port) {
 	socket.open(boost::asio::ip::udp::v4());
 	socket.bind(boost::asio::ip::udp::endpoint(boost::asio::ip::udp::v4(), port));
+
+	if (!recv_buffer.get()) {
+		recv_buffer.reset(new uint8_t[recv_buffer_size]);
+	}
 	receive();
 }
 
 void net::StreamReceiver::receive() {
-	socket.async_receive_from(boost::asio::buffer(recv_buffer), remote, [this](auto error, auto bytes_transferred) {
-		std::cout << "received\n";
+	socket.async_receive_from(boost::asio::buffer(recv_buffer.get(), recv_buffer_size), remote, [this](auto error, auto bytes_transferred) {
 		if (!error && bytes_transferred >= FrameHeader::SIZE) {
 			FrameHeader section;
-			section.read(recv_buffer.data());
-			std::cout << "section<stream = " << (int)section.stream_index
-				<< ", frame = " << (int)section.frame_index
-				<< ", section = " << (int)section.section_index
-				<< ", n_sections = " << (int)section.section_count
-				<< ", offset = " << (int)section.offset << ">\n";
-
+			section.read(recv_buffer.get());
 
 			// Acquire streams_lock as a reader
 			std::shared_lock<std::shared_mutex> streams_reader(streams_lock);
-			if (section.stream_index > 0 && section.stream_index < streams.size() && streams[section.stream_index].open) {
+			if (section.stream_index >= 0 && section.stream_index < streams.size() && streams[section.stream_index].open) {
 				
 				Stream& s = streams[section.stream_index];
 
@@ -193,12 +193,10 @@ void net::StreamReceiver::receive() {
 					use_buffer++;
 					if (use_buffer == s.frame_buffers.size()) use_buffer = 0;
 				}
-				std::cout << "using buffer " << use_buffer << "\n";
 
 				// Continue reconstructing this frame -or- overwrite the old frame
 				FrameBuf& f = s.frame_buffers[use_buffer];
 				if (f.frame_index != section.frame_index) {
-					std::cout << "overwriting old frame\n";
 					// Different frames; overwrite
 					f.frame_index = section.frame_index;
 					f.received_sections = 0;
@@ -207,8 +205,7 @@ void net::StreamReceiver::receive() {
 
 				std::size_t data_bytes_in = bytes_transferred - FrameHeader::SIZE;
 				if (section.offset + data_bytes_in <= s.indv_buffer_size) {
-					std::cout << "receiving " << data_bytes_in << " bytes\n";
-					std::memcpy(&f.data[section.offset], &recv_buffer[FrameHeader::SIZE], data_bytes_in);
+					std::memcpy(&f.data[section.offset], &recv_buffer.get()[FrameHeader::SIZE], data_bytes_in);
 					f.received_sections++;
 					f.received_size += data_bytes_in;
 					if (f.received_sections == section.section_count) {
@@ -216,9 +213,12 @@ void net::StreamReceiver::receive() {
 						// Cannot change completion pointer if the old complete buffer is in use (lock)
 						s.completion_lock.lock();
 						s.complete_buffer = use_buffer;
-						s.completion_lock.unlock();
 
-						if (frame_handler) frame_handler(section.stream_index);
+						Frame completed;
+						// Transfer ownership to Frame
+						completed.bind(&s.completion_lock, f.data, f.received_size);
+
+						if (frame_handler) frame_handler(section.stream_index, completed);
 
 					}
 				}
@@ -235,12 +235,13 @@ void net::StreamReceiver::open_stream(int stream) {
 		std::unique_lock<std::shared_mutex> writer(streams_lock);
 		streams.resize(stream + 1);
 	}
-	streams[stream].alloc_buffers(frame_buffer_size, frame_buffer_level);
+	streams[stream].alloc_buffers(_frame_buffer_size, _frame_buffer_level);
 	streams[stream].open = true;
 }
 
 void net::StreamReceiver::destroy_stream(int stream) {
 	if (stream < streams.size()) {
+		std::unique_lock streams_writer(streams_lock);
 		streams[stream].free_buffers();
 		streams[stream].open = false;
 	}
@@ -250,6 +251,40 @@ void net::StreamReceiver::close_stream(int stream) {
 	if (stream < streams.size()) {
 		streams[stream].open = false;
 	}
+}
+
+void net::StreamReceiver::set_frame_buffer_params(std::size_t size, unsigned level) {
+	if (size > static_cast<uint64_t>(std::numeric_limits<unsigned>::max()))
+		throw std::out_of_range("net::StreamReceiver::set_frame_buffer_params: max size is 4GB");
+
+	if (level < 2)
+		throw std::invalid_argument("net::StreamReceiver::set_frame_buffer_params: minimum buffer level is 2");
+
+	std::unique_lock streams_writer(streams_lock);
+
+	_frame_buffer_size = size;
+	_frame_buffer_level = level;
+
+	for (auto& stream : streams) {
+		stream.alloc_buffers(_frame_buffer_size, _frame_buffer_level);
+	}
+}
+
+void net::StreamReceiver::set_section_buffer_size(std::size_t size) {
+	if (size == recv_buffer_size) return;
+
+	bool reopen = false;
+	if (socket.is_open()) {
+		socket.close();
+		reopen = true;
+	}
+
+	recv_buffer_size = size;
+	recv_buffer.reset(new uint8_t[recv_buffer_size]);
+
+	if (reopen)
+		begin(port);
+
 }
 
 net::Frame net::StreamReceiver::get_complete_frame(int stream) {
