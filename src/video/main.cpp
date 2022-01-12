@@ -13,6 +13,12 @@ int main(){
     video_session.load_config("res/v.sconfig");
     video_session.updateCameraStatus();
 
+    video_feeds.set_destination_endpoint(
+        boost::asio::ip::udp::endpoint(
+            boost::asio::ip::address_v4::from_string(video_session.config.video_multicast_group),
+            video_session.config.video_port
+        )
+    );
 
     util::Timer::init(&video_session.camera_update_timer, CAMERA_UPDATE_INTERVAL, &video_session.global_clock);
     util::Timer::init(&video_session.tick_timer, TICK_INTERVAL, &video_session.global_clock);
