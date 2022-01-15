@@ -41,10 +41,7 @@ void net::StreamSender::send_frame(int stream, uint8_t* data, std::size_t len) {
 		
 		std::size_t n_sent = (len > max_section_size) ? max_section_size : len;
 		hdr.write_new_section(header_buffer);
-		hdr.section_index++;
-		hdr.offset += n_sent;
 
-		
 		auto io_section_buffer = boost::asio::buffer(data, n_sent);
 		boost::array<decltype(io_header_buffer), 2> io_buffers = {io_header_buffer, io_section_buffer};
 
@@ -55,6 +52,7 @@ void net::StreamSender::send_frame(int stream, uint8_t* data, std::size_t len) {
 			data = &data[n_sent];
 
 			hdr.section_index++;
+			hdr.offset += n_sent;
 			hdr.write_new_section(header_buffer);
 		} catch (const boost::system::system_error& error) {
 			// Cancel sending the frame on error
@@ -73,9 +71,9 @@ void net::FrameHeader::write(uint8_t* arr) const {
 	arr[2] = section_index;
 	arr[3] = section_count;
 
-	arr[4] = offset & 0xF;
-	arr[5] = (offset >> 8) & 0xF;
-	arr[6] = (offset >> 16) & 0xF;
+	arr[4] = offset & 0xFF;
+	arr[5] = (offset >> 8) & 0xFF;
+	arr[6] = (offset >> 16) & 0xFF;
 }
 
 void net::FrameHeader::read(const uint8_t* arr) {
@@ -90,9 +88,9 @@ void net::FrameHeader::read(const uint8_t* arr) {
 void net::FrameHeader::write_new_section(uint8_t* arr) const {
 	arr[2] = section_index;
 
-	arr[4] = offset & 0xF;
-	arr[5] = (offset >> 8) & 0xF;
-	arr[6] = (offset >> 16) & 0xF;
+	arr[4] = offset & 0xFF;
+	arr[5] = (offset >> 8) & 0xFF;
+	arr[6] = (offset >> 16) & 0xFF;
 }
 
 net::StreamReceiver::Stream::Stream() { }
