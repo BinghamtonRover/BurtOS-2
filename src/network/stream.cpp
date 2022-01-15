@@ -166,13 +166,30 @@ void net::StreamReceiver::begin(uint16_t port) {
 	socket.open(boost::asio::ip::udp::v4());
 	socket.bind(boost::asio::ip::udp::endpoint(boost::asio::ip::udp::v4(), port));
 
-	if (!recv_buffer.get()) {
-		recv_buffer.reset(new uint8_t[recv_buffer_size]);
+	receive();
+}
+
+void net::StreamReceiver::subscribe(boost::asio::ip::udp::endpoint& ep) {
+	if (socket.is_open()) {
+		socket.close();
 	}
+
+	socket.open(ep.protocol());
+	socket.set_option(boost::asio::ip::udp::socket::reuse_address(true));
+	socket.bind(boost::asio::ip::udp::endpoint(
+		boost::asio::ip::address_v4::from_string("0.0.0.0"),
+		ep.port()
+	));
+
+	socket.set_option(boost::asio::ip::multicast::join_group(ep.address()));
+
 	receive();
 }
 
 void net::StreamReceiver::receive() {
+	if (!recv_buffer.get()) {
+		recv_buffer.reset(new uint8_t[recv_buffer_size]);
+	}
 	socket.async_receive_from(boost::asio::buffer(recv_buffer.get(), recv_buffer_size), remote, [this](auto error, auto bytes_transferred) {
 		if (!error && bytes_transferred >= FrameHeader::SIZE) {
 			FrameHeader section;

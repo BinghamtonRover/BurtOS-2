@@ -134,8 +134,13 @@ public:
 	};
 
 	StreamReceiver(boost::asio::io_context& io_context);
+
+	// Regular Mode
 	void set_listen_port(uint16_t port);
 	void begin(uint16_t port);
+
+	// Multicast Mode
+	void subscribe(boost::asio::ip::udp::endpoint& feed);
 
 	// Open stream and allocate buffers if needed
 	void open_stream(int stream);
