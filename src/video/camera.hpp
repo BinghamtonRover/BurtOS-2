@@ -162,6 +162,8 @@ const char* get_error_string(Error error);
 */
 Error open(CaptureSession* session, const char* device_filepath, size_t width, size_t height, uint8_t dev_video_id, util::Clock* clock, int framerate);
 
+bool is_video_device(const char* dev_name);
+
 /*
     Starts the capture session. The device will begin to offer frames.
 

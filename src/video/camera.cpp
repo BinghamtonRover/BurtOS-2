@@ -21,6 +21,23 @@ const char* get_error_string(Error error) {
     return error_names[(int) error];
 }
 
+bool is_video_device(const char* dev_name) {
+    auto fd = ::open(dev_name, O_RDONLY);
+    if (fd == -1) return false;
+
+    // Allocate a capability struct since we will need it several times.
+    struct v4l2_capability cap;
+
+    // Query for capability.
+    if (ioctl(fd, VIDIOC_QUERYCAP, &cap) != 0) {
+        return false;
+    }
+
+    // Does the camera support video capture?
+    return (cap.device_caps & V4L2_CAP_VIDEO_CAPTURE) && (cap.device_caps & V4L2_CAP_STREAMING);
+
+}
+
 Error open(CaptureSession* session, const char* device_filepath, size_t width, size_t height, uint8_t dev_id, util::Clock* clock, int framerate) {
     // Set the width and height.
     session->width = width;
@@ -51,12 +68,12 @@ Error open(CaptureSession* session, const char* device_filepath, size_t width, s
     strcpy(session->hardware_location, (char*) cap.bus_info);
 
     // Does the camera support video capture?
-    if (!(cap.capabilities & V4L2_CAP_VIDEO_CAPTURE)) {
+    if (!(cap.device_caps & V4L2_CAP_VIDEO_CAPTURE)) {
         return Error::NO_VIDEOCAPTURE;
     }
 
     // Does this camera support video streaming?
-    if (!(cap.capabilities & V4L2_CAP_STREAMING)) {
+    if (!(cap.device_caps & V4L2_CAP_STREAMING)) {
         return Error::NO_STREAMING;
     }
 
@@ -70,6 +87,7 @@ Error open(CaptureSession* session, const char* device_filepath, size_t width, s
     // Let V4L2 fill it in based on what is currently set.
     // This is so that we only need to set relevant values.
     if (ioctl(session->fd, VIDIOC_G_FMT, &fmt) != 0) {
+        fprintf(stderr, "here: %s\n", strerror(errno));
         return Error::QUERY_FORMAT;
     }
 
@@ -186,7 +204,7 @@ Error grab_frame(CaptureSession* session, uint8_t** out_frame, size_t* out_frame
     tv.tv_usec = 0;
 
     // Wait for the next frame. See man select(2) for more information.
-    if (select(session->fd + 1, &fds, NULL, NULL, &tv) <= 0) {
+    if (select(session->fd + 1, &fds, NULL, NULL, &tv) == -1) {
         if (errno == EAGAIN || errno == EWOULDBLOCK)
             return Error::AGAIN;
 
