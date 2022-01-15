@@ -15,14 +15,14 @@
 
 using namespace nanogui;
 
-class WindowModule {
+class WindowModule : public Screen {
     private:
         Screen *screen = nullptr;
         FormHelper *widget;
 
     public:
         //will eventually change to accept parameters for type of window
-        WindowModule(); 
+        WindowModule();
         //will eventually change to accept title text
         void create_screen();
         //This function must be called after creating all widgets, groups, variables, etc.

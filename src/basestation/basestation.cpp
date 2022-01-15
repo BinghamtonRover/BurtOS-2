@@ -10,7 +10,7 @@ int main() {
 	
 	//Session basestation;
 	WindowModule window;
-	//window.add_widget();
+	window.add_widget();
 	window.window_loop();
 	//basestation.gui_loop();
 	
