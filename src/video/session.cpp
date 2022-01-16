@@ -4,13 +4,61 @@
 #include <stdexcept>
 #include <rover_system_messages.hpp>
 #include <filesystem>
+#include <iostream>
+
+bool VideoConfig::read_from(boost::property_tree::ptree& src) {
+    bool success = true;
+    try {
+
+        video_stream_port = src.get<uint16_t>("video.network.stream_ip.port");
+        video_stream_address = boost::asio::ip::address_v4::from_string(
+            src.get<std::string>("video.network.stream_ip.addr")
+        );
+
+        video_command_port = src.get<uint16_t>("video.network.command_ip.port");
+
+        default_jpeg_quality = src.get<uint8_t>("video.camera_init.jpeg_quality", 30);
+        default_greyscale_enable = src.get<bool>("video.camera_init.greyscale", false);
+        
+        std::fill(default_enabled_streams.begin(), default_enabled_streams.end(), false);
+
+        boost::optional enable_streams = src.get_child_optional("video.camera_init.enable_streams");
+        if (enable_streams) {
+            for (const auto& elem : enable_streams.get()) {
+                try {
+                    int stream = std::stoi(elem.first);                
+                    if (stream >= 0 && stream < MAX_STREAMS) {
+                        bool enable = elem.second.get_value<bool>();
+                        default_enabled_streams[stream] = enable;
+                    } else {
+                        throw std::out_of_range("stream index");
+                    }
+                } catch (const std::logic_error& e) {
+                    std::cerr << "Invalid stream index in config: " << elem.first << "\n";
+                    success = false;
+                }
+
+            }
+        }
+
+    } catch (const boost::property_tree::ptree_bad_path& e) {
+        std::cerr << "Missing required config value: " << e.what() << "\n";
+        success = false;
+    } catch (const boost::property_tree::ptree_bad_data& e) {
+        std::cerr << "Could not interpret config value: " << e.data<std::string>() << "\n";
+        success = false;
+    }
+    return success;
+}
 
 Session::Session(const VideoConfig& config, boost::asio::io_context& ctx) :
     ctrl_message_receiver(config.video_command_port, ctx),
     video_streams_out(ctx),
     cfg(config),
     compressor(tjInitCompress()),
-    decompressor(tjInitDecompress())
+    decompressor(tjInitDecompress()),
+    jpeg_quality(cfg.default_jpeg_quality),
+    greyscale(cfg.default_greyscale_enable)
 {
 
     if (!compressor || !decompressor) {
@@ -44,79 +92,12 @@ Session::Session(const VideoConfig& config, boost::asio::io_context& ctx) :
 
     video_streams_out.create_streams(MAX_STREAMS);
     video_streams_out.set_destination_endpoint(boost::asio::ip::udp::endpoint(
-       boost::asio::ip::address_v4::from_string(cfg.video_multicast_group),
-       cfg.video_port 
+       cfg.video_stream_address,
+       cfg.video_stream_port 
     ));
 
-}
+    send_stream = cfg.default_enabled_streams;
 
-void VideoConfig::read(const char* filename) {
-    sc::SimpleConfig* sc_config;
-
-    auto err = sc::parse(filename, &sc_config);
-    if (err != sc::Error::OK) {
-        logger::log(logger::ERROR, "Failed to parse config file: %s", sc::get_error_string(sc_config, err));
-        exit(1);
-    }
-
-    char* rover_port_str = sc::get(sc_config, "rover_port");
-    if (!rover_port_str) {
-        logger::log(logger::ERROR, "Config file missing 'rover_port'!");
-        exit(1);
-    }
-    rover_port = atoi(rover_port_str);
-
-    char* base_station_port_str = sc::get(sc_config, "base_station_port");
-    if (!base_station_port_str) {
-        logger::log(logger::ERROR, "Config file missing 'base_station_port'!");
-        exit(1);
-    }
-    base_station_port = atoi(base_station_port_str);
-
-    char* video_port_str = sc::get(sc_config, "video_port");
-    if (!video_port_str) {
-        logger::log(logger::ERROR, "Config file missing 'video_port'!");
-        exit(1);
-    }
-    video_port = atoi(video_port_str);
-
-    char* video_command_port_str = sc::get(sc_config, "video_command_port");
-    if (!video_command_port_str) {
-        logger::log(logger::ERROR, "Config file missing 'video_command_port'!");
-        exit(1);
-    }
-    video_command_port = atoi(video_command_port_str);
-
-    char* base_station_multicast_group_str = sc::get(sc_config, "base_station_multicast_group");
-    if (!base_station_multicast_group_str) {
-        logger::log(logger::ERROR, "Config file missing 'base_station_multicast_group'!");
-        exit(1);
-    }
-    strncpy(base_station_multicast_group, base_station_multicast_group_str, 16);
-
-    char* rover_multicast_group_str = sc::get(sc_config, "rover_multicast_group");
-    if (!rover_multicast_group_str) {
-        logger::log(logger::ERROR, "Config file missing 'rover_multicast_group'!");
-        exit(1);
-    }
-    strncpy(rover_multicast_group, rover_multicast_group_str, 16);
-
-    char* video_multicast_group_str = sc::get(sc_config, "video_multicast_group");
-    if (!video_multicast_group_str) {
-        logger::log(logger::ERROR, "Config file missing 'video_multicast_group'!");
-        exit(1);
-    }
-    strncpy(video_multicast_group, video_multicast_group_str, 16);
-
-    char* interface_str = sc::get(sc_config, "interface");
-    if (!interface_str) {
-        // Default.
-        strncpy(interface, "0.0.0.0", 16);
-    } else {
-        strncpy(interface, interface_str, 16);
-    }
-
-    sc::free(sc_config);
 }
 
 int Session::update_available_streams() {

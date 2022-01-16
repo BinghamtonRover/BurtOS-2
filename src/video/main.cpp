@@ -1,20 +1,22 @@
 #include "session.hpp"
 
+#include <boost/property_tree/json_parser.hpp>
+
 boost::asio::io_context net_io_ctx;
 VideoConfig session_config;
 
 int main() {
     logger::register_handler(logger::stderr_handler);
 
-    session_config.read("res/v.sconfig");
+    namespace tree = boost::property_tree;
+    tree::ptree video_cfg;
+    tree::json_parser::read_json("res/video_config.json", video_cfg);
+    if (!session_config.read_from(video_cfg)) {
+        return 1;
+    }
 
     Session video_session(session_config, net_io_ctx);
     video_session.update_available_streams();
-
-    // Start with 2 enabled streams
-    for (int i = 0; i < 2; i++) {
-        video_session.send_stream[i] = true;
-    }
     
     for (;;) {
         

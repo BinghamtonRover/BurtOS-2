@@ -2,7 +2,6 @@
 #define SESSION
 
 #include <roversystem/logger.hpp>
-#include <roversystem/simpleconfig.hpp>
 #include <roversystem/util.hpp>
 #include <network.hpp>
 #include <stream.hpp>
@@ -10,6 +9,7 @@
 #include "camera.hpp"
 
 #include <turbojpeg.h>
+#include <boost/property_tree/ptree.hpp>
 #include <array>
 
 const int MAX_STREAMS = 9;
@@ -26,17 +26,15 @@ const int NETWORK_UPDATE_INTERVAL = 1000 / 2;
 
 
 struct VideoConfig {
-    uint16_t base_station_port;
-    uint16_t rover_port;
-    uint16_t video_port;
+    bool read_from(boost::property_tree::ptree& src);
+
+    uint16_t video_stream_port;
     uint16_t video_command_port;
+    boost::asio::ip::address_v4 video_stream_address;
 
-    char base_station_multicast_group[16];
-    char rover_multicast_group[16];
-    char video_multicast_group[16];
-    char interface[16];
-
-    void read(const char* fname);
+    uint8_t default_jpeg_quality;
+    bool default_greyscale_enable;
+    std::array<bool, MAX_STREAMS> default_enabled_streams;
 };
 
 class Session {
