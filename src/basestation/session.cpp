@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+#include "modules/console.hpp"
+
 const char* Session::window_title = "Base Station 2.0 - Binghamton University Rover Team";
 
 Session* Session::main_session = nullptr;
@@ -77,6 +79,8 @@ void Session::create_window(bool fullscreen, int monitor, int w, int h) {
 	glfwSwapInterval(0);
 	glfwSwapBuffers(window);
 
+	Console* main_console = new Console(screen);
+
 	screen->set_visible(true);
 	screen->perform_layout();
 }
@@ -114,10 +118,13 @@ void Session::gui_loop() {
 		while (!glfwWindowShouldClose(window)) {
 			glfwPollEvents();
 
-			/*
-			We should probably add the window updates once we actually have
-			something to update here
-			*/
+			glClearColor(0.11F, 0.11F, 0.11F, 1.0F);
+			glClear(GL_COLOR_BUFFER_BIT);
+
+			screen->draw_contents();
+			screen->draw_widgets();
+
+			glfwSwapBuffers(window);
 		}
 
 		glfwDestroyWindow(window);
