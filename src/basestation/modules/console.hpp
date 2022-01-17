@@ -6,13 +6,10 @@
 #include <nanogui/vscrollpanel.h>
 #include "../widgets/action_textbox.hpp"
 
-extern "C" {
-	#include <lua.h>
-	#include <lauxlib.h>
-	#include <lualib.h>
-}
+#include <interactive_lua.hpp>
 
 #include <iostream>
+#include <thread>
 
 class Console : protected nanogui::Window {
 private:
@@ -28,16 +25,14 @@ private:
 		if (available_w < 0) available_w = 0;
 		entry->set_fixed_width(available_w);
 	}
-	lua_State *L;
-
-	// NOT PERMANENT
-	inline static Console* active;
-
+	
+	rover_lua::InteractivePrompt lua_prompt;
+	std::thread lua_runtime;
 public:
 	Console(nanogui::Screen* screen) : 
-			nanogui::Window(screen, "Console") {
-		
-		Console::active = this;
+			nanogui::Window(screen, "Console"),
+			lua_runtime(&rover_lua::InteractivePrompt::run, &lua_prompt)
+	{
 
 		set_position(nanogui::Vector2i(15, 15));
 		set_layout(new nanogui::GroupLayout(6));
@@ -56,64 +51,37 @@ public:
 		entry->set_placeholder("");
 		entry->set_editable(true);
 		entry->set_alignment(nanogui::TextBox::Alignment::Left);
-		entry->set_action_callback([this] {
-			console_out->append_line("> " + entry->value());
+		entry->set_action_callback([this] (ActionTextBox::Action a) {
+			switch (a) {
+				case ActionTextBox::Action::SUBMIT: {
+					console_out->append_line("> " + entry->value());
 
-			int error = luaL_loadbuffer(L, entry->value().data(), entry->value().size(), entry->value().data())
-					|| lua_pcall(L, 0, 0, 0);
-			
-			if (error) {
-				console_out->append_line(lua_tostring(L, -1));
-				lua_pop(L, 1);
+					lua_prompt.execute_line(entry->value());
+
+					entry->set_value("");
+					break;
+				}
+				default:
+					break;
 			}
 
-			entry->set_value("");
 		});
 
 		submit = new nanogui::Button(entry_bar, "Run");
 		submit->set_callback([this] {
-			entry->action();
+			entry->action(ActionTextBox::Action::SUBMIT);
 		});
 
 		perform_layout(screen->nvg_context());
 
 		compute_size();
 
-		L = luaL_newstate();
-		luaL_openlibs(L);
-		
+		lua_prompt.set_write_line_callback([this] (const char* str) {
+			console_out->append_line(str);
+		});
+
 		console_out->append_line(LUA_COPYRIGHT);
 
-		lua_pushcfunction(L, console_print);
-		lua_setglobal(L, "cprint");
-
-		lua_pushcfunction(L, console_clear);
-		lua_setglobal(L, "clear");
-
-		const static std::string replace_print = "print = function(...) print_str = \"\" for i,v in ipairs({...}) do print_str = print_str .. tostring(v) if i ~= select(\"#\", ...) then print_str = print_str .. \"\t\" end end cprint(print_str) end";
-		int error = luaL_loadbuffer(L, replace_print.data(), replace_print.size(), "line")
-		|| lua_pcall(L, 0, 0, 0);
-		
-		if (error) {
-			console_out->append_line(lua_tostring(L, -1));
-			lua_pop(L, 1);
-		}
-
-	}
-
-	~Console() {
-		lua_close(L);
-	}
-
-	static int console_print(lua_State* L) {
-		const char* str_out = lua_tostring(L, 1);
-		active->console_out->append_line(str_out);
-		return 0;
-	}
-
-	static int console_clear(lua_State* L) {
-		active->console_out->clear();
-		return 0;
 	}
 
 };
