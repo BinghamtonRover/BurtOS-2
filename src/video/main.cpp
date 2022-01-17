@@ -10,7 +10,7 @@ int main() {
 
     namespace tree = boost::property_tree;
     tree::ptree video_cfg;
-    tree::json_parser::read_json("res/video_config.json", video_cfg);
+    tree::json_parser::read_json("cfg/video_config.json", video_cfg);
     if (!session_config.read_from(video_cfg)) {
         return 1;
     }
