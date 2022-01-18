@@ -16,6 +16,7 @@
 
 #include <GLFW/glfw3.h>
 #include <nanogui/nanogui.h>
+#include "modules/console.hpp"
 
 
 class Session {
@@ -56,6 +57,7 @@ class Session {
 		static Session* main_session;
 		GLFWwindow* window;
 		nanogui::Screen* screen;
+		Console* main_console;
 		bool is_glfw_init;
 
 		void create_window(bool, int, int, int);

@@ -11,12 +11,23 @@
 #include <iostream>
 #include <thread>
 
-class Console : protected nanogui::Window {
+class Console : public nanogui::Window, public rover_lua::InteractivePrompt {
 private:
 	struct Builtin {
 		static int clear(lua_State* L) {
 			auto& self = rover_lua::InteractivePrompt::get_instance<Console>(L);
 			self.console_out->clear();
+			return 0;
+		}
+		static int exit(lua_State* L) {
+			auto& self = rover_lua::InteractivePrompt::get_instance<Console>(L);
+			self.stop();
+			return 0;
+		}
+		static int title(lua_State* L) {
+			auto& self = rover_lua::InteractivePrompt::get_instance<Console>(L);
+			const char* new_title = luaL_checkstring(L, 1);
+			self.set_title(new_title);
 			return 0;
 		}
 	};
@@ -29,25 +40,43 @@ private:
 	std::vector<std::string> history;
 	std::size_t history_index = 0;
 	std::string uncommitted_entry;
+	bool should_close = false;
 
 	void compute_size() {
 		// Button should already be preferred size; only resize the text entry
 		int available_w = entry_bar->width() - submit->width() - layout_margin - layout_spacing;
 		if (available_w < 0) available_w = 0;
 		entry->set_fixed_width(available_w);
+		parent()->perform_layout(screen()->nvg_context());
 	}
-	
-	rover_lua::InteractivePrompt lua_prompt;
+
 	std::thread lua_runtime;
 public:
+	inline bool closed() { return should_close; }
+	inline void close() { should_close = true; }
+	virtual void draw(NVGcontext* ctx) override {
+		if (!active()) {
+			if (lua_runtime.joinable()) lua_runtime.join();
+			if (exit_success()) {
+				// On a successful exit, close the console window
+				return;
+			} else {
+				// If exit was abnormal, leave log open for viewing
+				entry->focus_event(false);
+				entry->set_editable(false);
+				submit->set_enabled(false);
+			}
+		}
+		nanogui::Window::draw(ctx);	
+	}
 	Console(nanogui::Screen* screen) : 
 			nanogui::Window(screen, "Console"),
-			lua_runtime(&rover_lua::InteractivePrompt::run, &lua_prompt)
+			lua_runtime(&rover_lua::InteractivePrompt::run, static_cast<rover_lua::InteractivePrompt*>(this))
 	{
 
 		set_position(nanogui::Vector2i(15, 15));
 		set_layout(new nanogui::GroupLayout(6));
-		set_fixed_width(500);
+		set_fixed_width(800);
 
 		auto scroller = new nanogui::VScrollPanel(this);
 		scroller->set_fixed_height(300);
@@ -68,7 +97,7 @@ public:
 					console_out->append_line("> " + entry->value());
 
 					if (!entry->value().empty()) {
-						lua_prompt.execute_line(entry->value());
+						execute_line(entry->value());
 						history.push_back(entry->value());
 						// Index intentionally beyond last element
 						history_index = history.size();
@@ -96,7 +125,7 @@ public:
 					break;
 				case ActionTextBox::Action::CANCEL: 
 					if (entry->value().empty()) {
-						lua_prompt.interrupt();
+						interrupt();
 					} else {
 						entry->set_value("");
 					}
@@ -116,14 +145,14 @@ public:
 
 		compute_size();
 
-		lua_prompt.save_instance(*this);
-		lua_prompt.set_write_line_callback([this] (const char* str) {
+		save_instance(*this);
+		set_write_line_callback([this] (const char* str) {
 			console_out->append_line(str);
 		});
 
-		lua_State* L = lua_prompt.lua();
-		lua_pushcfunction(L, Builtin::clear);
-		lua_setglobal(L, "clear");
+		add_function("clear", Builtin::clear);
+		add_function("exit", Builtin::exit);
+		add_function("title", Builtin::title);
 
 		console_out->append_line(LUA_COPYRIGHT);
 

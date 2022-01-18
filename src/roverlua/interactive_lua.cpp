@@ -1,6 +1,7 @@
 #include "interactive_lua.hpp"
 
 #include <iostream>
+#include <stdexcept>
 
 #define lua_initreadline(L)  ((void)L)
 #define lua_readline(L,b,p) \
@@ -40,13 +41,23 @@ rover_lua::InteractivePrompt::InteractivePrompt() : _c_write_line(Default::write
 
 	luaL_openlibs(L);
 
-	lua_pushcfunction(L, Builtin::print);
-	lua_setglobal(L, "print");
+	add_function("print", Builtin::print);
 }
 
 rover_lua::InteractivePrompt::~InteractivePrompt() {
 		rover_lua::del_custom_ptr(L);
 		lua_close(L);
+}
+
+void rover_lua::InteractivePrompt::stop() {
+		std::unique_lock lock(execute_stream_lock);
+		should_close = true;
+		cv_line_available.notify_all();
+}
+
+void rover_lua::InteractivePrompt::add_function(const char* lua_name, int(*lua_c_function)(lua_State*)) {
+	lua_pushcfunction(L, lua_c_function);
+	lua_setglobal(L, lua_name);
 }
 
 int rover_lua::InteractivePrompt::report_error(int status) {
@@ -167,12 +178,16 @@ void rover_lua::InteractivePrompt::get_input() {
 		line_in_unread.clear();
 		return;
 	}
-	while (line_in_unread.empty())
+	while (line_in_unread.empty() && !should_close)
 		cv_line_available.wait(lock);
-	line_in = line_in_unread;
-	line_in_unread.clear();
-	// Ignore interrupts raised while execution was stopped
-	if (should_interrupt) should_interrupt = false;
+	if (should_close) {
+		throw SignalShutdown();
+	} else {
+		line_in = line_in_unread;
+		line_in_unread.clear();
+		// Ignore interrupts raised while execution was stopped
+		if (should_interrupt) should_interrupt = false;
+	}
 }
 
 int rover_lua::InteractivePrompt::pushline(int firstline) {
@@ -210,21 +225,39 @@ void rover_lua::InteractivePrompt::check_interrupt(lua_State* L, lua_Debug* db) 
 	if (self->should_interrupt) {
 		self->should_interrupt = false;
 		luaL_error(L, "interrupted!");
+	} else if (self->should_close) {
+		throw SignalShutdown();
 	}
 }
 
 void rover_lua::InteractivePrompt::run() {
-	int status;
+	try {
+		_prompt_active = true;
+		int status;
 
-	// Check for interrupts every so often
-	lua_sethook(L, check_interrupt, LUA_MASKCOUNT, 1000);
+		// Check for interrupts every so often
+		lua_sethook(L, check_interrupt, LUA_MASKCOUNT, 1000);
 
-	while ((status = loadline()) != -1) {
-		if (status == LUA_OK)
-		status = docall(0, LUA_MULTRET);
-		if (status == LUA_OK) lua_print();
-		else report_error(status);
+		while ((status = loadline()) != -1) {
+			if (status == LUA_OK)
+			status = docall(0, LUA_MULTRET);
+			if (status == LUA_OK) lua_print();
+			else report_error(status);
+		}
+		lua_settop(L, 0);  /* clear stack */
+		lua_writeline();
+	} catch (const SignalShutdown&) {
+		// Let the shutdown signal fall through
+		_prompt_active = false;
+		_normal_exit = true;
+	} catch (const std::exception& e) {
+		_prompt_active = false;
+		// Catch-all for other exceptions: try reporting error on console before closing
+		std::string error_msg("lua: caught ");
+		error_msg.append(typeid(e).name());
+		error_msg.append("\n\tcause: ");
+		error_msg.append(e.what());
+		error_msg.append("\ninstance terminated");
+		_c_write_line(error_msg.c_str());
 	}
-	lua_settop(L, 0);  /* clear stack */
-	lua_writeline();
 }
