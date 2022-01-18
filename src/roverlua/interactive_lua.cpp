@@ -119,7 +119,7 @@ int rover_lua::InteractivePrompt::multiline() {
 	for (;;) {  /* repeat until gets a complete statement */
 		size_t len;
 		const char *line = lua_tolstring(L, 1, &len);  /* get what it has */
-		int status = luaL_loadbuffer(L, line, len, "=stdin");  /* try it */
+		int status = luaL_loadbuffer(L, line, len, "=console");  /* try it */
 		if (!incomplete(status) || !pushline(0)) {
 			lua_saveline(L, line);  /* keep history */
 			return status;  /* cannot or should not try to add continuation line */
@@ -133,7 +133,7 @@ int rover_lua::InteractivePrompt::multiline() {
 int rover_lua::InteractivePrompt::addreturn() {
 	const char *line = lua_tostring(L, -1);  /* original line */
 	const char *retline = lua_pushfstring(L, "return %s;", line);
-	int status = luaL_loadbuffer(L, retline, strlen(retline), "=stdin");
+	int status = luaL_loadbuffer(L, retline, strlen(retline), "=console");
 	if (status == LUA_OK) {
 		lua_remove(L, -2);  /* remove modified line */
 		if (line[0] != '\0')  /* non empty? */
@@ -167,7 +167,8 @@ void rover_lua::InteractivePrompt::get_input() {
 		line_in_unread.clear();
 		return;
 	}
-	cv_line_available.wait(lock);
+	while (line_in_unread.empty())
+		cv_line_available.wait(lock);
 	line_in = line_in_unread;
 	line_in_unread.clear();
 }
@@ -203,9 +204,10 @@ int rover_lua::InteractivePrompt::loadline() {
 }
 void rover_lua::InteractivePrompt::check_interrupt(lua_State* L, lua_Debug* db) {
 	InteractivePrompt* self = static_cast<InteractivePrompt*>(rover_lua::get_custom_ptr(L));
+
 	if (self->should_interrupt) {
-		luaL_error(L, "interrupted!");
 		self->should_interrupt = false;
+		luaL_error(L, "interrupted!");
 	}
 }
 

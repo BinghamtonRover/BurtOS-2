@@ -45,7 +45,7 @@
 namespace rover_lua {
 
 class InteractivePrompt {
-private:
+public:
 	constexpr static std::size_t LUA_MAXINPUT = 512;
 	lua_State* L;
 	std::function<void(const char*)> _c_write_line;

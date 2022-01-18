@@ -19,6 +19,10 @@ private:
 	nanogui::Button* submit;
 	nanogui::Widget* entry_bar;
 	TextArea* console_out;
+	std::vector<std::string> history;
+	std::size_t history_index = 0;
+	std::string uncommitted_entry;
+
 	void compute_size() {
 		// Button should already be preferred size; only resize the text entry
 		int available_w = entry_bar->width() - submit->width() - layout_margin - layout_spacing;
@@ -53,14 +57,43 @@ public:
 		entry->set_alignment(nanogui::TextBox::Alignment::Left);
 		entry->set_action_callback([this] (ActionTextBox::Action a) {
 			switch (a) {
-				case ActionTextBox::Action::SUBMIT: {
+				case ActionTextBox::Action::SUBMIT:
 					console_out->append_line("> " + entry->value());
 
-					lua_prompt.execute_line(entry->value());
+					if (!entry->value().empty()) {
+						lua_prompt.execute_line(entry->value());
+						history.push_back(entry->value());
+						// Index intentionally beyond last element
+						history_index = history.size();
+					}
 
 					entry->set_value("");
 					break;
-				}
+				case ActionTextBox::Action::SCROLL_UP:
+					if (history_index > 0 && !history.empty()) {
+						if (history_index == history.size()) {
+							uncommitted_entry = entry->value();
+						}
+						history_index--;
+						entry->set_value(history[history_index]);
+					}
+					break;
+				case ActionTextBox::Action::SCROLL_DOWN:
+					if (history_index + 1 < history.size()) {
+						history_index++;
+						entry->set_value(history[history_index]);
+					} else if (history_index != history.size()) {
+						history_index = history.size();
+						entry->set_value(uncommitted_entry);
+					}
+					break;
+				case ActionTextBox::Action::CANCEL: 
+					if (entry->value().empty()) {
+						lua_prompt.interrupt();
+					} else {
+						entry->set_value("");
+					}
+					break;
 				default:
 					break;
 			}
