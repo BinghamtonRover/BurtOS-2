@@ -87,6 +87,9 @@ public:
 		append(text + "\n");
 	}
 
+	inline bool autoscroll() const { return m_autoscroll; }
+	inline void set_autoscroll(bool enable) { m_autoscroll = enable; }
+
 	/// Clear all current contents
 	void clear();
 
@@ -121,6 +124,7 @@ protected:
 	nanogui::Vector2i m_offset, m_max_size;
 	int m_padding;
 	bool m_selectable;
+	bool m_autoscroll;
 	nanogui::Vector2i m_selection_start;
 	nanogui::Vector2i m_selection_end;
 	

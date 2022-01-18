@@ -21,7 +21,7 @@
 TextArea::TextArea(Widget *parent) : Widget(parent),
   m_foreground_color(nanogui::Color(0, 0)), m_background_color(nanogui::Color(0, 0)),
   m_selection_color(.5f, 1.f), m_font("sans"), m_offset(0),
-  m_max_size(0), m_padding(0), m_selectable(true),
+  m_max_size(0), m_padding(0), m_selectable(true), m_autoscroll(true),
   m_selection_start(-1), m_selection_end(-1) { }
 
 void TextArea::append(const std::string& text) {
@@ -60,8 +60,10 @@ void TextArea::compute_append() {
 	append_queue.clear();
 
     nanogui::VScrollPanel *vscroll = dynamic_cast<nanogui::VScrollPanel *>(m_parent);
-    if (vscroll)
+    if (vscroll) {
         vscroll->perform_layout(ctx);
+        if (m_autoscroll) vscroll->set_scroll(1.0F);
+    }
 }
 
 void TextArea::clear() {

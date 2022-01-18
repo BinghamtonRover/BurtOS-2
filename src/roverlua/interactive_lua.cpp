@@ -171,6 +171,8 @@ void rover_lua::InteractivePrompt::get_input() {
 		cv_line_available.wait(lock);
 	line_in = line_in_unread;
 	line_in_unread.clear();
+	// Ignore interrupts raised while execution was stopped
+	if (should_interrupt) should_interrupt = false;
 }
 
 int rover_lua::InteractivePrompt::pushline(int firstline) {
