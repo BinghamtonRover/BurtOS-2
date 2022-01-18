@@ -2,9 +2,9 @@
 
 #include <nanogui/window.h>
 #include <nanogui/textbox.h>
-#include <nanogui/textarea.h>
 #include <nanogui/vscrollpanel.h>
 #include "../widgets/action_textbox.hpp"
+#include "../widgets/textarea.hpp"
 
 #include <interactive_lua.hpp>
 
@@ -18,7 +18,7 @@ private:
 	ActionTextBox* entry;
 	nanogui::Button* submit;
 	nanogui::Widget* entry_bar;
-	nanogui::TextArea* console_out;
+	TextArea* console_out;
 	void compute_size() {
 		// Button should already be preferred size; only resize the text entry
 		int available_w = entry_bar->width() - submit->width() - layout_margin - layout_spacing;
@@ -41,7 +41,7 @@ public:
 		auto scroller = new nanogui::VScrollPanel(this);
 		scroller->set_fixed_height(300);
 		
-		console_out = new nanogui::TextArea(scroller);
+		console_out = new TextArea(scroller);
 		console_out->set_font("mono");
 
 		entry_bar = new Widget(this);
