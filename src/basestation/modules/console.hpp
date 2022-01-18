@@ -13,6 +13,13 @@
 
 class Console : protected nanogui::Window {
 private:
+	struct Builtin {
+		static int clear(lua_State* L) {
+			auto& self = rover_lua::InteractivePrompt::get_instance<Console>(L);
+			self.console_out->clear();
+			return 0;
+		}
+	};
 	const int layout_margin = 0;
 	const int layout_spacing = 6;
 	ActionTextBox* entry;
@@ -109,9 +116,14 @@ public:
 
 		compute_size();
 
+		lua_prompt.save_instance(*this);
 		lua_prompt.set_write_line_callback([this] (const char* str) {
 			console_out->append_line(str);
 		});
+
+		lua_State* L = lua_prompt.lua();
+		lua_pushcfunction(L, Builtin::clear);
+		lua_setglobal(L, "clear");
 
 		console_out->append_line(LUA_COPYRIGHT);
 

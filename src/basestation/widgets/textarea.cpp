@@ -67,6 +67,8 @@ void TextArea::compute_append() {
 }
 
 void TextArea::clear() {
+    std::lock_guard lock_q(append_queue_lock);
+    append_queue.clear();
 	std::lock_guard lock(clear_text_lock);
     m_blocks.clear();
     m_offset = m_max_size = 0;

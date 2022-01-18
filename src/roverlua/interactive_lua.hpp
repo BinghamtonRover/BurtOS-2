@@ -45,9 +45,10 @@
 namespace rover_lua {
 
 class InteractivePrompt {
-public:
+private:
 	constexpr static std::size_t LUA_MAXINPUT = 512;
 	lua_State* L;
+	void* _custom_ptr;
 	std::function<void(const char*)> _c_write_line;
 	std::mutex execute_stream_lock;
 	std::condition_variable cv_line_available;
@@ -91,6 +92,18 @@ public:
 	void run();
 	inline void interrupt() { should_interrupt = true; }
 	inline void set_write_line_callback(const std::function<void(const char*)>& f) { _c_write_line = f; }
+	inline lua_State* lua() { return L; }
+
+	template<typename T>
+	void save_instance(T& instance) {
+		_custom_ptr = &instance;
+	}
+
+	template<typename T>
+	static T& get_instance(lua_State* L) {
+		auto self = reinterpret_cast<InteractivePrompt*>(rover_lua::get_custom_ptr(L));
+		return *reinterpret_cast<T*>(self->_custom_ptr);
+	}
 
 };
 
