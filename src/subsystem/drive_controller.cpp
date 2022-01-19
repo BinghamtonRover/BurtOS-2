@@ -38,7 +38,7 @@ void DriveController::set_forward_velocity(float mps) {
 }
 
 // -90 = sharp left, 0 = straight, 90 = sharp right
-void DriveController::set_steering_angle(float angle) {
+void DriveController::set_steering_angle(float angle) { 
 	target_angle = fmin(fmax(angle, -180), 180);
 	update_target_velocity();
 }
