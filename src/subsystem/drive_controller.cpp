@@ -7,6 +7,7 @@ void DriveController::halt() {
 	target_right_speed = 0;
 	target_angle = 0;
 	update_target_velocity();
+	set_drive_mode(NEUTRAL);
 }
 
 void DriveController::update_target_velocity() { 
@@ -26,8 +27,13 @@ float DriveController::get_target_velocity() {
 }
 
 void DriveController::update_motor_acceleration() {
-	left_speed = target_left_speed;
-	right_speed = target_right_speed; 
+	if (get_drive_mode() == NEUTRAL) {
+		left_speed = 0;
+		right_speed = 0;
+	} else {
+		left_speed = target_left_speed;
+		right_speed = target_right_speed;
+	}
 }
 
 void DriveController::set_forward_velocity(float mps) {
@@ -41,4 +47,13 @@ void DriveController::set_forward_velocity(float mps) {
 void DriveController::set_steering_angle(float angle) { 
 	target_angle = fmin(fmax(angle, -180), 180);
 	update_target_velocity();
+}
+
+DriveController::DriveMode DriveController::get_drive_mode() {
+	return current_mode;
+}
+
+void DriveController::set_drive_mode(DriveMode mode) {
+	current_mode = mode;
+	update_motor_acceleration();
 }
