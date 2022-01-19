@@ -11,6 +11,8 @@ int Console::Builtin::clear(lua_State* L) {
 }
 int Console::Builtin::exit(lua_State* L) {
 	auto& self = rover_lua::InteractivePrompt::get_instance<Console>(L);
+	self.console_out->append_line("Lua stopped.");
+	self.console_out->append_line("Missing implementation: Cannot close NanoGUI Window");
 	self.stop();
 	return 0;
 }
@@ -35,16 +37,11 @@ void Console::compute_size() {
 
 void Console::draw(NVGcontext* ctx) {
 		if (!active()) {
-			if (lua_runtime.joinable()) lua_runtime.join();
-			if (exit_success()) {
-				// On a successful exit, close the console window
-				return;
-			} else {
-				// If exit was abnormal, leave log open for viewing
-				entry->focus_event(false);
-				entry->set_editable(false);
-				submit->set_enabled(false);
-			}
+
+			entry->focus_event(false);
+			entry->set_editable(false);
+			submit->set_enabled(false);
+
 		}
 		nanogui::Window::draw(ctx);	
 }
@@ -133,6 +130,14 @@ Console::Console(nanogui::Screen* screen) :
 	add_function("exit", Builtin::exit);
 	add_function("title", Builtin::title);
 
+	for (auto& f : global_setup) {
+		f(*this);
+	}
+
 	console_out->append_line(LUA_COPYRIGHT);
 
+}
+
+Console::~Console() {
+	if (lua_runtime.joinable()) lua_runtime.join();
 }

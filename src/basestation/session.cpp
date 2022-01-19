@@ -83,11 +83,14 @@ void Session::create_window(bool fullscreen, int monitor, int w, int h) {
 	screen->set_visible(true);
 	screen->perform_layout();
 
-	main_console = new Console(screen);
-	main_console->add_function("shutdown", [](lua_State* L) {
-		glfwSetWindowShouldClose(main_session->window, 1);
-		return 0;
+	Console::add_setup_routine([](Console& new_console) {
+		new_console.add_function("shutdown", [](lua_State* L) {
+			glfwSetWindowShouldClose(main_session->window, 1);
+			return 0;
+		});
 	});
+
+	new Console(screen);
 }
 
 void Session::glfw_cursor_pos_callback(GLFWwindow* window, double x, double y) {
@@ -121,14 +124,11 @@ void Session::glfw_framebuffer_size_callback(GLFWwindow* window, int width, int 
 void Session::gui_loop() {
 	if (is_glfw_init) {
 		while (!glfwWindowShouldClose(window)) {
-			glfwPollEvents();
+			glfwWaitEvents();
 
 			glClearColor(0.11F, 0.11F, 0.11F, 1.0F);
 			glClear(GL_COLOR_BUFFER_BIT);
 
-			if (main_console->closed()) {
-				screen->remove_child(main_console);
-			}
 
 			screen->draw_contents();
 			screen->draw_widgets();

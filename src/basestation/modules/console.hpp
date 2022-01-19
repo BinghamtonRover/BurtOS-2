@@ -28,17 +28,20 @@ protected:
 	std::vector<std::string> history;
 	std::size_t history_index = 0;
 	std::string uncommitted_entry;
-	bool should_close = false;
 	std::thread lua_runtime;
 
 	void compute_size();
 
+	inline static std::vector<std::function<void(Console&)>> global_setup;
+
 public:
 	Console(nanogui::Screen* screen);
+	~Console();
 
 	virtual void draw(NVGcontext* ctx);
-
-	inline bool closed() { return should_close; }
-	inline void close() { should_close = true; }
+	
+	// Add a function to run when creating any new Console
+	// Intended for initializing Lua functions and variables 
+	inline static void add_setup_routine(const std::function<void(Console&)>& f) { global_setup.push_back(f); }
 
 };
