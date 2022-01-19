@@ -22,7 +22,7 @@ class DriveController {
 		float right_speed = 0.0F;
 
 		// Call whenever target_angle or target_velocity changes
-		void update_target_velocity();	
+		void update_target_velocity();		
 	public:
 		void set_forward_velocity(float mps);
 		void set_steering_angle(float angle);
