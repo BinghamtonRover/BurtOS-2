@@ -26,7 +26,7 @@ class DriveController {
 	public:
 		void set_forward_velocity(float mps);
 		void set_steering_angle(float angle);
-
+		
 		// Update and apply target speeds and apply acceleration rate limits
 		void update_motor_acceleration();
 		void halt();
