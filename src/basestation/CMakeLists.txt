@@ -1,4 +1,20 @@
-add_executable(basestation basestation.cpp session.hpp session.cpp modules/console.hpp widgets/action_textbox.hpp widgets/textarea.hpp widgets/textarea.cpp)
+set(MODULE_HDR
+	modules/console.hpp
+)
+set(MODULE_SRC
+	modules/console.cpp
+)
+
+set(WIDGET_HDR
+	widgets/textarea.hpp
+	widgets/functionbox.hpp
+)
+set(WIDGET_SRC
+	widgets/textarea.cpp
+	widgets/functionbox.cpp
+)
+
+add_executable(basestation basestation.cpp session.hpp session.cpp ${MODULE_HDR} ${MODULE_SRC} ${WIDGET_HDR} ${WIDGET_SRC})
 
 target_include_directories(basestation PUBLIC nanogui roverlua)
 target_link_libraries(basestation nanogui ${NANOGUI_EXTRA_LIBS} roverlua)
