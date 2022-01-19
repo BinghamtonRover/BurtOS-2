@@ -38,5 +38,5 @@ class DriveController {
 		// Call whenever target_angle or target_velocity changes
 		void update_target_velocity();		
 		
-		DriveMode current_mode = DriveMode::NEUTRAL;
+		DriveMode current_mode = NEUTRAL;
 };
