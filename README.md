@@ -43,6 +43,7 @@ While you are not locked to a specific toolchain, the process suggested below wi
 * Install Boost libraries: `sudo apt install libboost-dev libboost-program-options-dev`
   * You need at least Boost 1.71. Older versions will not work.
 * Install Protocol Buffers: `sudo apt install protobuf-compiler`
+* Install Lua: `sudo apt install lua`
 
 <p id="build-ubuntu"></p>
 
@@ -63,6 +64,7 @@ The [Ubuntu](#ubuntu) section provides more context for each command, so read ov
 * Install Ninja: `pacman -S mingw-w64-x86_64-ninja`
 * Install Boost libraries: `pacman -S mingw-w64-x86_64-boost`
 * Install Protocol Buffers: `pacman -S mingw-w64-x86_64-protobuf`
+* Install Lua: `pacman -S mingw-w64-x86_64-lua`
 * Generate build files: `CXX=g++ cmake -S . -B build -GNinja`
 * Build the project: `ninja -C build`
 
@@ -78,6 +80,7 @@ Must have [Xcode](https://apps.apple.com/us/app/xcode/id497799835?mt=12), otherw
 #### Required Dependencies
 * Install Protocol Buffers: `brew install protobuf`
 * Install Boost Libraries: `brew install boost`
+* Install Lua: `brew install lua`
 * Follow [Ubuntu's build instructions](#build-ubuntu).
 ### CMake Variables
 Set variables with CMake on the command line by adding: `-DVARIABLE_NAME=VALUE`
