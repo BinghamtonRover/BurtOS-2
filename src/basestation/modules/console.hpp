@@ -18,6 +18,8 @@ protected:
 		static int clear(lua_State* L);
 		static int exit(lua_State* L);
 		static int title(lua_State* L);
+		static int set_autoscroll(lua_State* L);
+		static int get_autoscroll(lua_State* L);
 	};
 	const int layout_margin = 0;
 	const int layout_spacing = 6;
@@ -33,6 +35,8 @@ protected:
 	void compute_size();
 
 	inline static std::vector<std::function<void(Console&)>> global_setup;
+	static const struct luaL_Reg term_lib[];
+	static int luaopen_term(lua_State*);
 
 public:
 	Console(nanogui::Screen* screen);
