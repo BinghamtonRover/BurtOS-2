@@ -43,7 +43,7 @@ While you are not locked to a specific toolchain, the process suggested below wi
 * Install Boost libraries: `sudo apt install libboost-dev libboost-program-options-dev`
   * You need at least Boost 1.71. Older versions will not work.
 * Install Protocol Buffers: `sudo apt install protobuf-compiler`
-* Install Lua: `sudo apt install lua`
+* Install Lua: `sudo apt-get install lua5.3-dev`
 
 <p id="build-ubuntu"></p>
 
