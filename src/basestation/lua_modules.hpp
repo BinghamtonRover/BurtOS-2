@@ -13,4 +13,7 @@ namespace lua_ctrl_lib {
 	void open(lua_State* L);
 
 	int show_devices(lua_State* L);
+	int show_actions(lua_State* L);
+	int show_axes(lua_State* L);
+	int bind(lua_State* L);
 }

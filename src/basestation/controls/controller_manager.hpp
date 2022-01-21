@@ -12,7 +12,7 @@ class ControllerManager {
 	private:
 		constexpr static std::size_t MAX_DEVICES = GLFW_JOYSTICK_LAST + 1;
 		std::array<Controller, MAX_DEVICES> _devices;
-		std::vector<AxisAction> actions;
+		std::vector<AxisAction> _actions;
 
 		static void glfw_joystick_callback(int joystick_id, int event);
 		static ControllerManager* main_controller_manager;
@@ -36,6 +36,9 @@ class ControllerManager {
 		// @param final_value Transmitted to action_callback if the axis device disconnects.
 		void add_axis_action(const std::string& name, const std::function<void(float)>& action_callback, float final_value);
 
+		const AxisAction& find_action(const std::string& name) const;
+
 		inline decltype(_devices)& devices() { return _devices; }
+		inline const decltype(_actions)& actions() { return _actions; }
 
 };

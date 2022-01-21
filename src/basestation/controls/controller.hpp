@@ -5,7 +5,7 @@
 #include <functional>
 
 struct AxisAction {
-	std::string name;
+	std::string name = "<unbound>";
 	std::function<void(float)> callback;
 	float final_value;
 
