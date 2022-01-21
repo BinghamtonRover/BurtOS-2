@@ -3,7 +3,6 @@
 #include <GLFW/glfw3.h>
 #include <limits>
 #include <cmath>
-#include <iostream>
 
 float JoystickAxis::translate(float x) {
 	if (x < center - dead_zone) {
@@ -24,7 +23,6 @@ float JoystickAxis::translate(float x) {
 void Controller::update_device() {
 	_present = glfwJoystickPresent(_joystick_id);
 	if (_present) {
-		std::cout << "present!!!\n";
 		int axis_count;
 		glfwGetJoystickAxes(_joystick_id, &axis_count);
 
@@ -32,8 +30,6 @@ void Controller::update_device() {
 			_axes.resize(axis_count);
 		}
 
-	} else {
-		std::cout << "not present :(\n";
 	}
 }
 

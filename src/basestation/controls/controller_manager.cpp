@@ -1,23 +1,20 @@
 #include "controller_manager.hpp"
 
 #include <algorithm>
-#include <iostream>
+
+ControllerManager* ControllerManager::main_controller_manager = nullptr;
 
 ControllerManager::ControllerManager() {
 	for (unsigned int i = 0; i < _devices.size(); i++) {
 		_devices[i].set_joystick_id(i);
-		glfwSetJoystickUserPointer(i, this);
-
-		_devices[i].update_device();
 	}
-	glfwSetJoystickCallback(glfw_joystick_callback);
 }
 
-ControllerManager::~ControllerManager() {
+void ControllerManager::init() {
+	main_controller_manager = this;
+	glfwSetJoystickCallback(glfw_joystick_callback);
 	for (Controller& c : _devices) {
-		if (glfwGetJoystickUserPointer(c.joystick_id()) == this) {
-			glfwSetJoystickUserPointer(c.joystick_id(), nullptr);
-		}
+		c.update_device();
 	}
 }
 
@@ -36,10 +33,7 @@ void ControllerManager::update_controls() {
 }
 
 void ControllerManager::glfw_joystick_callback(int joystick_id, int event) {
-	std::cout << "js event: " << joystick_id << " \n";
-	ControllerManager* self = reinterpret_cast<ControllerManager*>(glfwGetJoystickUserPointer(joystick_id));
-	if (self)
-		self->_devices[joystick_id].update_device();
+	main_controller_manager->_devices[joystick_id].update_device();
 }
 
 void ControllerManager::add_axis_action(const std::string& name, const std::function<void(float)>& action_callback, float final_value) {

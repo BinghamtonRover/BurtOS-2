@@ -71,6 +71,8 @@ void Session::create_window(bool fullscreen, int monitor, int w, int h) {
 	glClearColor(0.2f, 0.25f, 0.3f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 
+	controller_mgr.init();
+
 	screen = new nanogui::Screen();
 	screen->initialize(window,true);
 
@@ -126,7 +128,9 @@ void Session::glfw_framebuffer_size_callback(GLFWwindow* window, int width, int 
 void Session::gui_loop() {
 	if (is_glfw_init) {
 		while (!glfwWindowShouldClose(window)) {
-			glfwWaitEvents();
+			glfwPollEvents();
+			
+			controller_mgr.update_controls();
 
 			glClearColor(0.11F, 0.11F, 0.11F, 1.0F);
 			glClear(GL_COLOR_BUFFER_BIT);

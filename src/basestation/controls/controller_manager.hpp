@@ -15,9 +15,12 @@ class ControllerManager {
 		std::vector<AxisAction> actions;
 
 		static void glfw_joystick_callback(int joystick_id, int event);
+		static ControllerManager* main_controller_manager;
 	public:
 		ControllerManager();
-		~ControllerManager();
+		
+		// Set GLFW callbacks and scan devices. Must initialize GLFW first
+		void init();
 
 		// Read axis values from GLFW and call action callbacks. Call frequently (main loop)
 		void update_controls();
