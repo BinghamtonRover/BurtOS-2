@@ -1,13 +1,14 @@
 #include "drive_controller.hpp"
 
 #include <cmath>
+#include <boost/math/constants/constants.hpp>
 
 void DriveController::halt() {
-	target_left_speed = 0;
-	target_right_speed = 0;
+	target_velocity_mps = 0;
+	target_velocity_rps = 0;
 	target_angle = 0;
 	update_target_velocity();
-	set_drive_mode(NEUTRAL);
+	set_drive_mode(DriveMode::NEUTRAL);
 }
 
 void DriveController::update_target_velocity() { 
@@ -27,7 +28,7 @@ float DriveController::get_target_velocity() {
 }
 
 void DriveController::update_motor_acceleration() {
-	if (get_drive_mode() == NEUTRAL) {
+	if (get_drive_mode() == DriveMode::NEUTRAL) {
 		left_speed = 0;
 		right_speed = 0;
 	} else {
@@ -39,7 +40,9 @@ void DriveController::update_motor_acceleration() {
 void DriveController::set_forward_velocity(float mps) {
 	mps = fmin(fmax(mps, -MAX_SPEED), MAX_SPEED);
 	target_velocity_mps = mps;
-	target_velocity_rps = (GEARBOX_RATIO * mps) / (static_cast<float>(M_PI) * WHEEL_DIAMETER_METERS);
+	// M_PI is technically non-standard C++
+	// When C++20 support becomes ubiquitous, replace Boost with std::numbers::pi_v<float>
+	target_velocity_rps = (GEARBOX_RATIO * mps) / (boost::math::constants::pi<float>() * WHEEL_DIAMETER_METERS);
 	update_target_velocity();
 }
 
@@ -54,7 +57,7 @@ DriveController::DriveMode DriveController::get_drive_mode() {
 }
 
 void DriveController::set_drive_mode(DriveMode mode) {
-	if (mode < COUNT) {
+	if (mode < DriveMode::COUNT) {
 		current_mode = mode;
 		update_motor_acceleration();
 	}
