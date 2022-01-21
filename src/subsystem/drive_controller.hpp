@@ -12,7 +12,7 @@ class DriveController {
 		void halt();
 		float get_target_velocity();
 
-		enum DriveMode { NEUTRAL, DRIVE };
+		enum DriveMode { NEUTRAL, DRIVE, COUNT };
 
 		DriveMode get_drive_mode();
 		void set_drive_mode(DriveMode mode);

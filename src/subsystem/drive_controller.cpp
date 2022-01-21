@@ -54,6 +54,8 @@ DriveController::DriveMode DriveController::get_drive_mode() {
 }
 
 void DriveController::set_drive_mode(DriveMode mode) {
-	current_mode = mode;
-	update_motor_acceleration();
+	if (mode < COUNT) {
+		current_mode = mode;
+		update_motor_acceleration();
+	}
 }
