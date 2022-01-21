@@ -96,6 +96,7 @@ public:
 	~InteractivePrompt();
 
 	void add_function(const char* lua_name, int(*lua_c_function)(lua_State*));
+	void load_library(const char* lua_name, const std::function<void(lua_State*)>& open_lib);
 	void execute_line(const std::string&);
 	// Run Lua interpreter. Blocking call.
 	void run();

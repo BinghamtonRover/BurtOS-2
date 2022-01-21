@@ -60,6 +60,11 @@ void rover_lua::InteractivePrompt::add_function(const char* lua_name, int(*lua_c
 	lua_setglobal(L, lua_name);
 }
 
+void rover_lua::InteractivePrompt::load_library(const char* lua_name, const std::function<void(lua_State*)>& open_lib) {
+	open_lib(L);
+	lua_setglobal(L, lua_name);
+}
+
 int rover_lua::InteractivePrompt::report_error(int status) {
 	if (status != LUA_OK) {
 		const char *msg = lua_tostring(L, -1);

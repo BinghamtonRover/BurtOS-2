@@ -2,6 +2,7 @@
 
 #include <iostream>
 
+#include "lua_modules.hpp"
 #include "modules/console.hpp"
 
 const char* Session::window_title = "Base Station 2.0 - Binghamton University Rover Team";
@@ -88,6 +89,7 @@ void Session::create_window(bool fullscreen, int monitor, int w, int h) {
 			glfwSetWindowShouldClose(main_session->window, 1);
 			return 0;
 		});
+		new_console.load_library("ctrl", lua_ctrl_lib::open);
 	});
 
 	new Console(screen);

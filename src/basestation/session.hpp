@@ -17,6 +17,7 @@
 #include <GLFW/glfw3.h>
 #include <nanogui/nanogui.h>
 
+#include "controls/controller_manager.hpp"
 
 class Session {
 	public:
@@ -51,7 +52,12 @@ class Session {
 		bool get_is_glfw_init();
 		void set_is_glfw_init(bool);
 
+		inline ControllerManager& controller_manager() {
+			return controller_mgr;
+		}
+
 	private:
+		ControllerManager controller_mgr;
 		const static char* window_title;
 		static Session* main_session;
 		GLFWwindow* window;
