@@ -38,7 +38,8 @@ if (NOT NO_GFX AND OPENGL_FOUND)
 	set(NANOGUI_BUILD_SHARED	OFF CACHE BOOL " " FORCE)
 	add_subdirectory(ext/nanogui)
 	set_property(TARGET glfw glfw_objects nanogui PROPERTY FOLDER "dependencies")
-
+	
+	add_subdirectory(src/roverlua)
 	add_subdirectory(src/basestation)
 else()
 	message(STATUS "NO_GFX is ON. Base Station is excluded from this build.")
