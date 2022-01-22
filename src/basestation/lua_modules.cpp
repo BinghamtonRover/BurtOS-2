@@ -9,6 +9,7 @@ const struct luaL_Reg lua_ctrl_lib::lib[] = {
 	{"show_actions", lua_ctrl_lib::show_actions},
 	{"show_axes", lua_ctrl_lib::show_axes},
 	{"bind", lua_ctrl_lib::bind},
+	{"unbind", lua_ctrl_lib::unbind},
 	{NULL, NULL}
 };
 
@@ -96,6 +97,19 @@ int lua_ctrl_lib::bind(lua_State* L) {
 		luaL_error(L, "error: device number or joystick id out of range");
 	} catch (const std::invalid_argument&) {
 		luaL_error(L, "error: invalid action");
+	}
+	return 0;
+}
+
+int lua_ctrl_lib::unbind(lua_State* L) {
+	int joystick_id = luaL_checkinteger(L, 1);
+	int axis_n = luaL_checkinteger(L, 2);
+
+	try {
+		ControllerManager& cmgr = Session::get_main_session().controller_manager();
+		cmgr.devices().at(joystick_id).axes().at(axis_n).unbind();
+	} catch (const std::out_of_range&) {
+		luaL_error(L, "error: device number or joystick id out of range");
 	}
 	return 0;
 }

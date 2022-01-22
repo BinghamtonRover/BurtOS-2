@@ -5,7 +5,7 @@
 #include <functional>
 
 struct AxisAction {
-	std::string name = "<unbound>";
+	std::string name = UNBOUND_NAME;
 	std::function<void(float)> callback;
 	float final_value;
 
@@ -13,6 +13,7 @@ struct AxisAction {
 	inline bool operator<(const AxisAction& other) const {
 		return name < other.name;
 	}
+	constexpr static const char* UNBOUND_NAME = "<unbound>";
 };
 
 class JoystickAxis {
@@ -22,17 +23,12 @@ class JoystickAxis {
 		constexpr static float AXIS_MAX = 1.0F;
 		constexpr static float AXIS_RANGE = AXIS_MAX - AXIS_MIN;
 
-		inline void update(float x) {
-			last_value_raw = x;
-			last_value_translated = translate(x);
-			if (_action.callback) _action.callback(last_value_translated);
-		}
+		void update(float x);
 		inline const AxisAction& action() const {
 			return _action;
 		}
-		inline void set_action(const AxisAction& act) {
-			_action = act;
-		}
+		void set_action(const AxisAction& act);
+		void unbind();
 		inline float value() const { 
 			return last_value_translated;
 		}
@@ -62,12 +58,16 @@ class JoystickAxis {
 
 class Controller {
 	private:
+		std::string name;
+		std::vector<JoystickAxis> _axes;
 		int _joystick_id = -1;
 		bool _present = false;
-		std::vector<JoystickAxis> _axes;
 	public:
 
+		// Read hardware information for this device
 		void update_device();
+
+		// Read axis positions and call event handlers
 		void update_axes();
 
 		const char* device_name() const;

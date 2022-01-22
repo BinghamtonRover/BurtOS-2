@@ -16,4 +16,5 @@ namespace lua_ctrl_lib {
 	int show_actions(lua_State* L);
 	int show_axes(lua_State* L);
 	int bind(lua_State* L);
+	int unbind(lua_State* L);
 }
