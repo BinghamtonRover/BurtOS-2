@@ -7,6 +7,8 @@
 class DriveController {
 	private:
 		static constexpr float WHEEL_SIZE = 15; // In cm 
+		static constexpr float ACCELERATION_LIMIT = 100; // In revs / seconds^2
+		static constexpr float OVER_ACCELERATION_LIMIT = .1; // In seconds 
 
 		// accelerations for each motor
 		float left_motor_1 = 0;
@@ -17,6 +19,7 @@ class DriveController {
 		float right_motor_2 = 0;
 		float right_motor_3 = 0;
 
+		std::chrono::high_resolution_clock::time_point last_acceleration_time;
 
 		float target_velocity_rps = 0;
 		float target_velocity_mps = 0;
@@ -30,6 +33,7 @@ class DriveController {
 		
 		void set_motor_acc(char direction, float acc);
 		void update_target_velocity();		
+
 	public:
 		void set_forward_velocity(float mps);
 		void set_steering_angle(int8_t angle);
