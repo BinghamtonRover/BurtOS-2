@@ -1,8 +1,10 @@
 set(MODULE_HDR
 	modules/console.hpp
+	modules/controller_config.hpp
 )
 set(MODULE_SRC
 	modules/console.cpp
+	modules/controller_config.cpp
 )
 
 set(WIDGET_HDR

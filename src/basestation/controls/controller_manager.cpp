@@ -45,6 +45,7 @@ const AxisAction& ControllerManager::find_action(const std::string& name) const 
 
 void ControllerManager::glfw_joystick_callback(int joystick_id, int event) {
 	main_controller_manager->_devices[joystick_id].update_device();
+	main_controller_manager->hw_cfg++;
 }
 
 void ControllerManager::add_axis_action(const std::string& name, const std::function<void(float)>& action_callback, float final_value) {

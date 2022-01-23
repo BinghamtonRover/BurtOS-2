@@ -13,6 +13,7 @@ class ControllerManager {
 		constexpr static std::size_t MAX_DEVICES = GLFW_JOYSTICK_LAST + 1;
 		std::array<Controller, MAX_DEVICES> _devices;
 		std::vector<AxisAction> _actions;
+		int hw_cfg = 0;
 
 		static void glfw_joystick_callback(int joystick_id, int event);
 		static ControllerManager* main_controller_manager;
@@ -40,5 +41,7 @@ class ControllerManager {
 
 		inline decltype(_devices)& devices() { return _devices; }
 		inline const decltype(_actions)& actions() { return _actions; }
+		// The hardware config index increments on any controller event (connect, disconnect)
+		inline int hw_config_idx() const { return hw_cfg; }
 
 };
