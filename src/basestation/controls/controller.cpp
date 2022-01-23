@@ -6,7 +6,7 @@
 #include <stdexcept>
 
 void AxisCalibration::set_center(float new_center) {
-	if (center >= JoystickAxis::AXIS_MAX || center <= JoystickAxis::AXIS_MIN)
+	if (new_center >= JoystickAxis::AXIS_MAX || new_center <= JoystickAxis::AXIS_MIN)
 		throw std::invalid_argument("center must be within (-1,1)");
 
 	center = new_center;
@@ -14,7 +14,7 @@ void AxisCalibration::set_center(float new_center) {
 }
 
 void AxisCalibration::set_dead_zone(float new_deadzone) {
-	if (dead_zone < 0.0F || dead_zone > 1.0F)
+	if (new_deadzone < 0.0F || new_deadzone > 1.0F)
 		throw std::invalid_argument("dead zone must be within [0,1]");
 
 	dead_zone = new_deadzone;
@@ -71,37 +71,47 @@ void JoystickAxis::unbind() {
 	_action.callback = nullptr;
 }
 
-void JoystickAxis::start_calibration(AxisCalibrator& c) {
+void JoystickAxis::start_calibration() {
+	displaced_action = _action;
 	unbind();
-	c.displaced_action = _action;
-	c.min = std::numeric_limits<float>::infinity();
-	c.max = - std::numeric_limits<float>::infinity();
 
+	cal.min = raw_value();
+	cal.max = raw_value();
+	cal.center = raw_value();
+	cal.dead_zone = 0.0F;
+
+	// During calibration, record the full range of motion
+	// The final value is out of the natural range
 	AxisAction calibrate_action {
 		.name = "Calibrating",
-		.callback = [this, &c](float) {
+		.callback = [this](float) {
 			float x = raw_value();
 			if (x < -1.0F) {
-				// Received final value
-				c.calibration_active = false;
-				c.rescale();
+				// Ignore final value
 			} else {
-				c.min = fmin(c.min, x);
-				c.max = fmax(c.max, x);
+				cal.min = fmin(cal.min, x);
+				cal.max = fmax(cal.max, x);
 			}
 		},
 		.final_value = -1.1F
 	};
-	c.calibration_active = true;
 	set_action(calibrate_action);
 
 }
 
-void JoystickAxis::end_calibration(AxisCalibrator& c) {
-	if (!c.active())
-		throw std::invalid_argument("not calibrating");
-	set_action(c.displaced_action);
-	c.calibration_active = false;
+void JoystickAxis::end_calibration() {
+
+	// If the value recorded when calibration started (the resting value) is
+	// equal to the min or max, then assume this axis doesn't rest in the center
+	// Otherwise, assume it does rest centered and apply a small dead zone
+	if (cal.center == cal.min || cal.center == cal.max) {
+		cal.center = 0.0F;
+	} else {
+		cal.dead_zone = 0.08F;
+	}
+	cal.rescale();
+
+	set_action(displaced_action);
 }
 
 void JoystickAxis::apply_calibration(const AxisCalibration& c) {

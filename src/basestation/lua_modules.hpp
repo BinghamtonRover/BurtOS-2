@@ -17,4 +17,8 @@ namespace lua_ctrl_lib {
 	int show_axes(lua_State* L);
 	int bind(lua_State* L);
 	int unbind(lua_State* L);
+	int start_calibration(lua_State* L);
+	int end_calibration(lua_State* L);
+	int set_center(lua_State* L);
+	int set_dead_zone(lua_State* L);
 }

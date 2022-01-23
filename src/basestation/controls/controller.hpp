@@ -32,18 +32,6 @@ struct AxisCalibration {
 	void restore_defaults();
 };
 
-// Helper class during calibration
-struct AxisCalibrator : public AxisCalibration {
-	inline bool active() const {
-		return calibration_active;
-	}
-	private:
-		friend class JoystickAxis;
-
-		AxisAction displaced_action;
-		bool calibration_active = false;
-};
-
 class JoystickAxis {
 	public:
 
@@ -55,6 +43,9 @@ class JoystickAxis {
 			return _action;
 		}
 		inline const AxisCalibration& calibration() const {
+			return cal;
+		}
+		inline AxisCalibration& calibration() {
 			return cal;
 		}
 		inline float value() const { 
@@ -70,23 +61,11 @@ class JoystickAxis {
 		void update(float x);
 		void unbind();
 
-		/*
-			Calibration process:
-			- When starting calibration, the new values are written to an AxisCalibrator
-				owned by the caller. The old (current) config is not changed.
-				The displaced action is saved privately in the Calibrator
-			- When calibration ends (either by calling end or set_action), the displaced
-				action is restored. The old config is still not overwritten
-			- The caller will presumably call apply_calibration() if desired
-		*/
-
-		void apply_calibration(const AxisCalibration&);	
-		// Begin calibrating and save the new config in an AxisCalibrator
-		// AxisCalibrator must be valid until calling end_calibration()
-		void start_calibration(AxisCalibrator& save_to);
+		void apply_calibration(const AxisCalibration&);
+		// Begin calibrating. The axis should in default (at rest/released) position when starting
+		void start_calibration();
 		// Finish calibrating and restore the displaced action
-		// Does not apply the new config: Must call apply_calibration()
-		void end_calibration(AxisCalibrator& to_end);
+		void end_calibration();
 
 	private:
 		
@@ -96,6 +75,7 @@ class JoystickAxis {
 		float last_value_translated;
 
 		AxisAction _action;
+		AxisAction displaced_action;
 };
 
 class Controller {

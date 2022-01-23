@@ -10,6 +10,10 @@ const struct luaL_Reg lua_ctrl_lib::lib[] = {
 	{"show_axes", lua_ctrl_lib::show_axes},
 	{"bind", lua_ctrl_lib::bind},
 	{"unbind", lua_ctrl_lib::unbind},
+	{"start_calibration", lua_ctrl_lib::start_calibration},
+	{"end_calibration", lua_ctrl_lib::end_calibration},
+	{"set_center", lua_ctrl_lib::set_center},
+	{"set_dead_zone", lua_ctrl_lib::set_dead_zone},
 	{NULL, NULL}
 };
 
@@ -110,6 +114,60 @@ int lua_ctrl_lib::unbind(lua_State* L) {
 		cmgr.devices().at(joystick_id).axes().at(axis_n).unbind();
 	} catch (const std::out_of_range&) {
 		luaL_error(L, "error: device number or joystick id out of range");
+	}
+	return 0;
+}
+
+int lua_ctrl_lib::start_calibration(lua_State* L) {
+	int joystick_id = luaL_checkinteger(L, 1);
+	int axis_n = luaL_checkinteger(L, 2);
+	try {
+		ControllerManager& cmgr = Session::get_main_session().controller_manager();
+		cmgr.devices().at(joystick_id).axes().at(axis_n).start_calibration();
+	} catch (const std::out_of_range&) {
+		luaL_error(L, "error: device number or joystick id out of range");
+	}
+	return 0;
+}
+
+int lua_ctrl_lib::end_calibration(lua_State* L) {
+	int joystick_id = luaL_checkinteger(L, 1);
+	int axis_n = luaL_checkinteger(L, 2);
+	try {
+		ControllerManager& cmgr = Session::get_main_session().controller_manager();
+		cmgr.devices().at(joystick_id).axes().at(axis_n).end_calibration();
+	} catch (const std::out_of_range&) {
+		luaL_error(L, "error: device number or joystick id out of range");
+	}
+	return 0;
+}
+
+int lua_ctrl_lib::set_dead_zone(lua_State* L) {
+	int joystick_id = luaL_checkinteger(L, 1);
+	int axis_n = luaL_checkinteger(L, 2);
+	float dz = luaL_checknumber(L, 3);
+	try {
+		ControllerManager& cmgr = Session::get_main_session().controller_manager();
+		cmgr.devices().at(joystick_id).axes().at(axis_n).calibration().set_dead_zone(dz);
+	} catch (const std::out_of_range&) {
+		luaL_error(L, "error: device number or joystick id out of range");
+	} catch (const std::invalid_argument&) {
+		luaL_error(L, "error: dead zone invalid");
+	}
+	return 0;
+}
+
+int lua_ctrl_lib::set_center(lua_State* L) {
+	int joystick_id = luaL_checkinteger(L, 1);
+	int axis_n = luaL_checkinteger(L, 2);
+	float ctr = luaL_checknumber(L, 3);
+	try {
+		ControllerManager& cmgr = Session::get_main_session().controller_manager();
+		cmgr.devices().at(joystick_id).axes().at(axis_n).calibration().set_center(ctr);
+	} catch (const std::out_of_range&) {
+		luaL_error(L, "error: device number or joystick id out of range");
+	} catch (const std::invalid_argument&) {
+		luaL_error(L, "error: center invalid");
 	}
 	return 0;
 }
