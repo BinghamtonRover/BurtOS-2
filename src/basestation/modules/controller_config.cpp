@@ -7,9 +7,6 @@ ControllerConfig::ControllerConfig(nanogui::Screen* screen, ControllerManager& m
 	set_layout(new nanogui::GroupLayout());
 	set_fixed_width(800);
 
-	//auto select_bar = new nanogui::Widget(this);
-	//select_bar->set_layout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal, nanogui::Alignment::Maximum, 0, 6));
-
 	devices_selector = new nanogui::ComboBox(this);
 	devices_selector->set_icon(FA_GAMEPAD);
 	devices_selector->set_caption("  (no controllers detected)");
@@ -25,7 +22,7 @@ ControllerConfig::ControllerConfig(nanogui::Screen* screen, ControllerManager& m
 	auto close_button = new nanogui::Button(this, "Close");
 	close_button->set_icon(FA_WINDOW_CLOSE);
 	close_button->set_callback([this]() {
-		this->parent()->remove_child(this);
+		this->screen()->dispose_window(this);
 	});
 
 	refresh();
@@ -80,15 +77,15 @@ void ControllerConfig::refresh() {
 			}
 		}
 	}
-	devices_selector->set_items(device_names);
 	if (device_names.empty()) {
 		devices_selector->set_enabled(false);
 	} else {
 		devices_selector->set_enabled(true);
 	}
-	devices_selector->popup()->perform_layout(screen()->nvg_context());
+	devices_selector->set_items(device_names);
 
 	recreate_axes_table();
+	screen()->perform_layout();
 }
 
 void ControllerConfig::draw(NVGcontext* ctx) {
