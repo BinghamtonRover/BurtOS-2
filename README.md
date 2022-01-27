@@ -90,6 +90,9 @@ Set variables with CMake on the command line by adding: `-DVARIABLE_NAME=VALUE`
 #### BUILD_NETWORK_APPS
 **Default:** OFF<br>
 **Description:** If set to `ON`, the network library example applications will be built. This includes `chat` and `rtt`.
+#### PKG_TURBOJPEG_PATH
+**Default:** /opt/libjpeg-turbo/lib64/pkgconfig<br>
+**Description:** Search path for pkg-config to find TurboJPEG for the video computer. Only applicable if TurboJPEG was installed manually. Path is not referenced for packages installed with APT.
 #### (Future) ONBOARD_CAN_BUS
 **Default:** automatic detection<br>
 **Description:** If set to `ON`, the subsystem program will be compiled with Linux-only CAN bus libraries. Otherwise, the program is compiled in offline mode and calling CAN bus functions has no effect.

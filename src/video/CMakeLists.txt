@@ -1,7 +1,7 @@
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
 
 	set(PKG_TURBOJPEG_PATH "/opt/libjpeg-turbo/lib64/pkgconfig" CACHE STRING "Search path for libjpeg-turbo pkg-config files")
-	set(ENV{PKG_CONFIG_PATH} PKG_TURBOJPEG_PATH)
+	set(ENV{PKG_CONFIG_PATH} ${PKG_TURBOJPEG_PATH})
 
 	find_package(PkgConfig)
 	if (NOT PKG_CONFIG_FOUND)
@@ -17,6 +17,7 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
 			add_executable(video camera.hpp camera.cpp session.hpp session.cpp main.cpp)
 			target_link_libraries(video roversystem_utils PkgConfig::PKG_LIBJPEG_TURBO network rover_system_messages)
 			target_include_directories(video PUBLIC rover_system_messages)
+			target_compile_features(video PRIVATE cxx_std_17)
 			set(VIDEO_BUILT ON)
 
 		endif()
