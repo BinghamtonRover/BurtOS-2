@@ -116,6 +116,7 @@ void JoystickAxis::end_calibration() {
 
 void JoystickAxis::apply_calibration(const AxisCalibration& c) {
 	cal = c;
+	cal.rescale();
 }
 
 void Controller::update_device() {
