@@ -219,7 +219,7 @@ void Session::send_frames() {
                     continue;
                 }
             }
-            std::size_t out_frame_size = frame_size;
+            unsigned long out_frame_size = frame_size;
             // Decode the frame and encode it again to set our desired quality.
             static uint8_t raw_buffer[CAMERA_WIDTH * CAMERA_HEIGHT * 3];
             // Decompress into a raw frame.
