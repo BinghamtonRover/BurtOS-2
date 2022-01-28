@@ -5,6 +5,7 @@
 #include <functional>
 #include <nanogui/nanogui.h>
 
+#include "controller_config_popup.hpp"
 #include "../controls/controller_manager.hpp"
 
 /*
@@ -12,27 +13,6 @@
 */
 class ControllerConfig : public nanogui::Window {
 	private:
-		// Pop-up window with fine details for an axis
-		class CalibrationPopup : public nanogui::Window {
-			private:
-				// Each configurable value will use a slider and textbox
-				struct ConfigValue {
-					nanogui::Slider* slider;
-					nanogui::TextBox* text;
-				};
-				JoystickAxis* axis;
-				nanogui::ProgressBar* cal_value_bar;
-				nanogui::TextBox* cal_value_box;
-				nanogui::ProgressBar* raw_value_bar;
-				nanogui::TextBox* raw_value_box;
-				ConfigValue center;
-				ConfigValue deadzone;
-				ConfigValue minimum;
-				ConfigValue maximum;
-			public:
-				CalibrationPopup(ControllerConfig* parent, JoystickAxis* axis = nullptr);
-				virtual void draw(NVGcontext* ctx);
-		};
 		struct TableRow {
 			nanogui::Label* bind_name;
 			nanogui::ProgressBar* axis_value;
@@ -55,6 +35,7 @@ class ControllerConfig : public nanogui::Window {
 
 	public:
 		ControllerConfig(nanogui::Screen* screen, ControllerManager& mgr);
+		~ControllerConfig();
 
 		virtual void draw(NVGcontext* ctx);
 

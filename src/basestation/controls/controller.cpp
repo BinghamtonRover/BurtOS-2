@@ -51,6 +51,14 @@ float JoystickAxis::translate(float x) const {
 	return x;
 }
 
+float JoystickAxis::axis_to_percent(float axis_value) {
+	return (axis_value - JoystickAxis::AXIS_MIN) / JoystickAxis::AXIS_RANGE;
+}
+
+float JoystickAxis::percent_to_axis(float percent) {
+	return percent * JoystickAxis::AXIS_RANGE + JoystickAxis::AXIS_MIN;
+}
+
 void JoystickAxis::update(float x) {
 	last_value_raw = x;
 	last_value_translated = translate(x);

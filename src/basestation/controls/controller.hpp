@@ -38,6 +38,8 @@ class JoystickAxis {
 		constexpr static float AXIS_MIN = -1.0F;
 		constexpr static float AXIS_MAX = 1.0F;
 		constexpr static float AXIS_RANGE = AXIS_MAX - AXIS_MIN;
+		static float percent_to_axis(float x);
+		static float axis_to_percent(float x);
 
 		inline const AxisAction& action() const {
 			return _action;
