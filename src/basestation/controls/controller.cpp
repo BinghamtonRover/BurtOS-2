@@ -1,6 +1,5 @@
 #include "controller.hpp"
 
-#include <GLFW/glfw3.h>
 #include <limits>
 #include <cmath>
 #include <stdexcept>
@@ -143,6 +142,15 @@ void Controller::update_device() {
 
 		int axis_count;
 		glfwGetJoystickAxes(_joystick_id, &axis_count);
+
+		// gamepad mode reorders axes by physical location rather than platform-specific index
+		// feature is only available if GLFW/SDL_GameControllerDB has a "Gamepad mapping" for it
+		gamepad_mode = glfwJoystickIsGamepad(_joystick_id);
+		if (gamepad_mode) {
+			// Allocate for gamepad axes rather than actual count
+			axis_count = GLFW_GAMEPAD_AXIS_LAST + 1;
+		}
+
 		if (_axes.size() != axis_count) {
 			// If the config has changed, unbind any old actions		
 			for (auto& axis : _axes) {
@@ -154,18 +162,33 @@ void Controller::update_device() {
 }
 
 void Controller::update_axes() {
-	int count;
-	const float* values = glfwGetJoystickAxes(_joystick_id, &count);
-	if (count != _axes.size()) {
-		update_device();
+	if (gamepad_mode) {
+		GLFWgamepadstate state;
+		glfwGetGamepadState(_joystick_id, &state);
+		for (int i = 0; i <= GLFW_GAMEPAD_AXIS_LAST; i++) {
+			_axes[i].update(state.axes[i]);
+		}
+	} else {
+		int count;
+		const float* values = glfwGetJoystickAxes(_joystick_id, &count);
+		while (count) {
+			count--;
+			_axes[count].update(values[count]);
+		}
 	}
 
-	while (count) {
-		count--;
-		_axes[count].update(values[count]);
-	}
 }
 
 const char* Controller::device_name() const {
 	return name.c_str();
+}
+
+JoystickAxis& Controller::get_gamepad_axis(int glfw_gamepad_axis) {
+	if (!_present || !gamepad_mode)
+		throw std::runtime_error("Controller::get_gamepad_axis: gamepad mappings unavailable");
+	
+	if (glfw_gamepad_axis < 0 || glfw_gamepad_axis > GLFW_GAMEPAD_AXIS_LAST)
+		throw std::invalid_argument("Controller::get_gamepad_axis: unknown axis");
+
+	return _axes[glfw_gamepad_axis];
 }

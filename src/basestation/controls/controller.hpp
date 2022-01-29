@@ -3,6 +3,7 @@
 #include <vector>
 #include <string>
 #include <functional>
+#include <nanogui/opengl.h>
 
 struct AxisAction {
 	std::string name = UNBOUND_NAME;
@@ -80,12 +81,65 @@ class JoystickAxis {
 		AxisAction displaced_action;
 };
 
+// Constants for the gamepad mappings
+namespace gamepad {
+	// Axis details for a gamepad mapping.
+	// Do not confuse with JoystickAxis. This is not the device, only const names/values
+	struct Axis {
+		const char* CODE_NAME;
+		const char* DISPLAY_NAME;
+		int IDX;
+	};
+	constexpr const Axis left_x {
+		.CODE_NAME = "left_x",
+		.DISPLAY_NAME = "Left Joystick X",
+		.IDX = GLFW_GAMEPAD_AXIS_LEFT_X
+	};
+
+	constexpr const Axis left_y {
+		.CODE_NAME = "left_y",
+		.DISPLAY_NAME = "Left Joystick Y",
+		.IDX = GLFW_GAMEPAD_AXIS_LEFT_Y
+	};
+	constexpr const Axis right_x {
+		.CODE_NAME = "right_x",
+		.DISPLAY_NAME = "Right Joystick X",
+		.IDX = GLFW_GAMEPAD_AXIS_RIGHT_X
+	};
+	constexpr const Axis right_y {
+		.CODE_NAME = "right_y",
+		.DISPLAY_NAME = "Right Joystick Y",
+		.IDX = GLFW_GAMEPAD_AXIS_RIGHT_Y
+	};
+	constexpr const Axis left_trigger {
+		.CODE_NAME = "left_trigger",
+		.DISPLAY_NAME = "Left Trigger",
+		.IDX = GLFW_GAMEPAD_AXIS_LEFT_TRIGGER
+	};
+	constexpr const Axis right_trigger {
+		.CODE_NAME = "right_trigger",
+		.DISPLAY_NAME = "Right Trigger",
+		.IDX = GLFW_GAMEPAD_AXIS_RIGHT_TRIGGER
+	};
+	constexpr std::array<const Axis, 6> AXES = {left_x, left_y, right_x, right_y, left_trigger, right_trigger};
+}
+
+/*
+	One Controller/Gamepad device on the system
+
+	Name and order of axes are system dependent, but if GLFW supports "Gamepad" mappings (1)
+	for this device, then the gamepad axes order is used (2)
+
+	1. https://www.glfw.org/docs/3.3/input_guide.html#gamepad
+	2. https://www.glfw.org/docs/3.3/group__gamepad__axes.html
+*/
 class Controller {
 	private:
 		std::string name;
 		std::vector<JoystickAxis> _axes;
 		int _joystick_id = -1;
 		bool _present = false;
+		bool gamepad_mode = false;
 	public:
 
 		// Read hardware information for this device
@@ -93,6 +147,8 @@ class Controller {
 
 		// Read axis positions and call event handlers
 		void update_axes();
+
+		JoystickAxis& get_gamepad_axis(int glfw_gamepad_axis);
 
 		const char* device_name() const;
 	
@@ -107,5 +163,8 @@ class Controller {
 		}
 		inline decltype(_axes)& axes() {
 			return _axes;
+		}
+		inline bool is_gamepad() const {
+			return gamepad_mode;
 		}
 };

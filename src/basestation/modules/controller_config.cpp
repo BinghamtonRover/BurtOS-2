@@ -67,7 +67,11 @@ void ControllerConfig::recreate_axes_table() {
 		// Each row has the name, bound function, calibration options, and the input value
 		int axis_num = 0;
 		for (auto& axis : selected_dev.axes()) {
-			new nanogui::Label(axes_table, std::to_string(axis_num));
+			if (selected_dev.is_gamepad()) {
+				new nanogui::Label(axes_table, gamepad::AXES[axis_num].DISPLAY_NAME);
+			} else {
+				new nanogui::Label(axes_table, std::to_string(axis_num));
+			}
 
 			// The button callbacks must be able to find their respective JoystickAxis
 			// The HW config may change and reallocate between loops
