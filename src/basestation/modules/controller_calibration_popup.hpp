@@ -4,6 +4,8 @@
 #include "../controls/controller_manager.hpp"
 
 // Window with fine details for an axis
+// This window will never close itself, but may go invisible.
+// The creator is responsible for closing it when no longer needed
 class CalibrationPopup : public nanogui::Window {
 	private:
 		// Each configurable value will use a slider and textbox
@@ -32,5 +34,14 @@ class CalibrationPopup : public nanogui::Window {
 		inline void set_selection(int joystick_id, int axis_idx) {
 			selected_joystick_id = joystick_id;
 			selected_axis_idx = axis_idx;
+		}
+		inline void clear_selection() {
+			selected_joystick_id = -1;
+		}
+		inline int joystick_id() const {
+			return selected_joystick_id;
+		}
+		inline int axis_idx() const {
+			return selected_axis_idx;
 		}
 };

@@ -1,4 +1,4 @@
-#include "controller_config_popup.hpp"
+#include "controller_calibration_popup.hpp"
 
 CalibrationPopup::CalibrationPopup(nanogui::Screen* p, ControllerManager& c, int joystick_id, int axis_idx) :
 		nanogui::Window(p, "Detailed Calibration"),
@@ -183,6 +183,10 @@ void CalibrationPopup::draw(NVGcontext* ctx) {
 	if (selected_joystick_id >= 0) {
 
 		try {
+			if (!ctrl_manager.devices().at(selected_joystick_id).present()) {
+				selected_joystick_id = -1;
+				set_visible(false);
+			}
 			JoystickAxis& axis = selected_axis();
 
 			cal_value_bar->set_value(JoystickAxis::axis_to_percent(axis.value()));

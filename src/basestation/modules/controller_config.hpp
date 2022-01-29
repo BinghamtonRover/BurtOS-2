@@ -5,7 +5,7 @@
 #include <functional>
 #include <nanogui/nanogui.h>
 
-#include "controller_config_popup.hpp"
+#include "controller_calibration_popup.hpp"
 #include "../controls/controller_manager.hpp"
 
 /*
@@ -14,7 +14,7 @@
 class ControllerConfig : public nanogui::Window {
 	private:
 		struct TableRow {
-			nanogui::Label* bind_name;
+			nanogui::Button* bind_name;
 			nanogui::ProgressBar* axis_value;
 		};
 

@@ -63,7 +63,7 @@ void ControllerConfig::recreate_axes_table() {
 		int axis_num = 0;
 		for (auto& axis : selected_dev.axes()) {
 			new nanogui::Label(axes_table, std::to_string(axis_num));
-			auto bind_name = new nanogui::Label(axes_table, axis.action().name);
+			auto bind_name = new nanogui::Button(axes_table, axis.action().name, FA_EDIT);
 
 			// Calibration menu has 3 buttons: start/stop, reset, and open detailed config
 			auto calibrate_menu = new nanogui::Widget(axes_table);
@@ -142,11 +142,6 @@ void ControllerConfig::refresh() {
 	devices_selector->set_items(device_names);
 
 	recreate_axes_table();
-
-	// if (popup) {
-	// 	screen()->dispose_window(popup);
-	// 	popup = nullptr;
-	// }
 
 	screen()->perform_layout();
 }
