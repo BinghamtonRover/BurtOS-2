@@ -6,6 +6,7 @@
 #include <nanogui/nanogui.h>
 
 #include "controller_calibration_popup.hpp"
+#include "controller_binding_popup.hpp"
 #include "../controls/controller_manager.hpp"
 
 /*
@@ -20,6 +21,7 @@ class ControllerConfig : public nanogui::Window {
 
 		ControllerManager& mgr;
 		CalibrationPopup* popup = nullptr;
+		BindingPopup* bind_popup = nullptr;
 		nanogui::ComboBox* devices_selector;
 		nanogui::VScrollPanel* table_scroller;
 		nanogui::Widget* axes_table;

@@ -33,12 +33,17 @@ ControllerConfig::ControllerConfig(nanogui::Screen* screen, ControllerManager& m
 	popup = new CalibrationPopup(screen, mgr);
 	popup->set_visible(false);
 
+	bind_popup = new BindingPopup(screen, mgr);
+	bind_popup->set_visible(false);
+
 	this->screen()->perform_layout();
 	
 }
 
 ControllerConfig::~ControllerConfig() {
-	screen()->dispose_window(popup);
+	auto s = screen();
+	s->dispose_window(popup);
+	s->dispose_window(bind_popup);
 }
 
 void ControllerConfig::recreate_axes_table() {
@@ -63,17 +68,23 @@ void ControllerConfig::recreate_axes_table() {
 		int axis_num = 0;
 		for (auto& axis : selected_dev.axes()) {
 			new nanogui::Label(axes_table, std::to_string(axis_num));
-			auto bind_name = new nanogui::Button(axes_table, axis.action().name, FA_EDIT);
-
-			// Calibration menu has 3 buttons: start/stop, reset, and open detailed config
-			auto calibrate_menu = new nanogui::Widget(axes_table);
-			calibrate_menu->set_layout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal, nanogui::Alignment::Middle, 0, 6));
 
 			// The button callbacks must be able to find their respective JoystickAxis
 			// The HW config may change and reallocate between loops
 			// Callbacks should not save pointers to individual devices or joysticks
 			// Instead, capture Joystick ID and Axis #
+
 			int selected_js_id = selected_dev.joystick_id();
+			auto bind_name = new nanogui::Button(axes_table, axis.action().name, FA_EDIT);
+			bind_name->set_callback([this, axis_num, selected_js_id]() {
+				bind_popup->set_selection(selected_js_id, axis_num);
+				bind_popup->set_visible(true);
+				bind_popup->request_focus();
+			});
+
+			// Calibration menu has 3 buttons: start/stop, reset, and open detailed config
+			auto calibrate_menu = new nanogui::Widget(axes_table);
+			calibrate_menu->set_layout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal, nanogui::Alignment::Middle, 0, 6));
 
 			auto b_toggle_calibrating = new nanogui::ToolButton(calibrate_menu, FA_PLAY);
 			b_toggle_calibrating->set_callback([this, axis_num, selected_js_id, b_toggle_calibrating]() {

@@ -2,11 +2,13 @@ set(MODULE_HDR
 	modules/console.hpp
 	modules/controller_config.hpp
 	modules/controller_calibration_popup.hpp
+	modules/controller_binding_popup.hpp
 )
 set(MODULE_SRC
 	modules/console.cpp
 	modules/controller_config.cpp
 	modules/controller_calibration_popup.cpp
+	modules/controller_binding_popup.cpp
 )
 
 set(WIDGET_HDR

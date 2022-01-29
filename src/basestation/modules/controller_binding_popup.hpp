@@ -5,21 +5,23 @@
 
 class BindingPopup : public nanogui::Window {
 	private:
-		int joystick_id;
-		int axis_idx;
+		int sel_joystick_id;
+		int sel_axis_idx;
+		ControllerManager& ctrl_manager;
+		nanogui::ComboBox* bind_selector;
 	public:
 		BindingPopup(nanogui::Screen* screen, ControllerManager& ctrl_manager, int joystick_id = -1, int axis_idx = 0);
-		inline void set_selection(int joystick_id, int axis_idx) {
-			joystick_id = joystick_id;
-			axis_idx = axis_idx;
-		}
+		void set_selection(int new_joystick_id, int new_axis_idx);
+
+		virtual void draw(NVGcontext* ctx);
+
 		inline void clear_selection() {
-			joystick_id = -1;
+			sel_joystick_id = -1;
 		}
 		inline int joystick_id() const {
-			return joystick_id;
+			return sel_joystick_id;
 		}
 		inline int axis_idx() const {
-			return axis_idx;
+			return sel_axis_idx;
 		}
 };
