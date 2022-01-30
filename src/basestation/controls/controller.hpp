@@ -132,35 +132,35 @@ namespace gamepad {
 		int IDX;
 	};
 	constexpr const Axis left_x {
-		.CODE_NAME = "left_x",
-		.DISPLAY_NAME = "Left Joystick X",
-		.IDX = GLFW_GAMEPAD_AXIS_LEFT_X
+		"left_x",
+		"Left Joystick X",
+		GLFW_GAMEPAD_AXIS_LEFT_X
 	};
 
 	constexpr const Axis left_y {
-		.CODE_NAME = "left_y",
-		.DISPLAY_NAME = "Left Joystick Y",
-		.IDX = GLFW_GAMEPAD_AXIS_LEFT_Y
+		"left_y",
+		"Left Joystick Y",
+		GLFW_GAMEPAD_AXIS_LEFT_Y
 	};
 	constexpr const Axis right_x {
-		.CODE_NAME = "right_x",
-		.DISPLAY_NAME = "Right Joystick X",
-		.IDX = GLFW_GAMEPAD_AXIS_RIGHT_X
+		"right_x",
+		"Right Joystick X",
+		GLFW_GAMEPAD_AXIS_RIGHT_X
 	};
 	constexpr const Axis right_y {
-		.CODE_NAME = "right_y",
-		.DISPLAY_NAME = "Right Joystick Y",
-		.IDX = GLFW_GAMEPAD_AXIS_RIGHT_Y
+		"right_y",
+		"Right Joystick Y",
+		GLFW_GAMEPAD_AXIS_RIGHT_Y
 	};
 	constexpr const Axis left_trigger {
-		.CODE_NAME = "left_trigger",
-		.DISPLAY_NAME = "Left Trigger",
-		.IDX = GLFW_GAMEPAD_AXIS_LEFT_TRIGGER
+		"left_trigger",
+		"Left Trigger",
+		GLFW_GAMEPAD_AXIS_LEFT_TRIGGER
 	};
 	constexpr const Axis right_trigger {
-		.CODE_NAME = "right_trigger",
-		.DISPLAY_NAME = "Right Trigger",
-		.IDX = GLFW_GAMEPAD_AXIS_RIGHT_TRIGGER
+		"right_trigger",
+		"Right Trigger",
+		GLFW_GAMEPAD_AXIS_RIGHT_TRIGGER
 	};
 	constexpr std::array<const Axis, 6> AXES = {left_x, left_y, right_x, right_y, left_trigger, right_trigger};
 }

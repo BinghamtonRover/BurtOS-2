@@ -11,7 +11,7 @@ BindingPopup::BindingPopup(nanogui::Screen* screen, ControllerManager& c, int js
 
 	std::vector<std::string> action_names( {"Nothing"});
 	for (const auto& action : ctrl_manager.actions()) {
-		action_names.push_back(action.name);
+		action_names.push_back(action.name());
 	}
 
 	bind_selector = new nanogui::ComboBox(this, action_names);
@@ -68,7 +68,7 @@ void BindingPopup::set_selection(int new_joystick_id, int new_axis_idx) {
 	bind_selector->set_selected_index(0);
 	const auto& action_names = bind_selector->items();
 	for (std::size_t i = 0; i < action_names.size(); i++) {
-		if (action_names[i] == target.action().name) {
+		if (action_names[i] == target.action().name()) {
 			bind_selector->set_selected_index(i);
 			break;
 		}

@@ -125,7 +125,7 @@ void ControllerConfig::recreate_axes_table() {
 			auto prog_bar = new nanogui::ProgressBar(axes_table);
 			prog_bar->set_fixed_width(150);
 			
-			axis_table_entries.push_back(TableRow{.bind_name = bind_name, .axis_value = prog_bar});
+			axis_table_entries.push_back(TableRow{bind_name, prog_bar});
 			axis_num++;
 		}
 	}
