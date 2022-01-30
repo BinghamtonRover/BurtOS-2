@@ -13,6 +13,7 @@ class ControllerManager {
 		constexpr static std::size_t MAX_DEVICES = GLFW_JOYSTICK_LAST + 1;
 		std::array<Controller, MAX_DEVICES> _devices;
 		std::vector<AxisAction> _actions;
+		std::function<void(Controller&)> device_connected_callback;
 		int hw_cfg = 0;
 
 		static void glfw_joystick_callback(int joystick_id, int event);
@@ -36,6 +37,10 @@ class ControllerManager {
 		//		Value is always between -1.0 and 1.0 (excepting final_value)
 		// @param final_value Transmitted to action_callback if the axis device disconnects.
 		void add_axis_action(const std::string& name, const std::function<void(float)>& action_callback, float final_value);
+
+		// Run an event when the controller is connected.
+		// If the callback is set before calling init(), this will also run for each initial device
+		inline void on_device_connect(const std::function<void(Controller&)>& callback) { device_connected_callback = callback; }
 
 		const AxisAction& find_action(const std::string& name) const;
 

@@ -15,6 +15,9 @@ void ControllerManager::init() {
 	glfwSetJoystickCallback(glfw_joystick_callback);
 	for (Controller& c : _devices) {
 		c.update_device();
+		if (c.present() && device_connected_callback) {
+			device_connected_callback(c);
+		}
 	}
 }
 
@@ -45,6 +48,10 @@ const AxisAction& ControllerManager::find_action(const std::string& name) const 
 void ControllerManager::glfw_joystick_callback(int joystick_id, int event) {
 	main_controller_manager->_devices[joystick_id].update_device();
 	main_controller_manager->hw_cfg++;
+
+	if (event == GLFW_CONNECTED && main_controller_manager->device_connected_callback) {
+		main_controller_manager->device_connected_callback(main_controller_manager->_devices[joystick_id]);
+	}
 }
 
 void ControllerManager::add_axis_action(const std::string& name, const std::function<void(float)>& action_callback, float final_value) {
