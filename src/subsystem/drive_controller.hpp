@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <iostream>
 
 class DriveController {
 	public:
@@ -15,7 +16,7 @@ class DriveController {
 		enum class DriveMode { NEUTRAL, DRIVE, COUNT };
 
 		DriveMode get_drive_mode();
-		void set_drive_mode(DriveMode mode);
+		void set_drive_mode(int mode);
 
 	private:
 		constexpr static float GEARBOX_RATIO = 6.923F;
@@ -39,4 +40,6 @@ class DriveController {
 		void update_target_velocity();		
 		
 		DriveMode current_mode = DriveMode::NEUTRAL;
+
+		std::chrono::steady_clock::time_point last_active_time = std::chrono::steady_clock::now();
 };

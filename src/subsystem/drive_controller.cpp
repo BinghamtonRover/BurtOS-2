@@ -8,7 +8,7 @@ void DriveController::halt() {
 	target_velocity_rps = 0;
 	target_angle = 0;
 	update_target_velocity();
-	set_drive_mode(DriveMode::NEUTRAL);
+	set_drive_mode(static_cast<int>(DriveMode::NEUTRAL));
 }
 
 void DriveController::update_target_velocity() { 
@@ -28,12 +28,20 @@ float DriveController::get_target_velocity() {
 }
 
 void DriveController::update_motor_acceleration() {
-	if (get_drive_mode() == DriveMode::NEUTRAL) {
-		left_speed = 0;
-		right_speed = 0;
+	auto time_now = std::chrono::steady_clock::now();
+	std::chrono::duration<double> time_passed = time_now - last_active_time;
+	if (time_passed.count() > 1) {
+		halt();
 	} else {
-		left_speed = target_left_speed;
-		right_speed = target_right_speed;
+		last_active_time = time_now;
+
+		if (get_drive_mode() == DriveMode::NEUTRAL) {
+			left_speed = 0;
+			right_speed = 0;
+		} else {
+			left_speed = target_left_speed;
+			right_speed = target_right_speed;
+		}
 	}
 }
 
@@ -56,9 +64,9 @@ DriveController::DriveMode DriveController::get_drive_mode() {
 	return current_mode;
 }
 
-void DriveController::set_drive_mode(DriveMode mode) {
-	if (mode < DriveMode::COUNT) {
-		current_mode = mode;
+void DriveController::set_drive_mode(int mode) {
+	if (mode < static_cast<int>(DriveMode::COUNT)) {
+		current_mode = static_cast<DriveMode>(mode);
 		update_motor_acceleration();
 	}
 }
