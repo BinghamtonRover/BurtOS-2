@@ -32,9 +32,11 @@ ControllerConfig::ControllerConfig(nanogui::Screen* screen, ControllerManager& m
 
 	popup = new CalibrationPopup(screen, mgr);
 	popup->set_visible(false);
+	popup->set_position(screen->size() / 3);
 
 	bind_popup = new BindingPopup(screen, mgr);
 	bind_popup->set_visible(false);
+	bind_popup->set_position(screen->size() / 3);
 
 	this->screen()->perform_layout();
 	
@@ -85,6 +87,7 @@ void ControllerConfig::recreate_axes_table() {
 				bind_popup->set_visible(true);
 				bind_popup->request_focus();
 			});
+			bind_name->set_fixed_width(150);
 
 			// Calibration menu has 3 buttons: start/stop, reset, and open detailed config
 			auto calibrate_menu = new nanogui::Widget(axes_table);

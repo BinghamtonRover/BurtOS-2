@@ -66,17 +66,21 @@ CalibrationPopup::CalibrationPopup(nanogui::Screen* p, ControllerManager& c, int
 		ctrl_manager.devices().at(selected_joystick_id).axes().at(selected_axis_idx).calibration().set_center(x);
 	});
 
-	center.text = new nanogui::TextBox(cal_params);
+	center.text = new FunctionBox(cal_params);
 	center.text->set_editable(true);
 	center.text->set_fixed_width(textbox_width);
+	center.text->set_verify_callback([](const std::string& v) {
+		try {
+			float x = std::stof(v);
+			return x < 1.0F && x > -1.0F; 
+		} catch (const std::logic_error&) {
+			return false;
+		}
+	});
 
 	center.text->set_callback([this](const std::string& str) {
-		try {
-			float x = std::stof(str);
-			selected_axis().calibration().set_center(x);
-		} catch (const std::logic_error&) {
-			center.text->set_value(std::to_string(selected_axis().calibration().center()));
-		}
+		float x = std::stof(str);
+		selected_axis().calibration().set_center(x);
 		return true;
 	});
 
@@ -92,17 +96,21 @@ CalibrationPopup::CalibrationPopup(nanogui::Screen* p, ControllerManager& c, int
 		selected_axis().calibration().set_dead_zone(x);
 	});
 
-	deadzone.text = new nanogui::TextBox(cal_params);
+	deadzone.text = new FunctionBox(cal_params);
 	deadzone.text->set_editable(true);
 	deadzone.text->set_fixed_width(textbox_width);
 	deadzone.text->set_units("%");
-	deadzone.text->set_callback([this](const std::string& str) {
+	deadzone.text->set_verify_callback([](const std::string& v) {
 		try {
-			float x = std::stof(str);
-			selected_axis().calibration().set_dead_zone(x / 100.0F);
+			float x = std::stof(v);
+			return x >= 0.0F && x <= 100.0F;
 		} catch (const std::logic_error&) {
-			deadzone.text->set_value(std::to_string(selected_axis().calibration().dead_zone() * 100.0F));
+			return false;
 		}
+	});
+	deadzone.text->set_callback([this](const std::string& str) {
+		float x = std::stof(str);
+		selected_axis().calibration().set_dead_zone(x / 100.0F);
 		return true;
 	});
 
@@ -119,20 +127,21 @@ CalibrationPopup::CalibrationPopup(nanogui::Screen* p, ControllerManager& c, int
 		selected_axis().calibration().set_min(x);
 	});
 
-	minimum.text = new nanogui::TextBox(cal_params);
+	minimum.text = new FunctionBox(cal_params);
 	minimum.text->set_editable(true);
 	minimum.text->set_fixed_width(textbox_width);
+	minimum.text->set_verify_callback([](const std::string& v) {
+		try {
+			float x = std::stof(v);
+			return x <= 1.0F && x >= -1.0F; 
+		} catch (const std::logic_error&) {
+			return false;
+		}
+	});
 
 	minimum.text->set_callback([this](const std::string& str) {
-		try {
-			float x = std::stof(str);
-			if (x > 1.0F || x < 1.0F)
-				throw std::logic_error("invalid axis min");
-
-			selected_axis().calibration().set_min(x);
-		} catch (const std::logic_error&) {
-			minimum.text->set_value(std::to_string(selected_axis().calibration().min()));
-		}
+		float x = std::stof(str);
+		selected_axis().calibration().set_min(x);
 		return true;
 	});
 
@@ -149,18 +158,20 @@ CalibrationPopup::CalibrationPopup(nanogui::Screen* p, ControllerManager& c, int
 		selected_axis().calibration().set_max(x);
 	});
 
-	maximum.text = new nanogui::TextBox(cal_params);
+	maximum.text = new FunctionBox(cal_params);
 	maximum.text->set_editable(true);
 	maximum.text->set_fixed_width(textbox_width);
-	maximum.text->set_callback([this](const std::string& str) {
+	maximum.text->set_verify_callback([](const std::string& v) {
 		try {
-			float x = std::stof(str);
-			if (x > 1.0F || x < 1.0F) throw std::logic_error("invalid axis max");
-
-			selected_axis().calibration().set_max(x);
+			float x = std::stof(v);
+			return x <= 1.0F && x >= -1.0F; 
 		} catch (const std::logic_error&) {
-			maximum.text->set_value(std::to_string(selected_axis().calibration().max()));
+			return false;
 		}
+	});
+	maximum.text->set_callback([this](const std::string& str) {
+		float x = std::stof(str);
+		selected_axis().calibration().set_max(x);
 		return true;
 	});
 

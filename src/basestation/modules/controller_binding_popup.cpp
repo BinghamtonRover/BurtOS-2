@@ -9,7 +9,7 @@ BindingPopup::BindingPopup(nanogui::Screen* screen, ControllerManager& c, int js
 	set_layout(new nanogui::GroupLayout());
 	set_fixed_width(200);
 
-	std::vector<std::string> action_names( {"Nothing"});
+	std::vector<std::string> action_names( {"none"});
 	for (const auto& action : ctrl_manager.actions()) {
 		action_names.push_back(action.name());
 	}
@@ -21,7 +21,7 @@ BindingPopup::BindingPopup(nanogui::Screen* screen, ControllerManager& c, int js
 			if (i == 0) {
 				target.unbind();
 			} else {
-				// action names includes "nothing", which isn't an actual action, so index is off by 1
+				// action names includes "none", which isn't an actual action, so index is off by 1
 				i--;
 				target.set_action(ctrl_manager.actions().at(i));
 			}

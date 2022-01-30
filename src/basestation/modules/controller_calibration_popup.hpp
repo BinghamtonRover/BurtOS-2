@@ -2,6 +2,7 @@
 
 #include <nanogui/nanogui.h>
 #include "../controls/controller_manager.hpp"
+#include "../widgets/functionbox.hpp"
 
 // Window with fine details for an axis
 // This window will never close itself, but may go invisible.
@@ -11,7 +12,7 @@ class CalibrationPopup : public nanogui::Window {
 		// Each configurable value will use a slider and textbox
 		struct ConfigValue {
 			nanogui::Slider* slider;
-			nanogui::TextBox* text;
+			FunctionBox* text;
 		};
 		nanogui::ProgressBar* cal_value_bar;
 		nanogui::TextBox* cal_value_box;

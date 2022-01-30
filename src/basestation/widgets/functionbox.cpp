@@ -29,5 +29,21 @@ bool FunctionBox::keyboard_event(int key, int scancode, int key_act, int modifie
 			return true;
 		}
 	}
-	return nanogui::TextBox::keyboard_event(key, scancode, key_act, modifiers);
+	if (nanogui::TextBox::keyboard_event(key, scancode, key_act, modifiers)) {
+		if (validate_callback) {
+			m_valid_format = validate_callback(m_value_temp);
+		}
+		return true;
+	}
+	return false;
+}
+
+bool FunctionBox::keyboard_character_event(unsigned int codepoint) {
+	if (nanogui::TextBox::keyboard_character_event(codepoint)) {
+		if (validate_callback) {
+			m_valid_format = validate_callback(m_value_temp);
+		}
+		return true;
+	}
+	return false;
 }

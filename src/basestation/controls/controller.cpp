@@ -16,7 +16,7 @@ AxisAction::AxisAction(const std::string& name, float final_value, const decltyp
 }
 
 AxisAction::AxisAction() {
-	display_name = "<Empty>";
+	display_name = "<none>";
 	callback = [](float) { };
 }
 
