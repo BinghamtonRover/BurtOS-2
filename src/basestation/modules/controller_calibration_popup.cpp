@@ -75,7 +75,7 @@ CalibrationPopup::CalibrationPopup(nanogui::Screen* p, ControllerManager& c, int
 			float x = std::stof(str);
 			selected_axis().calibration().set_center(x);
 		} catch (const std::logic_error&) {
-			center.text->set_value(std::to_string(selected_axis().calibration().center));
+			center.text->set_value(std::to_string(selected_axis().calibration().center()));
 		}
 		return true;
 	});
@@ -101,7 +101,7 @@ CalibrationPopup::CalibrationPopup(nanogui::Screen* p, ControllerManager& c, int
 			float x = std::stof(str);
 			selected_axis().calibration().set_dead_zone(x / 100.0F);
 		} catch (const std::logic_error&) {
-			deadzone.text->set_value(std::to_string(selected_axis().calibration().dead_zone * 100.0F));
+			deadzone.text->set_value(std::to_string(selected_axis().calibration().dead_zone() * 100.0F));
 		}
 		return true;
 	});
@@ -116,9 +116,7 @@ CalibrationPopup::CalibrationPopup(nanogui::Screen* p, ControllerManager& c, int
 	minimum.slider->set_fixed_width(slider_width);
 	minimum.slider->set_callback([this](float x) {
 		x = JoystickAxis::percent_to_axis(x);
-		AxisCalibration c = selected_axis().calibration();
-		c.min = x;
-		selected_axis().apply_calibration(c);
+		selected_axis().calibration().set_min(x);
 	});
 
 	minimum.text = new nanogui::TextBox(cal_params);
@@ -128,12 +126,12 @@ CalibrationPopup::CalibrationPopup(nanogui::Screen* p, ControllerManager& c, int
 	minimum.text->set_callback([this](const std::string& str) {
 		try {
 			float x = std::stof(str);
-			if (x > 1.0F || x < 1.0F) throw std::logic_error("invalid axis min");
-			AxisCalibration c = selected_axis().calibration();
-			c.min = x;
-			selected_axis().apply_calibration(c);
+			if (x > 1.0F || x < 1.0F)
+				throw std::logic_error("invalid axis min");
+
+			selected_axis().calibration().set_min(x);
 		} catch (const std::logic_error&) {
-			minimum.text->set_value(std::to_string(selected_axis().calibration().min));
+			minimum.text->set_value(std::to_string(selected_axis().calibration().min()));
 		}
 		return true;
 	});
@@ -148,9 +146,7 @@ CalibrationPopup::CalibrationPopup(nanogui::Screen* p, ControllerManager& c, int
 	maximum.slider->set_fixed_width(slider_width);
 	maximum.slider->set_callback([this](float x) {
 		x = JoystickAxis::percent_to_axis(x);
-		AxisCalibration c = selected_axis().calibration();
-		c.max = x;
-		selected_axis().apply_calibration(c);
+		selected_axis().calibration().set_max(x);
 	});
 
 	maximum.text = new nanogui::TextBox(cal_params);
@@ -160,11 +156,10 @@ CalibrationPopup::CalibrationPopup(nanogui::Screen* p, ControllerManager& c, int
 		try {
 			float x = std::stof(str);
 			if (x > 1.0F || x < 1.0F) throw std::logic_error("invalid axis max");
-			AxisCalibration c = selected_axis().calibration();
-			c.max = x;
-			selected_axis().apply_calibration(c);
+
+			selected_axis().calibration().set_max(x);
 		} catch (const std::logic_error&) {
-			maximum.text->set_value(std::to_string(selected_axis().calibration().max));
+			maximum.text->set_value(std::to_string(selected_axis().calibration().max()));
 		}
 		return true;
 	});
@@ -200,28 +195,28 @@ void CalibrationPopup::draw(NVGcontext* ctx) {
 
 			AxisCalibration& c = axis.calibration();
 			if (!center.slider->focused()) {
-				center.slider->set_value(JoystickAxis::axis_to_percent(c.center));
+				center.slider->set_value(JoystickAxis::axis_to_percent(c.center()));
 			}
 			if (!deadzone.slider->focused()) {
-				deadzone.slider->set_value(c.dead_zone);
+				deadzone.slider->set_value(c.dead_zone());
 			}
 			if (!minimum.slider->focused()) {
-				minimum.slider->set_value(JoystickAxis::axis_to_percent(c.min));
+				minimum.slider->set_value(JoystickAxis::axis_to_percent(c.min()));
 			}
 			if (!maximum.slider->focused()) {
-				maximum.slider->set_value(JoystickAxis::axis_to_percent(c.max));
+				maximum.slider->set_value(JoystickAxis::axis_to_percent(c.max()));
 			}
 			if (!center.text->focused()) {
-				center.text->set_value(std::to_string(c.center));
+				center.text->set_value(std::to_string(c.center()));
 			}
 			if (!deadzone.text->focused()) {
-				deadzone.text->set_value(std::to_string(c.dead_zone * 100.0F));
+				deadzone.text->set_value(std::to_string(c.dead_zone() * 100.0F));
 			}
 			if (!minimum.text->focused()) {
-				minimum.text->set_value(std::to_string(c.min));
+				minimum.text->set_value(std::to_string(c.min()));
 			}
 			if (!maximum.text->focused()) {
-				maximum.text->set_value(std::to_string(c.max));
+				maximum.text->set_value(std::to_string(c.max()));
 			}
 
 		} catch (const std::out_of_range&) {

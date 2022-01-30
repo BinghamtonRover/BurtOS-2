@@ -5,32 +5,75 @@
 #include <functional>
 #include <nanogui/opengl.h>
 
-struct AxisAction {
-	std::string name = UNBOUND_NAME;
-	std::function<void(float)> callback;
-	float final_value;
+class AxisAction {
+	private:
+		std::string display_name;
+		std::function<void(float)> callback;
+		float final_value;
+	public:
 
-	// Compare actions based on their names (alphabetical order)
-	inline bool operator<(const AxisAction& other) const {
-		return name < other.name;
-	}
-	constexpr static const char* UNBOUND_NAME = "<unbound>";
+		// Default action is nothing
+		AxisAction();
+
+		// Create a callable action for binding to joystick axes.
+		// @param name Display name to help with searching and configuring
+		// @param final_value Value sent to callback when this action is unbound
+		// @param callback The action to run
+		AxisAction(const std::string& name, float final_value = 0.0F, const decltype(callback)& callback = nullptr);
+		
+		inline const std::string& name() const {
+			return display_name;
+		}
+		inline void call(float x) const {
+			callback(x);
+		}
+		inline void disconnect() const {
+			call(final_value);
+		}
+		inline void operator()(float x) const {
+			call(x);
+		}
+
+		// Compare actions based on their names (alphabetical order)
+		inline bool operator<(const AxisAction& other) const {
+			return display_name < other.display_name;
+		}
 };
 
 
 // Two-sided scaling: joysticks usually don't center exactly at 0, so scale around a calibrated center
 // There are two separate scales since one side will cover a larger range of values
-struct AxisCalibration {
-	float left_scale = 1.0F;
-	float right_scale = 1.0F;
-	float center = 0.0F;
-	float dead_zone = 0.0F;
-	float min = -1.0F;
-	float max = 1.0F;
-	void set_center(float);
-	void set_dead_zone(float);
-	void rescale();
-	void restore_defaults();
+// Graph of raw input translation: https://www.desmos.com/calculator/gt7h3bbf2i
+class AxisCalibration {
+	private:
+		float left_scale = 1.0F;
+		float right_scale = 1.0F;
+		float center_pos = 0.0F;
+		float deadzone = 0.0F;
+		float minimum = -1.0F;
+		float maximum = 1.0F;
+		void rescale();
+	public:
+		void restore_defaults();
+
+		// Minimum position the joystick can reach (almost always -1.0)
+		void set_min(float);
+		inline float min() const { return minimum; }
+
+		// Maximum position the joystick can reach (almost always 1.0)
+		void set_max(float);
+		inline float max() const { return maximum; }
+
+		// Position where the joystick centers (default 0.0, but most joysticks are off by a bit)
+		void set_center(float);
+		inline float center() const { return center_pos; }
+
+		// The dead-zone is a region around the center where input is ignored. Should be in range [0.0, 1.0] 
+		void set_dead_zone(float percent);
+		inline float dead_zone() const { return deadzone; }
+
+		// Scale a raw input to the calibrated output
+		float translate(float x) const;
 };
 
 class JoystickAxis {
@@ -58,8 +101,6 @@ class JoystickAxis {
 			return last_value_raw;
 		}
 
-		// Scale the raw controller input to the calibrated range for this joystick
-		float translate(float) const;
 		void set_action(const AxisAction& act);
 		void update(float x);
 		void unbind();
@@ -149,6 +190,10 @@ class Controller {
 		void update_axes();
 
 		JoystickAxis& get_gamepad_axis(int glfw_gamepad_axis);
+		
+		inline JoystickAxis& get_gamepad_axis(const gamepad::Axis& a) {
+			return get_gamepad_axis(a.IDX);
+		}
 
 		const char* device_name() const;
 	

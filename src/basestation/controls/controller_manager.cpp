@@ -33,10 +33,9 @@ void ControllerManager::update_controls() {
 }
 
 const AxisAction& ControllerManager::find_action(const std::string& name) const {
-	AxisAction search;
-	search.name = name;
+	AxisAction search(name);
 	auto it = std::lower_bound(_actions.begin(), _actions.end(), search);
-	if (it != _actions.end() && it->name == name) {
+	if (it != _actions.end() && it->name() == name) {
 		return *it;
 	} else {
 		throw std::invalid_argument("action not found");
@@ -49,13 +48,10 @@ void ControllerManager::glfw_joystick_callback(int joystick_id, int event) {
 }
 
 void ControllerManager::add_axis_action(const std::string& name, const std::function<void(float)>& action_callback, float final_value) {
-	AxisAction new_action;
-	new_action.name = name;
-	new_action.callback = action_callback;
-	new_action.final_value = final_value;
+	AxisAction new_action(name, final_value, action_callback);
 
 	auto it = std::lower_bound(_actions.begin(), _actions.end(), new_action);
-	if (it != _actions.end() && it->name == name) {
+	if (it != _actions.end() && it->name() == name) {
 		// name was already added: replace it
 		*it = new_action;
 	} else {

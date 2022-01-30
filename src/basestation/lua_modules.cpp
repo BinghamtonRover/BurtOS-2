@@ -46,7 +46,7 @@ int lua_ctrl_lib::show_actions(lua_State* L) {
 	ControllerManager& cmgr = Session::get_main_session().controller_manager();
 	std::ostringstream listing;
 	for (auto& c : cmgr.actions()) {
-		listing << c.name << "\n";
+		listing << c.name() << "\n";
 	}
 
 	lua_getglobal(L, "print");
@@ -72,7 +72,7 @@ int lua_ctrl_lib::show_axes(lua_State* L) {
 		for (auto& axis : cmgr.devices().at(joystick_id).axes()) {
 			listing << "Axis " << axis_n << ": value = " << axis.value()
 				<< " (raw = " << axis.raw_value()
-				<< "), action = " << axis.action().name << "\n"; 
+				<< "), action = " << axis.action().name() << "\n"; 
 			axis_n += 1;
 		}
 	} catch (const std::out_of_range&) {

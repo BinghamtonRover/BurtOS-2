@@ -79,7 +79,7 @@ void ControllerConfig::recreate_axes_table() {
 			// Instead, capture Joystick ID and Axis #
 
 			int selected_js_id = selected_dev.joystick_id();
-			auto bind_name = new nanogui::Button(axes_table, axis.action().name, FA_EDIT);
+			auto bind_name = new nanogui::Button(axes_table, axis.action().name(), FA_EDIT);
 			bind_name->set_callback([this, axis_num, selected_js_id]() {
 				bind_popup->set_selection(selected_js_id, axis_num);
 				bind_popup->set_visible(true);
@@ -97,7 +97,7 @@ void ControllerConfig::recreate_axes_table() {
 				JoystickAxis& target = mgr.devices().at(selected_js_id).axes().at(axis_num);
 				// The icon will be wrong if calibration is modified with console, but the action will
 				// be correct
-				if (target.action().name == "Calibrating") {
+				if (target.action().name() == "Calibrating") {
 					b_toggle_calibrating->set_icon(FA_PLAY);
 					target.end_calibration();
 				} else {
@@ -173,7 +173,7 @@ void ControllerConfig::draw(NVGcontext* ctx) {
 		auto it = axis_table_entries.begin();
 		for (auto& axis : selected_dev.axes()) {
 			it->axis_value->set_value((axis.value() - JoystickAxis::AXIS_MIN) / JoystickAxis::AXIS_RANGE);
-			it->bind_name->set_caption(axis.action().name);
+			it->bind_name->set_caption(axis.action().name());
 			++it;
 		}
 	}
