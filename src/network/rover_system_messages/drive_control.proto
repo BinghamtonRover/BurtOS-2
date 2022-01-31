@@ -18,5 +18,5 @@ message DriveMode {
 		COUNT = 2;
 	}
 
-    Mode mode = 1;
+	Mode mode = 1;
 }

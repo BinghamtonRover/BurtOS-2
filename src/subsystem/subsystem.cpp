@@ -11,7 +11,7 @@ unsigned short int onboard_rover_receiver = 22101;
 int main() {
 	std::cout << "Binghamton University Rover Team - BurtOS 2 - Rover Subsystem v2\n";
 
-	register_drive_messages();
+	register_messages();
 
 	static boost::asio::io_context ctx;
 	static net::MessageReceiver receiver(onboard_rover_receiver, ctx);
@@ -22,8 +22,8 @@ int main() {
 		if (msg.ParseFromArray(buf, len)) {
 			std::cout << "Updating velocity with speed: " << msg.speed() << " and angle: " << msg.angle() << "\n";
 			drive_controller.set_forward_velocity(msg.speed());
-            drive_controller.set_steering_angle(msg.angle());
-        }
+    		drive_controller.set_steering_angle(msg.angle());
+		}
 	});
 
 	receiver.register_handler<drive_msg::Halt>([](const uint8_t buf[], std::size_t len) {
@@ -38,14 +38,14 @@ int main() {
 		drive::DriveMode msg;
 		if (msg.ParseFromArray(buf, len)) {
 			std::cout << "Changing drive mode to: " << msg.mode() << " (0 = NEUTRAL, 1 = DRIVE)\n";
-			int mode = static_cast<int>(msg.mode());
+			DriveController::DriveMode mode = static_cast<DriveController::DriveMode>(msg.mode());
 			drive_controller.set_drive_mode(mode);
         }
 	});
 
 	std::cout << "Initialization complete; Entering main event loop\n";
 	for (;;) {
-		ctx.run();
+		ctx.poll();
 		drive_controller.update_motor_acceleration();
 	}
 
