@@ -5,14 +5,14 @@ static int can_socket = 0;
 static bool socket_open = false;
 
 //Send float data
-int can_send(Node device, Command command, float data) {
+int can_send_float(Node device, Command command, float data) {
     union { unsigned long ul; float f; } conv = { .f = data };
-    return can_send(device, command, 8, get_big_endian_first_half(conv.ul));
+    return can_send(device, command, 8, get_big_endian(conv.ul));
 }
 
 //Send unsigned in data
-int can_send(Node device, Command command, int data) {
-    return can_send(device, command, 4, get_big_endian_first_half((unsigned long)data));
+int can_send_int(Node device, Command command, int data) {
+    return can_send(device, command, 4, get_big_endian((unsigned long)data));
 }
 
 //Send out a can message
@@ -38,7 +38,7 @@ int can_send(Node device, Command command, int num_bytes, unsigned long data) {
     }
 
     //Write the frame
-    if (write(can_socket, &frame, 10) != 10) {
+    if (write(can_socket, &frame, 16) != 16) {
         //Failed to write
         return 1;
     }
@@ -46,6 +46,7 @@ int can_send(Node device, Command command, int num_bytes, unsigned long data) {
     //Successfully sent
     return 0;
 }
+
 #ifdef ONBOARD_CAN_BUS
 //Create a can frame
 canfd_frame get_can_frame(int modifier, Node device, Command command, int num_bytes, unsigned long data) {
@@ -63,8 +64,8 @@ canfd_frame get_can_frame(int modifier, Node device, Command command, int num_by
 #endif
 
 //Take the first 4 bytes of an unsigned long, and convert them to big endian
-unsigned long get_big_endian_first_half(unsigned long u) {
-	return (((0x000000FF & u) << 24) | ((0x0000FF00 & u) << 8) | ((0x00FF0000 & u) >> 8)  | ((0xFF000000 & u) >> 24)) << 32;
+unsigned long get_big_endian(unsigned long u) {
+	return (((0x000000FF & u) << 24) | ((0x0000FF00 & u) << 8) | ((0x00FF0000 & u) >> 8)  | ((0xFF000000 & u) >> 24));
 }
 
 //Open can socket
@@ -85,6 +86,10 @@ bool open_can_socket() {
     struct sockaddr_can addr;
     addr.can_family = AF_CAN;
     addr.can_ifindex = ifr.ifr_ifindex;
+
+    //Set to "CAN FD mode"
+    int enable_canfd = 1;
+    setsockopt(can_socket, SOL_CAN_RAW, CAN_RAW_FD_FRAMES, &enable_canfd, sizeof(enable_canfd));
 
     //Disable recieve filter, then open socket
     setsockopt(can_socket, SOL_CAN_RAW, CAN_RAW_FILTER, NULL, 0);
