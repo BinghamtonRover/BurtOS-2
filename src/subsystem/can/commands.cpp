@@ -5,13 +5,13 @@ static int can_socket = 0;
 static bool socket_open = false;
 
 //Send float data
-int can_send_float(Node device, Command command, float data) {
+int can_send(Node device, Command command, float data) {
     union { unsigned long ul; float f; } conv = { .f = data };
     return can_send(device, command, 8, get_big_endian(conv.ul));
 }
 
 //Send unsigned in data
-int can_send_int(Node device, Command command, int data) {
+int can_send(Node device, Command command, int data) {
     return can_send(device, command, 4, get_big_endian((unsigned long)data));
 }
 

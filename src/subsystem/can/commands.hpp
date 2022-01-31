@@ -17,8 +17,8 @@
 #include "constants.hpp"
 
 //Methods for can_send
-int can_send_float(Node device, Command command, float data);
-int can_send_int(Node device, Command command, int data);
+int can_send(Node device, Command command, float data);
+int can_send(Node device, Command command, int data);
 
 //Send out a can message
 int can_send(Node device, Command command, int num_bytes, unsigned long data);
