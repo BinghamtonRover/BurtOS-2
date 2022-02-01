@@ -1,21 +1,37 @@
 #include <iostream>
 #include <boost/asio.hpp>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/json_parser.hpp>
 #include <rover_system_messages.hpp>
 
 #include <network.hpp>
 #include "drive_controller.hpp"
 
 DriveController drive_controller;
-unsigned short int onboard_rover_receiver = 22101;
+
+uint16_t subsystem_receive_port;
+
+void read_subsystem_config(const std::string& fname) {
+	namespace ptree = boost::property_tree;
+	ptree::ptree subsystem_cfg;
+	try {
+		ptree::json_parser::read_json(fname, subsystem_cfg);
+		subsystem_receive_port = subsystem_cfg.get<uint16_t>("subsystem.network.recv_port", 22101);
+
+	} catch (const ptree::json_parser_error& err) {
+		std::cerr << "Warning: Using default config after error reading config file: "
+				<< err.message() << " (" << err.filename() << ":" << err.line() << ")" << std::endl;
+	}
+}
 
 int main() {
 	std::cout << "Binghamton University Rover Team - BurtOS 2 - Rover Subsystem v2\n";
 
+	read_subsystem_config("cfg/subsystem_config.json");
 	register_messages();
 
-	static boost::asio::io_context ctx;
-	static net::MessageReceiver receiver(onboard_rover_receiver, ctx);
-	static net::MessageSender sender(ctx, net::Destination(boost::asio::ip::address::from_string("127.0.0.1"), onboard_rover_receiver));
+	boost::asio::io_context ctx;
+	net::MessageReceiver receiver(subsystem_receive_port, ctx);
 
 	receiver.register_handler<drive_msg::Velocity>([](const uint8_t buf[], std::size_t len) {
 		drive::Velocity msg;

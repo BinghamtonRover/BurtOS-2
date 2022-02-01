@@ -31,7 +31,7 @@ void DriveController::update_motor_acceleration() {
 	auto time_now = std::chrono::steady_clock::now();
 	std::chrono::duration<double> time_passed = time_now - last_active_time;
 	if (time_passed.count() > 1) {
-		halt();
+		set_forward_velocity(0.0F);
 	} else {
 		if (get_drive_mode() == DriveMode::NEUTRAL) {
 			left_speed = 0;
