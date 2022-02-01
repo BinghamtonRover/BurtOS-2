@@ -35,5 +35,5 @@ canfd_frame get_can_frame(int modifier, Node device, Command command, int num_by
 unsigned long get_big_endian(unsigned long u);
 
 //Can socket
-bool can_open_socket();
-void can_close_socket();
+bool open_can_socket();
+void close_can_socket();
