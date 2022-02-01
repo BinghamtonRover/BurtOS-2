@@ -33,8 +33,6 @@ void DriveController::update_motor_acceleration() {
 	if (time_passed.count() > 1) {
 		halt();
 	} else {
-		last_active_time = time_now;
-
 		if (get_drive_mode() == DriveMode::NEUTRAL) {
 			left_speed = 0;
 			right_speed = 0;
@@ -46,6 +44,7 @@ void DriveController::update_motor_acceleration() {
 }
 
 void DriveController::set_forward_velocity(float mps) {
+	last_active_time = std::chrono::steady_clock::now();
 	mps = fmin(fmax(mps, -MAX_SPEED), MAX_SPEED);
 	target_velocity_mps = mps;
 	// M_PI is technically non-standard C++
@@ -56,6 +55,7 @@ void DriveController::set_forward_velocity(float mps) {
 
 // -90 = sharp left, 0 = straight, 90 = sharp right
 void DriveController::set_steering_angle(float angle) { 
+	last_active_time = std::chrono::steady_clock::now();
 	target_angle = fmin(fmax(angle, -180), 180);
 	update_target_velocity();
 }
@@ -66,6 +66,7 @@ DriveController::DriveMode DriveController::get_drive_mode() {
 
 void DriveController::set_drive_mode(DriveMode mode) {
 	if (mode < DriveMode::COUNT) {
+		last_active_time = std::chrono::steady_clock::now();
 		current_mode = mode;
 		update_motor_acceleration();
 	}

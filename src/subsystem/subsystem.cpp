@@ -20,27 +20,24 @@ int main() {
 	receiver.register_handler<drive_msg::Velocity>([](const uint8_t buf[], std::size_t len) {
 		drive::Velocity msg;
 		if (msg.ParseFromArray(buf, len)) {
-			std::cout << "Updating velocity with speed: " << msg.speed() << " and angle: " << msg.angle() << "\n";
 			drive_controller.set_forward_velocity(msg.speed());
-    		drive_controller.set_steering_angle(msg.angle());
+			drive_controller.set_steering_angle(msg.angle());
 		}
 	});
 
 	receiver.register_handler<drive_msg::Halt>([](const uint8_t buf[], std::size_t len) {
 		drive::Halt msg;
 		if (msg.ParseFromArray(buf, len) && msg.halt()) {
-			std::cout << "Halting drive controller\n";
 			drive_controller.halt();
-        }
+		}
 	});
 
 	receiver.register_handler<drive_msg::DriveMode>([](const uint8_t buf[], std::size_t len) {
 		drive::DriveMode msg;
 		if (msg.ParseFromArray(buf, len)) {
-			std::cout << "Changing drive mode to: " << msg.mode() << " (0 = NEUTRAL, 1 = DRIVE)\n";
 			DriveController::DriveMode mode = static_cast<DriveController::DriveMode>(msg.mode());
 			drive_controller.set_drive_mode(mode);
-        }
+		}
 	});
 
 	std::cout << "Initialization complete; Entering main event loop\n";
