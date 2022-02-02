@@ -1,4 +1,5 @@
 #include <iostream>
+#include <csignal>
 #include <boost/asio.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
@@ -8,6 +9,7 @@
 #include "drive_controller.hpp"
 
 DriveController drive_controller;
+boost::asio::io_context ctx;
 
 uint16_t subsystem_receive_port;
 
@@ -30,7 +32,6 @@ int main() {
 	read_subsystem_config("cfg/subsystem_config.json");
 	register_messages();
 
-	boost::asio::io_context ctx;
 	net::MessageReceiver receiver(subsystem_receive_port, ctx);
 
 	receiver.register_handler<drive_msg::Velocity>([](const uint8_t buf[], std::size_t len) {
@@ -56,11 +57,52 @@ int main() {
 		}
 	});
 
-	std::cout << "Initialization complete; Entering main event loop\n";
-	for (;;) {
+	static bool operating = true;
+
+	// Peacefully shut down when receiving SIGINT
+	std::signal(SIGINT, [](int signal) {
+		std::cout << "Disabling operations in response to SIGINT.\n";
+		operating = false;
+	});
+
+	// Segmentation fault: as a last resort, at least try to deinitialize the subsystem
+	std::signal(SIGSEGV, [](int signal) {
+		std::cerr << "Fatal error: Segmentation fault!\n";
+		std::cerr << "Attempting to deinitialize critical systems...\n";
+
+		// TODO: (IMPORTANT) Send CAN commands to stop all subsystems
+		// Unlike the peaceful shutdown, this should only shutdown critical systems (ODrives, other motor drivers)
+		
+		std::cerr << "Critical system shutdown finished. Subsystem program terminating.\n";
+		exit(1);
+	});
+
+	std::cout << "Initialization complete; Entering main event loop.\n";
+
+	/*
+		Main Event Loop
+	*/
+
+	while (operating) {
+
 		ctx.poll();
 		drive_controller.update_motor_acceleration();
+
 	}
+
+	/*
+		Peaceful Shutdown Procedure
+	*/
+
+	std::cout << "Subsystem shutting down...\n";
+	receiver.close();
+	ctx.stop();
+
+	// TODO: (IMPORTANT) halt is not enough! Must also ensure speeds are sent to ODrives
+	// This may be done by adding a destructor to drive controller instead
+	drive_controller.halt();
+
+	std::cout << "Operation complete.\n";
 
 	return 0;
 }
