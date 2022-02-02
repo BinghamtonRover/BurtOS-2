@@ -21,4 +21,5 @@ namespace lua_ctrl_lib {
 	int end_calibration(lua_State* L);
 	int set_center(lua_State* L);
 	int set_dead_zone(lua_State* L);
+	int menu(lua_State* L);
 }

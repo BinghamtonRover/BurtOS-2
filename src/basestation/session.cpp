@@ -140,6 +140,11 @@ void Session::gui_loop() {
 			screen->draw_widgets();
 
 			glfwSwapBuffers(window);
+
+			for (const auto& event_callback : scheduled_events) {
+				event_callback(*this);
+			}
+			scheduled_events.clear();
 		}
 
 		glfwDestroyWindow(window);
@@ -177,4 +182,9 @@ bool Session::get_is_glfw_init() {
 
 void Session::set_is_glfw_init(bool is_init) {
 	is_glfw_init = is_init;
+}
+
+void Session::schedule_sync_event(const std::function<void(Session&)>& call) {
+	std::lock_guard lock(schedule_lock);
+	scheduled_events.push_back(call);
 }

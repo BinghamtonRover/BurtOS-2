@@ -1,6 +1,7 @@
 #include "lua_modules.hpp"
 
 #include "session.hpp"
+#include "modules/controller_config.hpp"
 
 #include <sstream>
 
@@ -14,6 +15,7 @@ const struct luaL_Reg lua_ctrl_lib::lib[] = {
 	{"end_calibration", lua_ctrl_lib::end_calibration},
 	{"set_center", lua_ctrl_lib::set_center},
 	{"set_dead_zone", lua_ctrl_lib::set_dead_zone},
+	{"menu", lua_ctrl_lib::menu},
 	{NULL, NULL}
 };
 
@@ -169,5 +171,19 @@ int lua_ctrl_lib::set_center(lua_State* L) {
 	} catch (const std::invalid_argument&) {
 		luaL_error(L, "error: center invalid");
 	}
+	return 0;
+}
+
+int lua_ctrl_lib::menu(lua_State* L) {
+	Session::get_main_session().schedule_sync_event([] (Session& bs_gui) {
+		nanogui::Screen* scr = &bs_gui.get_screen();
+		auto window = new ControllerConfig(scr, bs_gui.controller_manager());
+
+		// Center on screen
+		int xpos = std::max(0, (scr->width() - window->width()) / 2);
+		int ypos = std::max(0, (scr->height() - window->height()) / 2);
+		window->set_position(nanogui::Vector2i(xpos, ypos));
+
+	});
 	return 0;
 }
