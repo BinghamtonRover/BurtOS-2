@@ -107,6 +107,7 @@ class WindowModule : public nanogui::Screen {
         nanogui::Window* ui = nullptr;
         nanogui::ComboBox* uiCombo = nullptr;
 
+		//void close(int index);
         void minimize(int index);
 		void restore(int index);
 		void setFocused(int index);

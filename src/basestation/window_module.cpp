@@ -99,7 +99,7 @@ nanogui::Window* WindowModule::createManagedSubWindow(const std::string& title) 
     auto items_short = m_subWindows.uiCombo->items_short();
 
     items.push_back(title);
-    items_short.push_back(title.substr(0,20)); //size of height
+    items_short.push_back(title.substr(0,50)); //how much of title should be visible
 
     const auto old_selected = m_subWindows.uiCombo->selected_index();
 
@@ -107,34 +107,38 @@ nanogui::Window* WindowModule::createManagedSubWindow(const std::string& title) 
     m_subWindows.uiCombo->set_selected_index(old_selected > 0 ? old_selected : 0);
 
     w->button_panel()
-    ->add<nanogui::Button>("", FA_FOLDER_MINUS)
+    ->add<nanogui::Button>("", FA_ANGLE_DOWN)
     ->set_callback([this, this_window_index]() { 
         m_subWindows.minimize(this_window_index); });
 
+    // w->button_panel()
+    // ->add<nanogui::Button>("", FA_WINDOW_CLOSE)
+    // ->set_callback([this, this_window_index]() { 
+    //     m_subWindows.close(this_window_index); });
+
     w->center();
+    for (int i = 0; i < static_cast<int>(m_subWindows.windows.size()); i++)
+        m_subWindows.restore(i);
 
     return w;
 }
 
 void WindowModule::createControlUI() {
-    constexpr int WIDTH = 120, HEIGHT = 40;
-    constexpr int HIDEN_WIDTH = 35, HIDEN_HEIGHT = 35;
+    constexpr int WIDTH = 100, HEIGHT = 40;
+    constexpr int HIDEN_WIDTH = 70, HIDEN_HEIGHT = 70;
     if (m_subWindows.ui) return;
 
-    std::cout << "BRO" << std::endl;
     auto& w = m_subWindows.ui;
-    w = new nanogui::Window(this, "");
+    w = new nanogui::Window(this, "Manager", false);
 
-    w->set_layout(new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Fill, 1, 1));
+    w->set_layout(new nanogui::GroupLayout());
 
     w->set_size({WIDTH, HEIGHT});
-    w->set_position({0,0});
+    w->set_position({10,10});
     nanogui::Theme* mod_theme = new nanogui::Theme(screen()->nvg_context());
-    mod_theme->m_window_header_height = 1;
+    mod_theme->m_window_header_height = 20;
     w->set_theme(mod_theme);
-
     auto stack_panels = w->add<nanogui::StackedWidget>();
-
     auto page1 = new nanogui::Widget(nullptr);
     auto page2 = new nanogui::Widget(nullptr);
 
@@ -163,30 +167,31 @@ void WindowModule::createControlUI() {
 		m_subWindows.setFocused(index);
 	});
 
+
     auto pn = page1->add<nanogui::Widget>();
 	pn->set_layout(new nanogui::BoxLayout(
 		nanogui::Orientation::Horizontal, nanogui::Alignment::Fill, 4, 4));
 
-	auto minB = pn->add<nanogui::Button>("", FA_MINUS_SQUARE);
+	auto minB = pn->add<nanogui::Button>("Current", FA_ANGLE_DOWN);
 	minB->set_callback([this]() {
 		m_subWindows.minimize(m_subWindows.uiCombo->selected_index());
 	});
 	minB->set_tooltip("Minimize");
 
-    auto maxB = pn->add<nanogui::Button>("", FA_MINUS_SQUARE);
+    auto maxB = pn->add<nanogui::Button>("Current", FA_ANGLE_UP);
 	maxB->set_callback([this]() {
 		m_subWindows.restore(m_subWindows.uiCombo->selected_index());
 	});
 	maxB->set_tooltip("Restore selected");
 
-	auto minAll = pn->add<nanogui::Button>("All", FA_MINUS_SQUARE);
+	auto minAll = pn->add<nanogui::Button>("All", FA_ANGLE_DOUBLE_DOWN);
 	minAll->set_callback([this]() {
 		for (int i = 0; i < static_cast<int>(m_subWindows.windows.size()); i++)
 			m_subWindows.minimize(i);
 	});
 	minAll->set_tooltip("Minimize all");
 
-	auto maxAll = pn->add<nanogui::Button>("All", FA_MINUS_SQUARE);
+	auto maxAll = pn->add<nanogui::Button>("All", FA_ANGLE_DOUBLE_UP);
 	maxAll->set_callback([this]() {
 		for (int i = 0; i < static_cast<int>(m_subWindows.windows.size()); i++)
 			m_subWindows.restore(i);
@@ -217,6 +222,13 @@ void WindowModule::SubWindows::minimize(int index) {
 	w->set_visible(false);
 	parent.perform_layout();
 }
+
+// void WindowModule::SubWindows::close(int index) {
+//     if (index < 0 || index > static_cast<int>(windows.size())) return;
+//     auto w = windows.at(index);
+
+
+// }
 
 void WindowModule::SubWindows::restore(int index) {
 	if (index < 0 || index > static_cast<int>(windows.size())) return;
