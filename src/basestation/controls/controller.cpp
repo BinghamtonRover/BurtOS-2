@@ -177,9 +177,10 @@ void Controller::update_device() {
 void Controller::update_axes() {
 	if (gamepad_mode) {
 		GLFWgamepadstate state;
-		glfwGetGamepadState(_joystick_id, &state);
-		for (int i = 0; i <= GLFW_GAMEPAD_AXIS_LAST; i++) {
-			_axes[i].update(state.axes[i]);
+		if (glfwGetGamepadState(_joystick_id, &state)) {
+			for (int i = 0; i <= GLFW_GAMEPAD_AXIS_LAST; i++) {
+				_axes[i].update(state.axes[i]);
+			}
 		}
 	} else {
 		int count;
