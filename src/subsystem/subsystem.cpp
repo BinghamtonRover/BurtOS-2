@@ -26,6 +26,18 @@ void read_subsystem_config(const std::string& fname) {
 	}
 }
 
+// Try to deinitialize critical systems (like the ODrives) after the program has encountered a critical error
+// Exit with abnormal exit code when finished
+void panic_shutdown() {
+	std::cerr << "Attempting to stop critical systems...\n";
+
+	// TODO: (IMPORTANT) Send CAN commands to stop all subsystems
+	// Unlike the peaceful shutdown, this should only shutdown critical systems (ODrives, other motor drivers)
+
+	std::cerr << "Critical system shutdown finished. Terminating.\n";
+	exit(1);
+}
+
 int main() {
 	std::cout << "Binghamton University Rover Team - BurtOS 2 - Rover Subsystem v2\n";
 
@@ -68,13 +80,7 @@ int main() {
 	// Segmentation fault: as a last resort, at least try to deinitialize the subsystem
 	std::signal(SIGSEGV, [](int signal) {
 		std::cerr << "Fatal error: Segmentation fault!\n";
-		std::cerr << "Attempting to deinitialize critical systems...\n";
-
-		// TODO: (IMPORTANT) Send CAN commands to stop all subsystems
-		// Unlike the peaceful shutdown, this should only shutdown critical systems (ODrives, other motor drivers)
-		
-		std::cerr << "Critical system shutdown finished. Subsystem program terminating.\n";
-		exit(1);
+		panic_shutdown();
 	});
 
 	std::cout << "Initialization complete; Entering main event loop.\n";
@@ -83,11 +89,16 @@ int main() {
 		Main Event Loop
 	*/
 
-	while (operating) {
+	try {
+		while (operating) {
 
-		ctx.poll();
-		drive_controller.update_motor_acceleration();
+			ctx.poll();
+			drive_controller.update_motor_acceleration();
 
+		}
+	} catch (const std::exception& err) {
+		std::cerr << "Fatal error: Unhandled '" << typeid(err).name() << "' exception in Main Event Loop!\n\twhat(): " << err.what() << std::endl;
+		panic_shutdown();
 	}
 
 	/*
