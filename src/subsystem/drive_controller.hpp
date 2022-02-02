@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <chrono>
 
 class DriveController {
 	public:
@@ -29,14 +30,16 @@ class DriveController {
 
 		// Goal speeds to reach safely
 		float target_left_speed = 0.0F;
-		float target_right_speed = 0.0F; 
+		float target_right_speed = 0.0F;
 
 		// Actual speeds to be sent to ODrives (revolutions per second)
 		float left_speed = 0.0F;
 		float right_speed = 0.0F;
 
 		// Call whenever target_angle or target_velocity changes
-		void update_target_velocity();		
-		
+		void update_target_velocity();
+
 		DriveMode current_mode = DriveMode::NEUTRAL;
+
+		std::chrono::steady_clock::time_point last_active_time = std::chrono::steady_clock::now();
 };
