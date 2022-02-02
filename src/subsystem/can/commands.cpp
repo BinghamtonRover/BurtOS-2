@@ -12,7 +12,7 @@ int can_send(Node device, Command command, float data) {
 
 //Send unsigned in data
 int can_send(Node device, Command command, int data) {
-    return can_send(device, command, 4, get_big_endian((unsigned long)data));
+    return can_send(device, command, 4, (unsigned long)data);
 }
 
 //Send out a can message
@@ -56,20 +56,23 @@ canfd_frame get_can_frame(int modifier, Node device, Command command, int num_by
     frame.flags = 0;
     frame.__res0 = 0;
     frame.__res1 = 0;
-    for (int i = 0; i < 8; i++) {
-        frame.data[i] = (data >> (8 * (7 - i))) & 0xFF;
+    for (int i = 0; i < 4; i++) {
+        frame.data[i] = (data >> (8 * (3 - i))) & 0xFF;
+    }
+    for (int i = 4; i < num_bytes; i++) {
+        frame.data[i] = 0;
     }
     return frame;
 }
 #endif
 
-//Take the first 4 bytes of an unsigned long, and convert them to big endian
+//Convert to big endian
 unsigned long get_big_endian(unsigned long u) {
-	return (((0x000000FF & u) << 24) | ((0x0000FF00 & u) << 8) | ((0x00FF0000 & u) >> 8)  | ((0xFF000000 & u) >> 24));
+	return (((0x000000FF & u) << 24ul) | ((0x0000FF00 & u) << 8) | ((0x00FF0000 & u) >> 8)  | ((0xFF000000 & u) >> 24));
 }
 
 //Open can socket
-bool open_can_socket() {
+bool can_open_socket() {
 #ifdef ONBOARD_CAN_BUS
     //Get socket number
     can_socket = socket(PF_CAN, SOCK_RAW, CAN_RAW);
@@ -101,7 +104,7 @@ bool open_can_socket() {
 }
 
 //Close can socket
-void close_can_socket() {
+void can_close_socket() {
 #ifdef ONBOARD_CAN_BUS
     close(can_socket);
 #endif
