@@ -3,7 +3,7 @@
 #include <rover_system_messages.hpp>
 
 rc::Drive::Drive(net::MessageSender& ms)
-    : sender(ms) {
+: sender(ms) {
 }
 
 void rc::Drive::set_interval(int milliseconds) {
