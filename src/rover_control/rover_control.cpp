@@ -7,7 +7,7 @@ Drive::Drive(net::MessageSender& ms) {
 }
 
 void Drive::set_interval(int milliseconds) {
-	interval = milliseconds;
+    interval = milliseconds;
 }
 
 void Drive::get_interval() {
