@@ -137,16 +137,20 @@ void ControllerConfig::recreate_axes_table() {
 }
 
 void ControllerConfig::refresh() {
+	// Save the joystick ID of the old selection so we can reselect it after the refresh
 	int selection_js_id = -1;
-	if (device_js_ids.size() > devices_selector->selected_index())
+	int gui_selected_idx = devices_selector->selected_index();
+	if (gui_selected_idx >= 0 && device_js_ids.size() > static_cast<unsigned>(gui_selected_idx))
 		selection_js_id = device_js_ids[devices_selector->selected_index()];
+
+	// Rebuild the list of names and ids
 	device_names.clear();
 	device_js_ids.clear();
 	for (auto& dev : mgr.devices()) {
 		if (dev.present()) {
 			device_names.push_back(std::to_string(dev.joystick_id()) + ": " + dev.device_name());
 			device_js_ids.push_back(dev.joystick_id());
-			// Try to preserve the old selection
+			// Check if this device was the past selection; if so, reselct it
 			if (dev.joystick_id() == selection_js_id) {
 				devices_selector->set_selected_index(device_js_ids.size() - 1);
 			}

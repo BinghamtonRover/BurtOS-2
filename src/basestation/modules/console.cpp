@@ -1,5 +1,7 @@
 #include "console.hpp"
 
+#include <session.hpp>
+
 /*
 	Console Built-In Definitions
 */
@@ -11,9 +13,11 @@ int Console::Builtin::clear(lua_State* L) {
 }
 int Console::Builtin::exit(lua_State* L) {
 	auto& self = rover_lua::InteractivePrompt::get_instance<Console>(L);
-	self.console_out->append_line("Lua stopped.");
-	self.console_out->append_line("Missing implementation: Cannot close NanoGUI Window");
 	self.stop();
+
+	Session::get_main_session().schedule_sync_event([&self](Session& s) {
+		s.get_screen().dispose_window(&self);
+	});
 	return 0;
 }
 int Console::Builtin::title(lua_State* L) {

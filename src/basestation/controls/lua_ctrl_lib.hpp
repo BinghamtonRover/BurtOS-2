@@ -2,13 +2,12 @@
 
 #include <rover_lua.hpp>
 
-#include "controls/controller_manager.hpp"
-
 /*
 	Controller library for Lua
 */
 
 namespace lua_ctrl_lib {
+
 	extern const struct luaL_Reg lib[];
 	void open(lua_State* L);
 
@@ -22,4 +21,5 @@ namespace lua_ctrl_lib {
 	int set_center(lua_State* L);
 	int set_dead_zone(lua_State* L);
 	int menu(lua_State* L);
+
 }

@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-#include "lua_modules.hpp"
+#include "controls/lua_ctrl_lib.hpp"
 #include "modules/console.hpp"
 
 const char* Session::window_title = "Base Station 2.0 - Binghamton University Rover Team";
@@ -87,7 +87,7 @@ void Session::create_window(bool fullscreen, int monitor, int w, int h) {
 	screen->perform_layout();
 
 	Console::add_setup_routine([](Console& new_console) {
-		new_console.add_function("shutdown", [](lua_State* L) {
+		new_console.add_function("shutdown", [](lua_State*) {
 			glfwSetWindowShouldClose(main_session->window, 1);
 			return 0;
 		});

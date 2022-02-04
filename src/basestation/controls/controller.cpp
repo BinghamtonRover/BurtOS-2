@@ -164,7 +164,7 @@ void Controller::update_device() {
 			axis_count = GLFW_GAMEPAD_AXIS_LAST + 1;
 		}
 
-		if (_axes.size() != axis_count) {
+		if (_axes.size() != static_cast<unsigned>(axis_count)) {
 			// If the config has changed, unbind any old actions		
 			for (auto& axis : _axes) {
 				axis.unbind();
