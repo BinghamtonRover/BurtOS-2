@@ -47,3 +47,4 @@ endif()
 
 
 add_subdirectory(src/subsystem)
+add_subdirectory(src/video)

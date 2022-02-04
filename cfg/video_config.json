@@ -1,0 +1,27 @@
+{
+	"video":
+	{
+		"network":
+		{
+			"stream_ip":
+			{
+				"addr": "239.255.123.123",
+				"port": 22202
+			},
+			"command_ip":
+			{
+				"port": 22102
+			}
+		},
+		"camera_init":
+		{
+			"jpeg_quality": 30,
+			"greyscale": false,
+			"enable_streams":
+			{
+				"0": true,
+				"1": true
+			}
+		}
+	}
+}

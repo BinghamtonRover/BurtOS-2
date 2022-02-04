@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package drive;
+
+message Velocity {
+	float speed = 1;
+	float angle = 2;
+}
+
+message Halt {
+	bool halt = 1;
+}
+
+message DriveMode {
+	enum Mode {
+		NEUTRAL = 0;
+		DRIVE = 1;
+		COUNT = 2;
+	}
+
+	Mode mode = 1;
+}

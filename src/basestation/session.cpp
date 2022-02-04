@@ -92,6 +92,10 @@ void Session::create_window(bool fullscreen, int monitor, int w, int h) {
 			return 0;
 		});
 		new_console.load_library("ctrl", lua_ctrl_lib::open);
+		new_console.add_function("shutdown", [](lua_State* L) {
+			glfwSetWindowShouldClose(main_session->window, 1);
+			return 0;
+		});
 	});
 
 	new Console(screen);

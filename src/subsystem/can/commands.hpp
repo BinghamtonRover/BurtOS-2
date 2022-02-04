@@ -18,6 +18,7 @@
 
 //Overloads for can_send
 int can_send(Node device, Command command, float data);
+int can_send(Node device, Command command, int data);
 
 //Send out a can message
 int can_send(Node device, Command command, int num_bytes, unsigned long data);
@@ -31,7 +32,7 @@ canfd_frame get_can_frame(int modifier, Node device, Command command, int num_by
 #endif
 
 //Take the first 4 bytes of an unsigned long, and convert them to big endian
-unsigned long get_big_endian_first_half(unsigned long u);
+unsigned long get_big_endian(unsigned long u);
 
 //Can socket
 bool can_open_socket();
