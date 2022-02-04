@@ -1,5 +1,10 @@
 #include "controller_calibration_popup.hpp"
 
+#include <nanogui/label.h>
+#include <nanogui/layout.h>
+#include <nanogui/icons.h>
+#include <nanogui/button.h>
+
 CalibrationPopup::CalibrationPopup(nanogui::Screen* p, ControllerManager& c, int joystick_id, int axis_idx) :
 		nanogui::Window(p, "Detailed Calibration"),
 		ctrl_manager(c),

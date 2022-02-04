@@ -2,8 +2,8 @@
 
 #include <iostream>
 
-#include "controls/lua_ctrl_lib.hpp"
-#include "modules/console.hpp"
+#include <controls/lua_ctrl_lib.hpp>
+#include <modules/console.hpp>
 
 const char* Session::window_title = "Base Station 2.0 - Binghamton University Rover Team";
 

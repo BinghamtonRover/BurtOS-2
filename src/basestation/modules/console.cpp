@@ -1,5 +1,8 @@
 #include "console.hpp"
 
+#include <nanogui/vscrollpanel.h>
+#include <nanogui/layout.h>
+
 #include <session.hpp>
 
 /*

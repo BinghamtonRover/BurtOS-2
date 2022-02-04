@@ -18,7 +18,7 @@
 #include <nanogui/nanogui.h>
 #include <mutex>
 
-#include "controls/controller_manager.hpp"
+#include <controls/controller_manager.hpp>
 
 class Session {
 	public:

@@ -1,8 +1,13 @@
 #pragma once
 
-#include <nanogui/nanogui.h>
-#include "../controls/controller_manager.hpp"
-#include "../widgets/functionbox.hpp"
+#include <nanogui/window.h>
+#include <nanogui/slider.h>
+#include <nanogui/progressbar.h>
+#include <nanogui/textbox.h>
+#include <nanogui/screen.h>
+
+#include <controls/controller_manager.hpp>
+#include <widgets/functionbox.hpp>
 
 // Window with fine details for an axis
 // This window will never close itself, but may go invisible.

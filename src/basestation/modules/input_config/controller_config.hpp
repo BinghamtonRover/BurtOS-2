@@ -3,11 +3,16 @@
 #include <vector>
 #include <string>
 #include <functional>
-#include <nanogui/nanogui.h>
 
-#include "controller_calibration_popup.hpp"
-#include "controller_binding_popup.hpp"
-#include "../controls/controller_manager.hpp"
+#include <nanogui/button.h>
+#include <nanogui/progressbar.h>
+#include <nanogui/combobox.h>
+#include <nanogui/vscrollpanel.h>
+
+#include <modules/input_config/controller_calibration_popup.hpp>
+#include <modules/input_config/controller_binding_popup.hpp>
+
+#include <controls/controller_manager.hpp>
 
 /*
 	Module for viewing, configuring, and calibrating connected controllers

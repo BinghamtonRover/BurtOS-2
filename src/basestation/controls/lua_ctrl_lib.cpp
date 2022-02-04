@@ -1,7 +1,7 @@
 #include "lua_ctrl_lib.hpp"
 
 #include <session.hpp>
-#include <modules/controller_config.hpp>
+#include <modules/input_config/controller_config.hpp>
 
 #include <sstream>
 #include <future>

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <nanogui/nanogui.h>
-#include "../controls/controller_manager.hpp"
+#include <controls/controller_manager.hpp>
 
 class BindingPopup : public nanogui::Window {
 	private:
