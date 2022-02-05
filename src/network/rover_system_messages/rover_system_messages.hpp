@@ -15,7 +15,7 @@ namespace drive_msg {
 	DEFINE_MESSAGE_TYPE(DriveMode, drive::DriveMode)
 }
 
-void register_messages() {
+inline void register_messages() {
 	msg::register_message_type<video_msg::Quality>();
 	msg::register_message_type<video_msg::Switch>();
 

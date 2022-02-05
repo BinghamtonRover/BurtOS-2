@@ -1,6 +1,6 @@
 add_library(rover_control rover_control.cpp rover_control.hpp)
 
-target_include_directories(rover_control PUBLIC rover_system_messages)
+target_include_directories(rover_control PUBLIC network rover_system_messages ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(rover_control PUBLIC network rover_system_messages)
 
 target_compile_features(rover_control PRIVATE cxx_std_17)
