@@ -8,6 +8,7 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
 add_subdirectory(src/network)
+add_subdirectory(src/rover_control)
 
 # The graphics libraries for the base station will not be present on the rover subsystem computers
 # Default value is OFF (build everything) but should be overridden when building on a Raspberry Pi
@@ -38,7 +39,7 @@ if (NOT NO_GFX AND OPENGL_FOUND)
 	set(NANOGUI_BUILD_SHARED	OFF CACHE BOOL " " FORCE)
 	add_subdirectory(ext/nanogui)
 	set_property(TARGET glfw glfw_objects nanogui PROPERTY FOLDER "dependencies")
-	
+
 	add_subdirectory(src/roverlua)
 	add_subdirectory(src/basestation)
 else()
