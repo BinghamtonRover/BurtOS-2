@@ -16,7 +16,9 @@
 
 #include <GLFW/glfw3.h>
 #include <nanogui/nanogui.h>
+#include <mutex>
 
+#include <controls/controller_manager.hpp>
 
 class Session {
 	public:
@@ -51,11 +53,23 @@ class Session {
 		bool get_is_glfw_init();
 		void set_is_glfw_init(bool);
 
+		// Schedule an event to execute in the main/render thread
+		void schedule_sync_event(const std::function<void(Session&)>&);
+
+		inline ControllerManager& controller_manager() {
+			return controller_mgr;
+		}
+
 	private:
+		ControllerManager controller_mgr;
 		const static char* window_title;
 		static Session* main_session;
 		GLFWwindow* window;
 		nanogui::Screen* screen;
+
+		std::mutex schedule_lock;
+		std::vector<std::function<void(Session&)>> scheduled_events;
+
 		bool is_glfw_init;
 
 		void create_window(bool, int, int, int);

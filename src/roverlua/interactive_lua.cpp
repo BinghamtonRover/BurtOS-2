@@ -60,6 +60,11 @@ void rover_lua::InteractivePrompt::add_function(const char* lua_name, int(*lua_c
 	lua_setglobal(L, lua_name);
 }
 
+void rover_lua::InteractivePrompt::load_library(const char* lua_name, const std::function<void(lua_State*)>& open_lib) {
+	open_lib(L);
+	lua_setglobal(L, lua_name);
+}
+
 int rover_lua::InteractivePrompt::report_error(int status) {
 	if (status != LUA_OK) {
 		const char *msg = lua_tostring(L, -1);
@@ -228,6 +233,23 @@ void rover_lua::InteractivePrompt::check_interrupt(lua_State* L, lua_Debug* db) 
 	} else if (self->should_close) {
 		throw SignalShutdown();
 	}
+}
+
+void rover_lua::InteractivePrompt::run_paused() {
+	// Reuse the stream cv/lock for pausing the startup
+	std::unique_lock lock(execute_stream_lock);
+	if (!_prompt_active) {
+		cv_line_available.wait(lock);
+	}
+	lock.unlock();
+	
+	run();
+}
+
+void rover_lua::InteractivePrompt::run_resume() {
+	std::unique_lock lock(execute_stream_lock);
+	_prompt_active = true;
+	cv_line_available.notify_all();
 }
 
 void rover_lua::InteractivePrompt::run() {

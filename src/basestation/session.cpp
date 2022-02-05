@@ -2,7 +2,8 @@
 
 #include <iostream>
 
-#include "modules/console.hpp"
+#include <controls/lua_ctrl_lib.hpp>
+#include <modules/console.hpp>
 
 const char* Session::window_title = "Base Station 2.0 - Binghamton University Rover Team";
 
@@ -70,6 +71,8 @@ void Session::create_window(bool fullscreen, int monitor, int w, int h) {
 	glClearColor(0.2f, 0.25f, 0.3f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 
+	controller_mgr.init();
+
 	screen = new nanogui::Screen();
 	screen->initialize(window,true);
 
@@ -84,6 +87,11 @@ void Session::create_window(bool fullscreen, int monitor, int w, int h) {
 	screen->perform_layout();
 
 	Console::add_setup_routine([](Console& new_console) {
+		new_console.add_function("shutdown", [](lua_State*) {
+			glfwSetWindowShouldClose(main_session->window, 1);
+			return 0;
+		});
+		new_console.load_library("ctrl", lua_ctrl_lib::open);
 		new_console.add_function("shutdown", [](lua_State* L) {
 			glfwSetWindowShouldClose(main_session->window, 1);
 			return 0;
@@ -124,7 +132,9 @@ void Session::glfw_framebuffer_size_callback(GLFWwindow* window, int width, int 
 void Session::gui_loop() {
 	if (is_glfw_init) {
 		while (!glfwWindowShouldClose(window)) {
-			glfwWaitEvents();
+			glfwPollEvents();
+			
+			controller_mgr.update_controls();
 
 			glClearColor(0.11F, 0.11F, 0.11F, 1.0F);
 			glClear(GL_COLOR_BUFFER_BIT);
@@ -134,6 +144,11 @@ void Session::gui_loop() {
 			screen->draw_widgets();
 
 			glfwSwapBuffers(window);
+
+			for (const auto& event_callback : scheduled_events) {
+				event_callback(*this);
+			}
+			scheduled_events.clear();
 		}
 
 		glfwDestroyWindow(window);
@@ -171,4 +186,9 @@ bool Session::get_is_glfw_init() {
 
 void Session::set_is_glfw_init(bool is_init) {
 	is_glfw_init = is_init;
+}
+
+void Session::schedule_sync_event(const std::function<void(Session&)>& call) {
+	std::lock_guard lock(schedule_lock);
+	scheduled_events.push_back(call);
 }

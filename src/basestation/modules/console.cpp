@@ -1,5 +1,10 @@
 #include "console.hpp"
 
+#include <nanogui/vscrollpanel.h>
+#include <nanogui/layout.h>
+
+#include <session.hpp>
+
 /*
 	Console Built-In Definitions
 */
@@ -11,9 +16,11 @@ int Console::Builtin::clear(lua_State* L) {
 }
 int Console::Builtin::exit(lua_State* L) {
 	auto& self = rover_lua::InteractivePrompt::get_instance<Console>(L);
-	self.console_out->append_line("Lua stopped.");
-	self.console_out->append_line("Missing implementation: Cannot close NanoGUI Window");
 	self.stop();
+
+	Session::get_main_session().schedule_sync_event([&self](Session& s) {
+		s.get_screen().dispose_window(&self);
+	});
 	return 0;
 }
 int Console::Builtin::title(lua_State* L) {
@@ -73,7 +80,7 @@ int Console::luaopen_term(lua_State* L) {
 
 Console::Console(nanogui::Screen* screen) : 
 		nanogui::Window(screen, "Console"),
-		lua_runtime(&rover_lua::InteractivePrompt::run, static_cast<rover_lua::InteractivePrompt*>(this)) {
+		lua_runtime(&rover_lua::InteractivePrompt::run_paused, static_cast<rover_lua::InteractivePrompt*>(this)) {
 
 	set_position(nanogui::Vector2i(15, 15));
 	set_layout(new nanogui::GroupLayout(6));
@@ -163,6 +170,7 @@ Console::Console(nanogui::Screen* screen) :
 	for (auto& f : global_setup) {
 		f(*this);
 	}
+	run_resume();
 
 	console_out->append_line(LUA_COPYRIGHT);
 

@@ -1,11 +1,11 @@
 #pragma once
 
 #include <nanogui/window.h>
-#include <nanogui/textbox.h>
-#include <nanogui/vscrollpanel.h>
-#include <nanogui/nanogui.h>
-#include "../widgets/functionbox.hpp"
-#include "../widgets/textarea.hpp"
+#include <nanogui/widget.h>
+#include <nanogui/button.h>
+
+#include <widgets/functionbox.hpp>
+#include <widgets/textarea.hpp>
 
 #include <interactive_lua.hpp>
 

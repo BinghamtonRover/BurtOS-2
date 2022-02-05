@@ -61,7 +61,7 @@ private:
 	std::string line_in;
 	bool should_interrupt = false;
 	bool should_close = false;
-	bool _prompt_active = true;
+	bool _prompt_active = false;
 	bool _normal_exit = false;
 
 	// source: lua.c
@@ -96,9 +96,15 @@ public:
 	~InteractivePrompt();
 
 	void add_function(const char* lua_name, int(*lua_c_function)(lua_State*));
+	void load_library(const char* lua_name, const std::function<void(lua_State*)>& open_lib);
 	void execute_line(const std::string&);
 	// Run Lua interpreter. Blocking call.
 	void run();
+
+	// Prepare to block and run, but wait until run_resume() is called
+	void run_paused();
+	// Allow the waiting thread to start running if it was started with run_paused
+	void run_resume();
 	void stop();
 	inline void interrupt() { should_interrupt = true; }
 	inline void set_write_line_callback(const std::function<void(const char*)>& f) { _c_write_line = f; }
