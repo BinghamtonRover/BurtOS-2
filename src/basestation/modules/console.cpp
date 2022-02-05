@@ -80,7 +80,7 @@ int Console::luaopen_term(lua_State* L) {
 
 Console::Console(nanogui::Screen* screen) : 
 		nanogui::Window(screen, "Console"),
-		lua_runtime(&rover_lua::InteractivePrompt::run, static_cast<rover_lua::InteractivePrompt*>(this)) {
+		lua_runtime(&rover_lua::InteractivePrompt::run_paused, static_cast<rover_lua::InteractivePrompt*>(this)) {
 
 	set_position(nanogui::Vector2i(15, 15));
 	set_layout(new nanogui::GroupLayout(6));
@@ -170,6 +170,7 @@ Console::Console(nanogui::Screen* screen) :
 	for (auto& f : global_setup) {
 		f(*this);
 	}
+	run_resume();
 
 	console_out->append_line(LUA_COPYRIGHT);
 

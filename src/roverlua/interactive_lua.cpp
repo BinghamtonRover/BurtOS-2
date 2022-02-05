@@ -235,6 +235,23 @@ void rover_lua::InteractivePrompt::check_interrupt(lua_State* L, lua_Debug* db) 
 	}
 }
 
+void rover_lua::InteractivePrompt::run_paused() {
+	// Reuse the stream cv/lock for pausing the startup
+	std::unique_lock lock(execute_stream_lock);
+	if (!_prompt_active) {
+		cv_line_available.wait(lock);
+	}
+	lock.unlock();
+	
+	run();
+}
+
+void rover_lua::InteractivePrompt::run_resume() {
+	std::unique_lock lock(execute_stream_lock);
+	_prompt_active = true;
+	cv_line_available.notify_all();
+}
+
 void rover_lua::InteractivePrompt::run() {
 	try {
 		_prompt_active = true;
