@@ -20,6 +20,7 @@ void rc::Drive::poll_events() {
 
     if (time_passed.count() >= interval) {
         sender.send_message(movement_message);
+        last_message_sent = std::chrono::steady_clock::now();
     }
 }
 
