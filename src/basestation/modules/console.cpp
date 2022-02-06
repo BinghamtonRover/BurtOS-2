@@ -2,8 +2,9 @@
 
 #include <nanogui/vscrollpanel.h>
 #include <nanogui/layout.h>
+#include <nanogui/screen.h>
 
-#include <session.hpp>
+#include <basestation.hpp>
 
 /*
 	Console Built-In Definitions
@@ -18,8 +19,8 @@ int Console::Builtin::exit(lua_State* L) {
 	auto& self = rover_lua::InteractivePrompt::get_instance<Console>(L);
 	self.stop();
 
-	Session::get_main_session().schedule_sync_event([&self](Session& s) {
-		s.get_screen().dispose_window(&self);
+	Basestation::async([&self] (Basestation&) {
+		self.screen()->dispose_window(&self);
 	});
 	return 0;
 }
@@ -177,5 +178,9 @@ Console::Console(nanogui::Screen* screen) :
 }
 
 Console::~Console() {
-	if (lua_runtime.joinable()) lua_runtime.join();
+	if (lua_runtime.joinable()) {
+		if (active())
+			stop();
+		lua_runtime.join();
+	}
 }

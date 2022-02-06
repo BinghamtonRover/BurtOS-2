@@ -1,6 +1,6 @@
 #include "lua_ctrl_lib.hpp"
 
-#include <session.hpp>
+#include <basestation.hpp>
 #include <modules/input_config/controller_config.hpp>
 
 #include <sstream>
@@ -30,7 +30,8 @@ int lua_ctrl_lib::show_devices(lua_State* L) {
 	std::future<void> future = p.get_future();
 
 	std::ostringstream listing;
-	Session::get_main_session().schedule_sync_event([&p, &listing](Session& s) {
+	Basestation::async([&p, &listing](Basestation& s) {
+		
 		auto& mgr = s.controller_manager();
 		for (auto& dev : mgr.devices()) {
 			if (dev.present()) {
@@ -57,7 +58,8 @@ int lua_ctrl_lib::show_actions(lua_State* L) {
 	std::future<void> f = p.get_future();
 	
 	std::ostringstream listing;
-	Session::get_main_session().schedule_sync_event([&p, &listing] (Session& s) {
+	Basestation::async([&p, &listing] (Basestation& s) {
+		
 		ControllerManager& cmgr = s.controller_manager();
 		for (auto& c : cmgr.actions()) {
 			listing << c.name() << "\n";
@@ -85,7 +87,8 @@ int lua_ctrl_lib::show_axes(lua_State* L) {
 	std::future<void> f = p.get_future();
 
 	std::ostringstream listing;
-	Session::get_main_session().schedule_sync_event([&p, &listing, joystick_id](Session& s) {
+	Basestation::async([&p, &listing, joystick_id](Basestation& s) {
+		
 		try {
 			ControllerManager& cmgr = s.controller_manager();
 			int axis_n = 0;
@@ -125,7 +128,8 @@ int lua_ctrl_lib::bind(lua_State* L) {
 	std::promise<void> p;
 	std::future<void> f = p.get_future();
 
-	Session::get_main_session().schedule_sync_event([&p, action, joystick_id, axis_n] (Session& s) {
+	Basestation::async([&p, action, joystick_id, axis_n] (Basestation& s) {
+		
 		try {
 			ControllerManager& cmgr = s.controller_manager();
 			cmgr.devices().at(joystick_id).axes().at(axis_n).set_action(cmgr.find_action(action));
@@ -152,7 +156,8 @@ int lua_ctrl_lib::unbind(lua_State* L) {
 	std::promise<void> p;
 	std::future<void> f = p.get_future();
 
-	Session::get_main_session().schedule_sync_event([&p, joystick_id, axis_n] (Session& s) {
+	Basestation::async([&p, joystick_id, axis_n] (Basestation& s) {
+		
 		try {
 			ControllerManager& cmgr = s.controller_manager();
 			cmgr.devices().at(joystick_id).axes().at(axis_n).unbind();
@@ -177,7 +182,8 @@ int lua_ctrl_lib::start_calibration(lua_State* L) {
 	std::promise<bool> start_promise;
 	std::future<bool> start_future = start_promise.get_future();
 
-	Session::get_main_session().schedule_sync_event([joystick_id, axis_n, &start_promise] (Session& s) {
+	Basestation::async([joystick_id, axis_n, &start_promise] (Basestation& s) {
+		
 		try {
 			ControllerManager& cmgr = s.controller_manager();
 			JoystickAxis& ax = cmgr.devices().at(joystick_id).axes().at(axis_n);
@@ -209,7 +215,8 @@ int lua_ctrl_lib::end_calibration(lua_State* L) {
 	std::promise<bool> end_promise;
 	std::future<bool> end_future = end_promise.get_future();
 
-	Session::get_main_session().schedule_sync_event([joystick_id, axis_n, &end_promise] (Session& s) {
+	Basestation::async([joystick_id, axis_n, &end_promise] (Basestation& s) {
+		
 		try {
 			ControllerManager& cmgr = s.controller_manager();
 			JoystickAxis& ax = cmgr.devices().at(joystick_id).axes().at(axis_n);
@@ -242,7 +249,8 @@ int lua_ctrl_lib::set_dead_zone(lua_State* L) {
 	std::promise<void> set_promise;
 	std::future<void> set_future = set_promise.get_future();
 
-	Session::get_main_session().schedule_sync_event([joystick_id, axis_n, dz, &set_promise] (Session& s) {
+	Basestation::async([joystick_id, axis_n, dz, &set_promise] (Basestation& s) {
+		
 		try {
 			ControllerManager& cmgr = s.controller_manager();
 			cmgr.devices().at(joystick_id).axes().at(axis_n).calibration().set_dead_zone(dz);
@@ -270,7 +278,8 @@ int lua_ctrl_lib::set_center(lua_State* L) {
 	std::promise<void> set_promise;
 	std::future<void> future = set_promise.get_future();
 
-	Session::get_main_session().schedule_sync_event([joystick_id, axis_n, ctr, &set_promise] (Session& s) {
+	Basestation::async([joystick_id, axis_n, ctr, &set_promise] (Basestation& s) {
+		
 		try {
 			s.controller_manager().devices().at(joystick_id).axes().at(axis_n).calibration().set_center(ctr);
 			set_promise.set_value();
@@ -288,16 +297,29 @@ int lua_ctrl_lib::set_center(lua_State* L) {
 	return 0;
 }
 
-int lua_ctrl_lib::menu(lua_State*) {
-	Session::get_main_session().schedule_sync_event([] (Session& s) {
-		nanogui::Screen* scr = &s.get_screen();
-		auto window = new ControllerConfig(scr, s.controller_manager());
+int lua_ctrl_lib::menu(lua_State* L) {
 
-		// Center on screen
-		int xpos = std::max(0, (scr->width() - window->width()) / 2);
-		int ypos = std::max(0, (scr->height() - window->height()) / 2);
-		window->set_position(nanogui::Vector2i(xpos, ypos));
+	std::promise<void> promise_open;
+	std::future<void> fut = promise_open.get_future();
 
+	Basestation::async([&promise_open] (Basestation& s) {
+		
+		try {
+			auto scr = s.get_focused_screen();
+			auto wnd = new ControllerConfig(scr, s.controller_manager());
+			wnd->center();
+
+			promise_open.set_value();
+		} catch (...) {
+			promise_open.set_exception(std::current_exception());
+		}
 	});
+	
+	try {
+		fut.get();
+	} catch (const std::runtime_error& rt) {
+		luaL_error(L, rt.what());
+	}
+
 	return 0;
 }

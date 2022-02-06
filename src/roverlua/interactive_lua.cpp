@@ -82,7 +82,7 @@ void rover_lua::InteractivePrompt::lua_print() {
 		lua_insert(L, 1);
 		if (lua_pcall(L, n, 0, 0) != LUA_OK) {
 			constexpr const char* error_msg = "error calling 'print' (%s)";
-			constexpr std::size_t error_msg_len = strlen(error_msg);
+			const static std::size_t error_msg_len = strlen(error_msg);
 
 			const char* error_desc = lua_tostring(L, -1);
 			std::size_t error_desc_len = strlen(error_desc);
@@ -224,7 +224,7 @@ int rover_lua::InteractivePrompt::loadline() {
 	lua_assert(lua_gettop(L) == 1);
 	return status;
 }
-void rover_lua::InteractivePrompt::check_interrupt(lua_State* L, lua_Debug* db) {
+void rover_lua::InteractivePrompt::check_interrupt(lua_State* L, lua_Debug*) {
 	InteractivePrompt* self = static_cast<InteractivePrompt*>(rover_lua::get_custom_ptr(L));
 
 	if (self->should_interrupt) {
@@ -236,12 +236,13 @@ void rover_lua::InteractivePrompt::check_interrupt(lua_State* L, lua_Debug* db) 
 }
 
 void rover_lua::InteractivePrompt::run_paused() {
-	// Reuse the stream cv/lock for pausing the startup
-	std::unique_lock lock(execute_stream_lock);
-	if (!_prompt_active) {
-		cv_line_available.wait(lock);
+	{
+		// Reuse the stream cv/lock for pausing the startup
+		std::unique_lock lock(execute_stream_lock);
+		if (!_prompt_active) {
+			cv_line_available.wait(lock);
+		}
 	}
-	lock.unlock();
 	
 	run();
 }
