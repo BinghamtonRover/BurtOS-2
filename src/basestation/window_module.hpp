@@ -5,7 +5,7 @@
 
 #include <nanogui/nanogui.h>
 
-namespace tony::gui {
+namespace module::gui {
 
 struct WindowModuleParams
 {
@@ -13,24 +13,17 @@ struct WindowModuleParams
 
 	bool resizable = true;
 	bool fullscreen = false;
-	int colorBits = 8;
-	int alphaBits = 8;
-	int depthBits = 24;
-	int stencilBits = 8;
-	int nSamples = 0;
-	unsigned int glMajor = 3;
-	unsigned int glMinor = 3;
+	int color_bits = 8;
+	int alpha_bits = 8;
+	int depth_bits = 24;
+	int stencil_bits = 8;
+	int n_samples = 0;
+	unsigned int gl_major = 3;
+	unsigned int gl_minor = 3;
 };
 
 class WindowModule : public nanogui::Screen {
     public:
-
-	// using loop_callback_t = std::function<void(void)>;
-	// using drop_files_callback_t = std::function<bool (const std::vector<std::string>&)>;
-	// using keyboard_callback_t = std::function<bool (int,int,int,int)>;
-
-	// using Ptr = std::shared_prt<WindowModule>;
-	// using ConstPtr = std::shared_ptr<const ModuleWindow>;
 
     WindowModule(
 		const std::string& caption = std::string(), unsigned int width = 400,
@@ -39,26 +32,14 @@ class WindowModule : public nanogui::Screen {
 
     virtual ~WindowModule() override;
 
-	// template <typename... Args>
-	// static Ptr Create(Args&&... args) {
-	// 	return std::make_shared<WindowModule>(std::forward<Args>(args)...);
-	// }
-
-
-    nanogui::Window* createManagedSubWindow(const std::string& title);
-
-	nanogui::Window* getSubWindowsUI() { return m_subWindows.ui; }
-
-	const nanogui::Window* getSubWindowsUI() const { return m_subWindows.ui; }
-
-	const nanogui::Window* getSubwindow(size_t index) const {
-		return m_subWindows.windows.at(index);
-	}
-
-	size_t getSubwindowCount() const { return m_subWindows.windows.size(); }
-	void subwindowMinimize(size_t index) { m_subWindows.minimize(index); }
-	void subwindowRestore(size_t index) { m_subWindows.restore(index); }
-	void subwindowSetFocused(size_t index) { m_subWindows.setFocused(index); }
+    nanogui::Window* create_subwindow(const std::string& title);
+	nanogui::Window* get_subwindows_ui() { return m_subwindows.ui; }
+	const nanogui::Window* get_subwindows_ui() const { return m_subwindows.ui; }
+	const nanogui::Window* get_subwindow(size_t index) const { return m_subwindows.windows.at(index); }
+	size_t get_subwindow_count() const { return m_subwindows.windows.size(); }
+	void subwindow_minimize(size_t index) { m_subwindows.minimize(index); }
+	void subwindow_restore(size_t index) { m_subwindows.restore(index); }
+	void subwindow_set_focused(size_t index) { m_subwindows.set_focused(index); }
 
 	protected:
 	WindowModule(const WindowModule&) = delete;
@@ -67,28 +48,20 @@ class WindowModule : public nanogui::Screen {
 	WindowModule(WindowModule&&) = delete;
 	WindowModule& operator=(WindowModule&&) = delete;
 
-	//virtual bool keyboard_event(int key, int scancode, int action, int modifiers) override;
-	//virtual void draw_contents() override;
-
-	//virtual bool mouse_motion_event(const nanogui::Vector2i& p, const nanogui::Vector2i& rel, int button, int modifiers) override;
-	//virtual bool mouse_button_event(const nanogui::Vector2i& p, int button, bool down, int modifiers) override;
-	//virtual bool scroll_event(const nanogui::Vector2i& p, const nanogui::Vector2f& rel) override;
-	//virtual bool drop_event(const std::vector<std::string>& filenames) override;
-
-	void createControlUI();
+	void create_manager_ui();
 
     class SubWindow : public nanogui::Window {
 
-        WindowModule& m_parentGui;
-	    const int m_subWindowIndex = 0;
+        WindowModule& m_parent_gui;
+	    const int m_subwindow_index = 0;
 
 	    public:
 		    SubWindow(
-                WindowModule& parentGui, int myIndex, Widget* parent,
+                WindowModule& parent_gui, int my_index, Widget* parent,
                 const std::string& title)
                 : nanogui::Window(parent, title),
-                m_parentGui(parentGui),
-                m_subWindowIndex(myIndex)
+                m_parent_gui(parent_gui),
+                m_subwindow_index(my_index)
 		    {
 		    }
 
@@ -96,7 +69,7 @@ class WindowModule : public nanogui::Screen {
             //focus status, but do nothing)
             bool focus_event(bool focused) override {
                 if (focused)
-                    m_parentGui.m_subWindows.onSubWindowFocused(m_subWindowIndex);
+                    m_parent_gui.m_subwindows.on_subwindow_focused(m_subwindow_index);
                 return nanogui::Window::focus_event(focused);
             }
 	};
@@ -105,18 +78,18 @@ class WindowModule : public nanogui::Screen {
         SubWindows(WindowModule& p) : parent(p) {}
         std::vector<SubWindow*> windows;
         nanogui::Window* ui = nullptr;
-        nanogui::ComboBox* uiCombo = nullptr;
+        nanogui::ComboBox* ui_combo = nullptr;
 
 		//void close(int index);
         void minimize(int index);
 		void restore(int index);
-		void setFocused(int index);
+		void set_focused(int index);
 
-		void onSubWindowFocused(int index);
+		void on_subwindow_focused(int index);
 
 		WindowModule& parent;
     };
-    SubWindows m_subWindows {*this};
+    SubWindows m_subwindows {*this};
 
 
 };
