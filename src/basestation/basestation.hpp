@@ -4,6 +4,7 @@
 #include <mutex>
 #include <functional>
 
+#include <rover_lua.hpp>
 #include <basestation_screen.hpp>
 #include <controls/controller_manager.hpp>
 
@@ -29,6 +30,10 @@ class Basestation {
 		// Return the focused screen. Guaranteed to return a valid screen.
 		// If there are no valid screens, throws a runtime error
 		BasestationScreen* get_focused_screen() const;
+		
+		inline const std::vector<BasestationScreen*>& get_screens() const {
+			return screens;
+		}
 
 		void schedule(const std::function<void(Basestation&)>& callback);
 		
@@ -41,6 +46,14 @@ class Basestation {
 		inline static void async(const std::function<void(Basestation&)>& callback) {
 			get().schedule(callback);
 		}
+
+		struct lua_basestation_lib {
+			static const struct luaL_Reg lib[];
+			static int shutdown(lua_State*);
+			static int new_screen(lua_State*);
+
+			static void open(lua_State*);
+		};
 
 	private:
 		ControllerManager controller_mgr;

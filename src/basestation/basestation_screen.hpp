@@ -26,6 +26,8 @@ class BasestationScreen : public nanogui::Screen {
 
 		inline bool windowed() const { return !m_fullscreen; }
 
+		void move_here(nanogui::Window*);
+
 		constexpr static int DEFAULT_WIDTH = 1280;
 		constexpr static int DEFAULT_HEIGHT = 720;
 	private:

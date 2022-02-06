@@ -27,6 +27,9 @@ bool FunctionBox::keyboard_event(int key, int scancode, int key_act, int modifie
 				focus_event(true);
 			}
 			return true;
+		} else if (key == GLFW_KEY_ESCAPE && key_act == GLFW_PRESS) {
+			focus_event(false);
+			return true;
 		}
 	}
 	if (nanogui::TextBox::keyboard_event(key, scancode, key_act, modifiers)) {

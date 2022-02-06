@@ -77,6 +77,7 @@ bool BasestationScreen::keyboard_event(int key, int scancode, int action, int mo
 		handled = true;
 	} else if (key == GLFW_KEY_N && action == GLFW_PRESS && (mods & GLFW_MOD_CONTROL)) {
 		Basestation::get().add_screen(new BasestationScreen());
+		handled = true;
 	}
 
 	return handled;
@@ -96,4 +97,28 @@ bool BasestationScreen::resize_event(const nanogui::Vector2i& size) {
 	}
 
 	return ret;
+}
+
+void BasestationScreen::move_here(nanogui::Window* w) {
+	// Declare a reference so dispose_window() doesn't delete w
+	nanogui::ref w_ref(w);
+
+	nanogui::Screen* old_screen = w->screen();
+	if (old_screen == this)
+		return;
+	
+	for (nanogui::Widget* child : w->children()) {
+		if (child->focused()) {
+			old_screen->update_focus(nullptr);
+			break;
+		}
+	}
+	old_screen->dispose_window(w);
+	add_child(w);
+
+	// Keep the same position unless it is out of the new screen's bounds
+	w->set_position(nanogui::max(w->position(), nanogui::Vector2i(0)));
+	w->set_position(nanogui::min(w->position(), m_size - w->size()));
+
+
 }

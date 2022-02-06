@@ -6,7 +6,6 @@
 
 #include <nanogui/opengl.h>
 
-
 Basestation* Basestation::main_instance = nullptr;
 
 Basestation::Basestation() {
@@ -19,10 +18,7 @@ Basestation::Basestation() {
 
 	Console::add_setup_routine([](Console& new_console) {
 		new_console.load_library("ctrl", lua_ctrl_lib::open);
-		new_console.add_function("shutdown", [](lua_State*) {
-			main_instance->continue_operating = false;
-			return 0;
-		});
+		new_console.load_library("bs", lua_basestation_lib::open);
 	});
 }
 
@@ -95,4 +91,26 @@ void Basestation::mainloop() {
 void Basestation::schedule(const std::function<void(Basestation&)>& callback) {
 	std::lock_guard lock(schedule_lock);
 	async_callbacks.push_back(callback);
+}
+
+const struct luaL_Reg Basestation::lua_basestation_lib::lib[] = {
+	{"shutdown", shutdown},
+	{"new_screen", new_screen},
+	{NULL, NULL}
+};
+
+int Basestation::lua_basestation_lib::shutdown(lua_State*) {
+	main_instance->continue_operating = false;
+	return 0;
+}
+
+int Basestation::lua_basestation_lib::new_screen(lua_State*) {
+	async([](Basestation& bs) {
+		bs.add_screen(new BasestationScreen());
+	});
+	return 0;
+}
+
+void Basestation::lua_basestation_lib::open(lua_State* L) {
+	luaL_newlib(L, lib);
 }
