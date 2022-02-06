@@ -61,7 +61,7 @@ void WindowModule::create_manager_ui() {
     if (m_subwindows.ui) return;
 
     auto& w = m_subwindows.ui;
-    w = new nanogui::Window(this, "Manager", false);
+    w = new nanogui::Window(this, "Manager");
 
     w->set_layout(new nanogui::GroupLayout());
 

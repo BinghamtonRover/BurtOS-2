@@ -2,6 +2,7 @@
 
 #include <mutex>
 #include <string>
+#include "stacked_widget.hpp"
 
 #include <nanogui/nanogui.h>
 
