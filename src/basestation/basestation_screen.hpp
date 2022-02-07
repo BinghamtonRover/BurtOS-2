@@ -17,7 +17,7 @@ struct ScreenPositioning {
 	
 	ScreenPositioning(
 		const nanogui::Vector2i& size = nanogui::Vector2i(DEFAULT_WIDTH, DEFAULT_HEIGHT),
-		const nanogui::Vector2i& window_pos = 10000,
+		const nanogui::Vector2i& window_pos = 100,
 		int monitor = -1,
 		bool use_fullscreen = false
 	);
