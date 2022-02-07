@@ -3,9 +3,17 @@
 
 #include <modules/console.hpp>
 
-BasestationScreen::BasestationScreen()
-	: nanogui::Screen(nanogui::Vector2i(DEFAULT_WIDTH, DEFAULT_HEIGHT), "Base Station - Binghamton University Rover Team", true),
-	preferred_size(DEFAULT_WIDTH, DEFAULT_HEIGHT) {
+ScreenPositioning::ScreenPositioning(const nanogui::Vector2i& size, const nanogui::Vector2i& window_pos, int monitor, bool use_fullscreen) :
+	size(size),
+	window_pos(window_pos),
+	monitor(monitor),
+	use_fullscreen(use_fullscreen) {
+
+}
+
+BasestationScreen::BasestationScreen(const ScreenPositioning& pos)
+	: nanogui::Screen(pos.size, "Base Station - Binghamton University Rover Team", true, pos.use_fullscreen),
+	position(pos) {
 
 	perform_layout();
 	draw_all();
@@ -18,8 +26,11 @@ void BasestationScreen::set_fullscreen(GLFWmonitor* monitor) {
 	}
 	const GLFWvidmode* mode = glfwGetVideoMode(monitor);
 
+	glfwGetWindowPos(m_glfw_window, &position.window_pos.x(), &position.window_pos.y());
+
 	glfwSetWindowMonitor(m_glfw_window, monitor, 0, 0, mode->width, mode->height, GLFW_DONT_CARE);
 	m_fullscreen = true;
+	position.use_fullscreen = true;
 
 	resize_callback_event(mode->width, mode->height);
 }
@@ -31,18 +42,25 @@ void BasestationScreen::set_fullscreen(int monitor) {
 	GLFWmonitor** monitors = glfwGetMonitors(&count);
 
 	if (monitor < 0 || monitor >= count) {
-		set_fullscreen(nullptr);
+		// If the provided monitor is invalid, attempt to use the preferred monitor
+		// specified in the position config
+		GLFWmonitor* use_monitor = nullptr;
+		if (position.monitor >= 0 && position.monitor < count) {
+			use_monitor = monitors[position.monitor];
+		}
+		set_fullscreen(use_monitor);
 	} else {
+		position.monitor = monitor;
 		set_fullscreen(monitors[monitor]);
 	}
 }
 
 void BasestationScreen::set_windowed(int w, int h) {
 	if (w < 0 || h < 0) {
-		w = preferred_size.x();
-		h = preferred_size.y();
+		w = position.size.x();
+		h = position.size.y();
 	}
-	glfwSetWindowMonitor(m_glfw_window, nullptr, 100, 100, w, h, GLFW_DONT_CARE);
+	glfwSetWindowMonitor(m_glfw_window, nullptr, position.window_pos.x(), position.window_pos.y(), w, h, GLFW_DONT_CARE);
 	m_fullscreen = false;
 	resize_callback_event(w, h);
 }
@@ -70,7 +88,7 @@ bool BasestationScreen::keyboard_event(int key, int scancode, int action, int mo
 		handled = true;
 	} else if (key == GLFW_KEY_F11 && action == GLFW_PRESS) {
 		if (m_fullscreen) {
-			set_windowed(preferred_size);
+			set_windowed(position.size);
 		} else {
 			set_fullscreen(preferred_monitor);
 		}
@@ -93,7 +111,7 @@ bool BasestationScreen::resize_event(const nanogui::Vector2i& size) {
 	}
 
 	if (!m_fullscreen) {
-		preferred_size = m_size;
+		position.size = m_size;
 	}
 
 	return ret;
