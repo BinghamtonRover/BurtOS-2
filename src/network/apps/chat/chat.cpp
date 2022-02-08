@@ -85,7 +85,7 @@ int main(int argc, char* argv[]) {
 		net::Destination d(boost::asio::ip::address::from_string(destination_ip_str), destination_port);
 
 		static net::MessageSender client(ctx, d);
-		net::MessageReceiver receiver(listen_port, ctx);
+		net::MessageReceiver receiver(ctx, listen_port);
 
 		receiver.register_handler<Chat>([](const uint8_t buf[], std::size_t len) {
 			apps::Chat message_in;
