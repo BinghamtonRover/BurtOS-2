@@ -102,16 +102,74 @@ void net::MessageSender::reset() {
 	socket.open(boost::asio::ip::udp::v4());
 }
 
-net::MessageReceiver::MessageReceiver(uint_least16_t listen_port, boost::asio::io_context& io_context, bool open)
-		: socket(io_context, boost::asio::ip::udp::endpoint(boost::asio::ip::udp::v4(), listen_port)) {
+net::MessageReceiver::MessageReceiver(boost::asio::io_context& io_context)
+	: socket(io_context),
+	use_multicast(false) {
+
+}
+
+net::MessageReceiver::MessageReceiver(boost::asio::io_context& io_context, uint_least16_t listen_port, bool open)
+	: socket(io_context),
+	listen_ep(boost::asio::ip::address_v4(), listen_port),
+	use_multicast(false) {
 	
 	if (open) this->open();
 }
 
+net::MessageReceiver::MessageReceiver(uint_least16_t listen_port, boost::asio::io_context& io_context, bool open)
+	: MessageReceiver(io_context, listen_port, open) {
+}
+
+net::MessageReceiver::MessageReceiver(boost::asio::io_context& io_context, const boost::asio::ip::udp::endpoint& mcast_feed, bool open)
+	: socket(io_context),
+	listen_ep(mcast_feed),
+	use_multicast(true) {
+	
+	if (open) this->open();
+}
+
+void net::MessageReceiver::set_listen_port(uint_least16_t port) {
+	use_multicast = false;
+	listen_ep.port(port);
+
+	if (socket.is_open()) {
+		open();
+	}
+}
+
+void net::MessageReceiver::subscribe(const boost::asio::ip::udp::endpoint& mcast_feed) {
+	use_multicast = true;
+	listen_ep = mcast_feed;
+
+	if (socket.is_open()) {
+		open();
+	}
+}
+
 void net::MessageReceiver::open() {
+	if (socket.is_open())
+		socket.close();
+
+	if (use_multicast) {
+		socket.open(listen_ep.protocol());
+		socket.set_option(boost::asio::ip::udp::socket::reuse_address(true));
+		socket.bind(boost::asio::ip::udp::endpoint(
+			boost::asio::ip::address_v4::from_string("0.0.0.0"),
+			listen_ep.port()
+		));
+		socket.set_option(boost::asio::ip::multicast::join_group(listen_ep.address()));
+	} else {
+		socket.open(boost::asio::ip::udp::v4());
+		socket.bind(boost::asio::ip::udp::endpoint(boost::asio::ip::udp::v4(), listen_ep.port()));
+	}
+
+	listen();
+}
+
+void net::MessageReceiver::listen() {
 	socket.async_receive_from(boost::asio::buffer(recv_buffer), remote, [this](auto error, auto bytes_transferred) {
 		read_messages(recv_buffer.data(), bytes_transferred);
-		open();
+		listen();
 	});
 }
 

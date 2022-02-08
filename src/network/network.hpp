@@ -57,14 +57,28 @@ class MessageSender {
 
 class MessageReceiver : public msg::Receiver {
 	public:
-		MessageReceiver(uint_least16_t listen_port, boost::asio::io_context& io_context, bool open=true);
+		MessageReceiver(boost::asio::io_context& io_context);
+		MessageReceiver(boost::asio::io_context& io_context, uint_least16_t listen_port, bool open = true);
+		MessageReceiver(boost::asio::io_context& io_context, const boost::asio::ip::udp::endpoint& mcast_feed, bool open = true);
+
+		// Deprecated constructor. Use the others (where the io context is the first arg)
+		MessageReceiver(uint_least16_t listen_port, boost::asio::io_context& io_context, bool open = true);
+
+		void set_listen_port(uint_least16_t port);
+		void subscribe(const boost::asio::ip::udp::endpoint& mcast_feed);
+
 		void open();
 		void close();
 		inline Destination& remote_sender() { return remote; }
 	private:
 		boost::asio::ip::udp::socket socket;
 		Destination remote;
+		boost::asio::ip::udp::endpoint listen_ep;
+		bool use_multicast;
+		
 		boost::array<uint8_t, 2048> recv_buffer;
+
+		void listen();
 		
 };
 
