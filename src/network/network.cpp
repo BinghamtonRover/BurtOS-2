@@ -46,7 +46,7 @@ void net::MessageSender::begin_sending() {
 	async_send_active = true;
 	msg_buffer.swap();
 	auto& to_send = msg_buffer.read_only_buffer();
-	socket.async_send_to(boost::asio::buffer(to_send.data(), to_send.usage()), dest, [this](auto error, auto bytes_transferred) {
+	socket.async_send_to(boost::asio::buffer(to_send.data(), to_send.usage()), dest, [this](boost::system::error_code, std::size_t) {
 		// On send finished:
 
 		msg_buffer.read_only_buffer().clear();
@@ -80,7 +80,7 @@ void net::MessageSender::disable() {
 }
 
 net::MessageSender::MessageSender(boost::asio::io_context& io_context, const Destination& device_ip)
-		: dest(device_ip), socket(io_context), destination_provided(true) {
+		: socket(io_context), dest(device_ip), destination_provided(true) {
 
 	socket.open(boost::asio::ip::udp::v4());
 }
@@ -114,10 +114,6 @@ net::MessageReceiver::MessageReceiver(boost::asio::io_context& io_context, uint_
 	use_multicast(false) {
 	
 	if (open) this->open();
-}
-
-net::MessageReceiver::MessageReceiver(uint_least16_t listen_port, boost::asio::io_context& io_context, bool open)
-	: MessageReceiver(io_context, listen_port, open) {
 }
 
 net::MessageReceiver::MessageReceiver(boost::asio::io_context& io_context, const boost::asio::ip::udp::endpoint& mcast_feed, bool open)
@@ -167,7 +163,7 @@ void net::MessageReceiver::open() {
 }
 
 void net::MessageReceiver::listen() {
-	socket.async_receive_from(boost::asio::buffer(recv_buffer), remote, [this](auto error, auto bytes_transferred) {
+	socket.async_receive_from(boost::asio::buffer(recv_buffer), remote, [this](boost::system::error_code, std::size_t bytes_transferred) {
 		read_messages(recv_buffer.data(), bytes_transferred);
 		listen();
 	});

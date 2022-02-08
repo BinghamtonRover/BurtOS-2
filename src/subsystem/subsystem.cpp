@@ -44,7 +44,7 @@ int main() {
 	read_subsystem_config("cfg/subsystem_config.json");
 	register_messages();
 
-	net::MessageReceiver receiver(subsystem_receive_port, ctx);
+	net::MessageReceiver receiver(ctx, subsystem_receive_port);
 
 	receiver.register_handler<drive_msg::Velocity>([](const uint8_t buf[], std::size_t len) {
 		drive::Velocity msg;

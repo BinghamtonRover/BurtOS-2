@@ -31,7 +31,7 @@ std::string reply_ip_str;
 
 void host_server() {
 	static boost::asio::io_context ctx;
-	static net::MessageReceiver m(port, ctx);
+	static net::MessageReceiver m(ctx, port);
 	static net::MessageSender reply_rd(ctx);
 	m.register_handler<apps::RttMessage>([](const uint8_t buf[], std::size_t len) {
 		try {
@@ -58,7 +58,7 @@ void run_tests() {
 	static apps::RttMessage rtt_request;
 	static std::chrono::high_resolution_clock::time_point send_time;
 	static std::chrono::high_resolution_clock::time_point reply_time;
-	static net::MessageReceiver m(reply_port, ctx);
+	static net::MessageReceiver m(ctx, port);
 	static std::vector<double> all_times;
 	all_times.reserve(max_trips);
 

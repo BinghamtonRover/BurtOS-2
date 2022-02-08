@@ -15,13 +15,13 @@ void net::StreamSender::set_destination_endpoint(const boost::asio::ip::udp::end
 }
 
 void net::StreamSender::create_streams(int stream_count) {
-	if (stream_info.size() < stream_count) {
+	if (stream_count > 0 && stream_info.size() < static_cast<unsigned>(stream_count)) {
 		stream_info.resize(stream_count);
 	}
 }
 
 void net::StreamSender::send_frame(int stream, uint8_t* data, std::size_t len) {
-	if (stream >= stream_info.size() || stream < 0) {
+	if (static_cast<unsigned>(stream) >= stream_info.size()) {
 		throw std::out_of_range("net::StreamSender::send_frame: stream index out of range");
 	}
 	FrameHeader hdr;
@@ -114,7 +114,7 @@ net::StreamReceiver::Stream::~Stream() {
 	delete[] all_data;
 }
 
-void net::StreamReceiver::Stream::alloc_buffers(std::size_t buf_size, int buf_level) {
+void net::StreamReceiver::Stream::alloc_buffers(std::size_t buf_size, unsigned buf_level) {
 	// Do not reallocate if they are the same size
 	if (all_data && buf_level == frame_buffers.size() && buf_size == indv_buffer_size) return;
 
@@ -197,14 +197,14 @@ void net::StreamReceiver::receive() {
 
 			// Acquire streams_lock as a reader
 			std::shared_lock<std::shared_mutex> streams_reader(streams_lock);
-			if (section.stream_index >= 0 && section.stream_index < streams.size() && streams[section.stream_index].open) {
+			if (section.stream_index >= 0 && static_cast<unsigned>(section.stream_index) < streams.size() && streams[section.stream_index].open) {
 				
 				Stream& s = streams[section.stream_index];
 
 				// One buffer is reserved as a "completed frame" buffer, pick from the others
-				int use_buffer = section.frame_index % (s.frame_buffers.size() - 1);
+				unsigned use_buffer = section.frame_index % (s.frame_buffers.size() - 1);
 				// Do not overwrite most recently completed frame
-				if (s.complete_buffer != -1 && use_buffer >= s.complete_buffer) {
+				if (s.complete_buffer >= -1 && use_buffer >= static_cast<unsigned>(s.complete_buffer)) {
 					use_buffer++;
 					if (use_buffer == s.frame_buffers.size()) use_buffer = 0;
 				}
@@ -246,7 +246,7 @@ void net::StreamReceiver::receive() {
 
 void net::StreamReceiver::open_stream(int stream) {
 	// Direct map stream index to an entry in streams. Ensure table is big enough
-	if (stream >= streams.size()) {
+	if (static_cast<unsigned>(stream) >= streams.size()) {
 		std::unique_lock<std::shared_mutex> writer(streams_lock);
 		streams.resize(stream + 1);
 	}
@@ -255,7 +255,7 @@ void net::StreamReceiver::open_stream(int stream) {
 }
 
 void net::StreamReceiver::destroy_stream(int stream) {
-	if (stream < streams.size()) {
+	if (static_cast<unsigned>(stream) < streams.size()) {
 		std::unique_lock streams_writer(streams_lock);
 		streams[stream].free_buffers();
 		streams[stream].open = false;
@@ -263,7 +263,7 @@ void net::StreamReceiver::destroy_stream(int stream) {
 }
 
 void net::StreamReceiver::close_stream(int stream) {
-	if (stream < streams.size()) {
+	if (static_cast<unsigned>(stream) < streams.size()) {
 		streams[stream].open = false;
 	}
 }
@@ -304,7 +304,7 @@ void net::StreamReceiver::set_section_buffer_size(std::size_t size) {
 
 net::Frame net::StreamReceiver::get_complete_frame(int stream) {
 	std::shared_lock<std::shared_mutex> streams_reader(streams_lock);
-	if (stream >= streams.size())
+	if (static_cast<unsigned>(stream) >= streams.size())
 		throw std::out_of_range("net::StreamReceiver::get_complete_frame: stream index out of range");
 
 	Stream& s = streams[stream];
