@@ -202,25 +202,13 @@ void net::StreamReceiver::receive() {
 				Stream& s = streams[section.stream_index];
 
 				// Find which buffer to use
-				unsigned use_buffer;
-				if (s.frame_buffers.size() == 0) {
-					// Special case 1: No buffers were allocated. Ignore
-					receive();
-					return;
-				} else if (s.frame_buffers.size() == 1) {
-					// Special case 2: Only 1 buffer level. Cannot begin overwriting if the complete buffer is in use
-					use_buffer = 0;
+				// s.frame_buffers.size() is guaranteed to be >= 2
 
-					std::unique_lock scoped_lock(s.completion_lock);
-					s.complete_buffer = -1;
-				} else {
-					// Normal case: One buffer is reserved as a "completed frame" buffer, pick from the others
-					use_buffer = section.frame_index % (s.frame_buffers.size() - 1);
-					// Do not overwrite most recently completed frame
-					if (s.complete_buffer >= -1 && use_buffer >= static_cast<unsigned>(s.complete_buffer)) {
-						use_buffer++;
-						if (use_buffer == s.frame_buffers.size()) use_buffer = 0;
-					}
+				unsigned use_buffer = section.frame_index % (s.frame_buffers.size() - 1);
+				// Do not overwrite most recently completed frame
+				if (s.complete_buffer >= -1 && use_buffer >= static_cast<unsigned>(s.complete_buffer)) {
+					use_buffer++;
+					if (use_buffer == s.frame_buffers.size()) use_buffer = 0;
 				}
 
 				// Continue reconstructing this frame -or- overwrite the old frame
@@ -260,7 +248,7 @@ void net::StreamReceiver::receive() {
 
 void net::StreamReceiver::open_stream(int stream) {
 	// Direct map stream index to an entry in streams. Ensure table is big enough
-	if (static_cast<unsigned>(stream) >= streams.size()) {
+	if (stream >= 0 && static_cast<unsigned>(stream) >= streams.size()) {
 		std::unique_lock<std::shared_mutex> writer(streams_lock);
 		streams.resize(stream + 1);
 	}
