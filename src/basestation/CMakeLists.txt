@@ -20,13 +20,22 @@ set(WIDGET_SRC
 	widgets/functionbox.cpp
 )
 
-add_executable(basestation basestation.cpp session.hpp session.cpp ${MODULE_HDR} ${MODULE_SRC} ${WIDGET_HDR} ${WIDGET_SRC} 
+add_executable(basestation
+	main.cpp
+	basestation.hpp
+	basestation.cpp
+	basestation_screen.hpp
+	basestation_screen.cpp
 	controls/controller_manager.hpp
 	controls/controller_manager.cpp
 	controls/controller.hpp
 	controls/controller.cpp
 	controls/lua_ctrl_lib.hpp
 	controls/lua_ctrl_lib.cpp
+	${MODULE_HDR}
+	${MODULE_SRC}
+	${WIDGET_HDR}
+	${WIDGET_SRC} 
 )
 
 target_include_directories(basestation PUBLIC nanogui roverlua ${CMAKE_CURRENT_SOURCE_DIR})
