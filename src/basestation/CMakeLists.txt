@@ -32,14 +32,16 @@ add_executable(basestation
 	controls/controller.cpp
 	controls/lua_ctrl_lib.hpp
 	controls/lua_ctrl_lib.cpp
+	controls/drive_input.hpp
+	controls/drive_input.cpp
 	${MODULE_HDR}
 	${MODULE_SRC}
 	${WIDGET_HDR}
 	${WIDGET_SRC} 
 )
 
-target_include_directories(basestation PUBLIC nanogui roverlua ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(basestation nanogui ${NANOGUI_EXTRA_LIBS} roverlua)
+target_include_directories(basestation PUBLIC nanogui roverlua ${CMAKE_CURRENT_SOURCE_DIR} rover_control)
+target_link_libraries(basestation nanogui ${NANOGUI_EXTRA_LIBS} roverlua rover_control)
 
 # NanoGUI requires C++17
 target_compile_features(basestation PUBLIC cxx_std_17)

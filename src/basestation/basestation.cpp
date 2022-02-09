@@ -8,13 +8,17 @@
 
 Basestation* Basestation::main_instance = nullptr;
 
-Basestation::Basestation() {
+Basestation::Basestation()
+	: subsystem_sender(main_thread_ctx),
+	remote_drive(subsystem_sender) {
+
 	if (main_instance != nullptr) {
 		throw std::runtime_error("Basestation::Basestation: duplicate instance not allowed");
 	}
 	main_instance = this;
 
 	controller_mgr.init();
+	remote_drive.add_controller_actions(controller_mgr);
 
 	Console::add_setup_routine([](Console& new_console) {
 		new_console.load_library("ctrl", lua_ctrl_lib::open);
@@ -50,7 +54,10 @@ BasestationScreen* Basestation::get_focused_screen() const {
 void Basestation::mainloop() {
 	while (continue_operating) {
 		glfwPollEvents();
-		
+		main_thread_ctx.poll();
+
+		remote_drive.poll_events();
+
 		controller_mgr.update_controls();
 
 		{

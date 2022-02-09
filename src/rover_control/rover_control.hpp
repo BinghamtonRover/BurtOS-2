@@ -10,6 +10,8 @@ class Drive {
 		void set_interval(int milliseconds);
 		int get_interval();
 		void poll_events();
+		bool update_ready();
+		void send_update();
 
 		void set_drive_mode(::drive::DriveMode_Mode mode);
 		void halt();

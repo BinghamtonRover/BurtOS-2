@@ -4,9 +4,12 @@
 #include <mutex>
 #include <functional>
 
+#include <network.hpp>
+
 #include <rover_lua.hpp>
 #include <basestation_screen.hpp>
 #include <controls/controller_manager.hpp>
+#include <controls/drive_input.hpp>
 
 /*
 	Container class for the main instance of the base station
@@ -56,6 +59,10 @@ class Basestation {
 		};
 
 	private:
+		boost::asio::io_context main_thread_ctx;
+		net::MessageSender subsystem_sender;
+		DriveInput remote_drive;
+
 		ControllerManager controller_mgr;
 
 		std::vector<BasestationScreen*> screens;
