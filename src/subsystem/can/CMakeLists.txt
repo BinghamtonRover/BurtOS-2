@@ -14,7 +14,7 @@ if (NOT DEFINED ONBOARD_CAN_BUS)
 endif()
 
 if (ONBOARD_CAN_BUS)
-	target_compile_definitions(rover_can PRIVATE ONBOARD_CAN_BUS)
+	target_compile_definitions(rover_can PUBLIC ONBOARD_CAN_BUS)
 	message(STATUS "rover_can: Building in ONBOARD mode")
 else()
 	message(STATUS "rover_can: Building in OFFLINE mode. CAN bus is disabled")

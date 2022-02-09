@@ -40,9 +40,7 @@ class DriveController {
 		float right_speed = 0.0F;
 
 		//Clock 
-		const std::chrono::time_point<std::chrono::high_resolution_clock> time_now = std::chrono::high_resolution_clock::now();
-		std::chrono::time_point<std::chrono::high_resolution_clock> time_updated =  std::chrono::high_resolution_clock::now();
-		std::chrono::duration<double> time_difference = time_now - time_updated;
+		std::chrono::time_point<std::chrono::steady_clock> time_updated = std::chrono::steady_clock::now();
 
 		// Call whenever target_angle or target_velocity changes
 		void update_target_velocity();		

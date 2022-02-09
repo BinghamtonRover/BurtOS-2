@@ -28,52 +28,41 @@ float DriveController::get_target_velocity() {
 }
 
 void DriveController::update_motor_acceleration() {
-	//set current time
-	time_now = std::chrono::system_clock::now();
-	time_difference = time_now - time_updated();
+	auto time_now = std::chrono::steady_clock::now();
+	std::chrono::duration<double> time_difference = time_now - time_updated;
 
-	if(time_difference.count() < .002){
-			return;
-	}
-	else{
-		if (false && get_drive_mode() == DriveMode::NEUTRAL) {
-			left_speed = 0;
-			right_speed = 0;
-			time_updated = std::chrono::system_clock::now();
-		} else {
-			if(target_left_speed == left_speed && target_right_speed == right_speed){
-				//speed set, return
-				return;
-			}
-			else{
-				float last_left_speed = left_speed;
-				float last_right_speed = right_speed;
-				double delta_time = time.difference.count();
-				//what should max time be if program stalls?
-				if(delta_time > 0.01){ delta_time = 0.01;}
+	if (time_difference.count() < .002 || target_left_speed == left_speed && target_right_speed == right_speed) {
+		return;
+	} else if (current_mode == DriveMode::NEUTRAL) {
+		left_speed = 0;
+		right_speed = 0;
+	} else {
+		float last_left_speed = left_speed;
+		float last_right_speed = right_speed;
+		double delta_time = time_difference.count();
+		//what should max time be if program stalls?
+		if (delta_time > 0.01){ delta_time = 0.01;}
 
-				if (left_speed > target_left_speed) { left_speed = left_speed - delta_time; }
-				else if (left_speed < target_left_speed) { left_speed = left_speed + delta_time; }
-				if (right_speed > target_right_speed) { right_speed = right_speed - delta_time; }
-				else if (right_speed < target_right_speed) { right_speed = right_speed + delta_time; }
+		if (left_speed > target_left_speed) { left_speed = left_speed - delta_time; }
+		else if (left_speed < target_left_speed) { left_speed = left_speed + delta_time; }
+		if (right_speed > target_right_speed) { right_speed = right_speed - delta_time; }
+		else if (right_speed < target_right_speed) { right_speed = right_speed + delta_time; }
 
-				time_updated = std::chrono::system_clock::now();
-
-				//target speed reached (bandaid fix?)
-				//should 0.01f be based off of max change in velocity? (max delta time * acceleration) + buffer?
-				if (!(left_speed - target_left_speed < 0.01f && left_speed - last_left_speed < 0.01f)) {
-					if ((last_left_speed > target_left_speed && left_speed < target_left_speed) ||
-						(last_left_speed < target_left_speed && left_speed > target_left_speed)) { left_speed = target_left_speed; }
-				}
-				if (!(right_speed - target_right_speed < 0.01f && right_speed - last_right_speed < 0.01f)) {
-					if ((last_right_speed > target_right_speed && right_speed < target_left_speed) ||
-						(last_right_speed < target_right_speed && right_speed > target_left_speed)) { right_speed = target_right_speed; }
-				}
-			}
+		//target speed reached (bandaid fix?)
+		//should 0.01f be based off of max change in velocity? (max delta time * acceleration) + buffer?
+		if (!(left_speed - target_left_speed < 0.01f && left_speed - last_left_speed < 0.01f)) {
+			if ((last_left_speed > target_left_speed && left_speed < target_left_speed) ||
+				(last_left_speed < target_left_speed && left_speed > target_left_speed)) { left_speed = target_left_speed; }
 		}
-		can_send(Node::DRIVE_AXIS_5, Command::SET_INPUT_VEL, right_speed);
-		can_send(Node::DRIVE_AXIS_4, Command::SET_INPUT_VEL, left_speed);
+		if (!(right_speed - target_right_speed < 0.01f && right_speed - last_right_speed < 0.01f)) {
+			if ((last_right_speed > target_right_speed && right_speed < target_left_speed) ||
+				(last_right_speed < target_right_speed && right_speed > target_left_speed)) { right_speed = target_right_speed; }
+		}
 	}
+	can_send(Node::DRIVE_AXIS_5, Command::SET_INPUT_VEL, right_speed);
+	can_send(Node::DRIVE_AXIS_4, Command::SET_INPUT_VEL, left_speed);
+
+	time_updated = std::chrono::steady_clock::now();
 }
 
 void DriveController::set_forward_velocity(float mps) {
