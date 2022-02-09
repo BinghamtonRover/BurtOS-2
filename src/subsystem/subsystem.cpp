@@ -9,9 +9,9 @@ int main() {
 
 
 	std::cout << "Initialization complete; Entering main event loop\n";
+	
 	for (;;) {
 		drive.update_motor_acceleration();
 	}
-
 	return 0;   
 }
