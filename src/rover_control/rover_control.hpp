@@ -20,6 +20,10 @@ class Drive {
 
 		void register_listen_handlers(net::MessageReceiver& m);
 
+		float get_actual_left_speed();
+		float get_actual_right_speed();
+		::drive::DriveMode_Mode get_actual_drive_mode();
+
 	private:
 		int interval = 100;
 		net::MessageSender& sender;
@@ -30,6 +34,7 @@ class Drive {
 		float actual_left_speed;
 		float actual_right_speed;
 		::drive::DriveMode_Mode actual_drive_mode;
+		
 		std::chrono::steady_clock::time_point last_update_received;
 };
 

@@ -15,6 +15,7 @@ uint16_t subsystem_receive_port;
 
 std::chrono::steady_clock::time_point last_message_sent = std::chrono::steady_clock::now();;
 int message_interval = 100; //milliseconds
+std::string subsystem_update_ip = "127.0.0.1";
 
 void read_subsystem_config(const std::string& fname) {
 	namespace ptree = boost::property_tree;
@@ -27,6 +28,21 @@ void read_subsystem_config(const std::string& fname) {
 		std::cerr << "Warning: Using default config after error reading config file: "
 				<< err.message() << " (" << err.filename() << ":" << err.line() << ")" << std::endl;
 	}
+}
+
+bool read_from(boost::property_tree::ptree& src) {
+	bool success = true;
+	try {
+		message_interval = src.get<float>("subsystem.message.interval");
+		subsystem_update_ip = src.get<std::string>("subsystem.message.addr");
+	} catch (const boost::property_tree::ptree_bad_path& e) {
+		std::cerr << "Missing required config value: " << e.what() << "\n";
+		success = false;
+	} catch (const boost::property_tree::ptree_bad_data& e) {
+		std::cerr << "Could not interpret config value: " << e.data<std::string>() << "\n";
+		success = false;
+	}
+	return success;
 }
 
 // Try to deinitialize critical systems (like the ODrives) after the program has encountered a critical error
@@ -48,7 +64,7 @@ int main() {
 	register_messages();
 
 	net::MessageReceiver receiver(ctx, subsystem_receive_port);
-	net::MessageSender sender(ctx, net::Destination(boost::asio::ip::address::from_string("127.0.0.1"), subsystem_receive_port));
+	net::MessageSender sender(ctx, net::Destination(boost::asio::ip::address::from_string(subsystem_update_ip), subsystem_receive_port));
 
 	receiver.register_handler<drive_msg::Velocity>([](const uint8_t buf[], std::size_t len) {
 		drive::Velocity msg;

@@ -70,3 +70,15 @@ void rc::Drive::register_listen_handlers(net::MessageReceiver& m) {
 		}
 	});
 }
+
+float rc::Drive::get_actual_left_speed() {
+	return actual_left_speed;
+}
+
+float rc::Drive::get_actual_right_speed() {
+	return actual_right_speed;
+}
+
+::drive::DriveMode_Mode rc::Drive::get_actual_drive_mode() {
+	return actual_drive_mode;
+}
