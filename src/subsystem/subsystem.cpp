@@ -13,6 +13,9 @@ boost::asio::io_context ctx;
 
 uint16_t subsystem_receive_port;
 
+std::chrono::steady_clock::time_point last_message_sent = std::chrono::steady_clock::now();;
+int message_interval = 100; //milliseconds
+
 void read_subsystem_config(const std::string& fname) {
 	namespace ptree = boost::property_tree;
 	ptree::ptree subsystem_cfg;
@@ -96,15 +99,22 @@ int main() {
 			ctx.poll();
 			drive_controller.update_motor_acceleration();
 
-			drive_msg::ActualSpeed speed_message;
-			speed_message.data.set_left(drive_controller.get_left_speed());
-			speed_message.data.set_right(drive_controller.get_right_speed());
-			sender.send_message(speed_message);
+			auto time_now = std::chrono::steady_clock::now();
+			std::chrono::duration<double, std::milli> time_passed = time_now - last_message_sent;
 
-			drive_msg::DriveMode mode_message;
-			::drive::DriveMode_Mode new_mode = static_cast<::drive::DriveMode_Mode>(drive_controller.get_drive_mode());
-			mode_message.data.set_mode(new_mode);
-			sender.send_message(mode_message);
+			if (time_passed.count() >= message_interval) {
+				drive_msg::ActualSpeed speed_message;
+				speed_message.data.set_left(drive_controller.get_left_speed());
+				speed_message.data.set_right(drive_controller.get_right_speed());
+				sender.send_message(speed_message);
+
+				drive_msg::DriveMode mode_message;
+				::drive::DriveMode_Mode new_mode = static_cast<::drive::DriveMode_Mode>(drive_controller.get_drive_mode());
+				mode_message.data.set_mode(new_mode);
+				sender.send_message(mode_message);
+
+				last_message_sent = std::chrono::steady_clock::now();
+			}
 
 		}
 	} catch (const std::exception& err) {

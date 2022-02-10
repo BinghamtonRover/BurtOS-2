@@ -54,7 +54,7 @@ void rc::Drive::set_movement(float speed, float angle) {
 }
 
 void rc::Drive::register_listen_handlers(net::MessageReceiver& m) {
-	m.register_handler<drive_msg::ActualSpeed>([](const uint8_t buf[], std::size_t len) {
+	m.register_handler<drive_msg::ActualSpeed>([this](const uint8_t buf[], std::size_t len) {
 		drive::ActualSpeed msg;
 		if (msg.ParseFromArray(buf, len)) {
 			actual_left_speed = msg.right();
@@ -62,7 +62,7 @@ void rc::Drive::register_listen_handlers(net::MessageReceiver& m) {
 			last_update_received = std::chrono::steady_clock::now();
 		}
 	});
-	m.register_handler<drive_msg::DriveMode>([](const uint8_t buf[], std::size_t len) {
+	m.register_handler<drive_msg::DriveMode>([this](const uint8_t buf[], std::size_t len) {
 		drive::DriveMode msg;
 		if (msg.ParseFromArray(buf, len)) {
 			actual_drive_mode = msg.mode();
