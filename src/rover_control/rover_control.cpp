@@ -45,15 +45,11 @@ void rc::Drive::halt() {
 }
 
 void rc::Drive::set_speed(float speed) {
-	drive_msg::Velocity speed_message;
-	speed_message.data.set_speed(speed);
-	sender.send_message(speed_message);
+	movement_message.data.set_speed(speed);
 }
 
 void rc::Drive::set_angle(float angle) {
-	drive_msg::Velocity angle_message;
-	angle_message.data.set_angle(angle);
-	sender.send_message(angle_message);
+	movement_message.data.set_angle(angle);
 }
 
 void rc::Drive::set_movement(float speed, float angle) {

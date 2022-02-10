@@ -46,7 +46,7 @@ void net::MessageSender::begin_sending() {
 	async_send_active = true;
 	msg_buffer.swap();
 	auto& to_send = msg_buffer.read_only_buffer();
-	socket.async_send_to(boost::asio::buffer(to_send.data(), to_send.usage()), dest, [this](boost::system::error_code, std::size_t) {
+	socket.async_send_to(boost::asio::buffer(to_send.data(), to_send.usage()), dest, [this](boost::system::error_code ec, std::size_t) {
 		// On send finished:
 
 		msg_buffer.read_only_buffer().clear();
@@ -56,6 +56,10 @@ void net::MessageSender::begin_sending() {
 			begin_sending();
 		}
 		async_start_lock.unlock();
+
+		if (ec && error_callback) {
+			error_callback(ec);
+		}
 
 	});
 }

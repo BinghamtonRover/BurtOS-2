@@ -37,6 +37,12 @@ class Basestation {
 		inline const std::vector<BasestationScreen*>& get_screens() const {
 			return screens;
 		}
+		inline net::MessageSender& get_subsystem_sender() {
+			return subsystem_sender;
+		}
+		inline DriveInput& get_remote_drive_controller() {
+			return remote_drive;
+		}
 
 		void schedule(const std::function<void(Basestation&)>& callback);
 		
@@ -54,6 +60,7 @@ class Basestation {
 			static const struct luaL_Reg lib[];
 			static int shutdown(lua_State*);
 			static int new_screen(lua_State*);
+			static int open_module(lua_State*);
 
 			static void open(lua_State*);
 		};

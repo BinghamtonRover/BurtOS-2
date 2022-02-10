@@ -30,6 +30,7 @@ class MessageSender {
 		// Change the destination. If the device was constructed without a destination, this enables the device.
 		// Otherwise, enabled/disabled state is unchanged.
 		void set_destination_endpoint(const Destination& endpoint);
+		inline const Destination& destination_endpoint() const { return dest; }
 
 		// Disable device and block until the remaining operations have finished
 		// Continues dispatching other jobs on io_context until return
@@ -38,7 +39,8 @@ class MessageSender {
 		// Stops messages from being queued by send_message(). Clears queues but does not stop dispatched jobs
 		void disable();
 		inline void enable() { _disable = false; }
-		inline bool enabled() { return !_disable; }
+		inline bool enabled() const { return !_disable; }
+		inline void set_error_callback(const std::function<void(boost::system::error_code)>& f) { error_callback = f; }
 
 		// Close and reopen the socket
 		void reset();
@@ -47,6 +49,7 @@ class MessageSender {
 		Destination dest;
 		DoubleBuffer<uint8_t> msg_buffer;
 		std::mutex async_start_lock;
+		std::function<void(boost::system::error_code)> error_callback;
 		bool async_send_active = false;
 		bool _disable = false;
 		bool destination_provided;

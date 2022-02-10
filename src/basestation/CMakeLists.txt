@@ -1,11 +1,13 @@
 set(MODULE_HDR
 	modules/console.hpp
+	modules/network_config.cpp
 	modules/input_config/controller_config.hpp
 	modules/input_config/controller_calibration_popup.hpp
 	modules/input_config/controller_binding_popup.hpp
 )
 set(MODULE_SRC
 	modules/console.cpp
+	modules/network_config.cpp
 	modules/input_config/controller_config.cpp
 	modules/input_config/controller_calibration_popup.cpp
 	modules/input_config/controller_binding_popup.cpp

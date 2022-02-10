@@ -1,5 +1,7 @@
 #include <basestation.hpp>
 #include <modules/console.hpp>
+#include <modules/network_config.hpp>
+#include <modules/input_config/controller_config.hpp>
 #include <controls/lua_ctrl_lib.hpp>
 
 #include <stdexcept>
@@ -19,10 +21,29 @@ Basestation::Basestation()
 
 	controller_mgr.init();
 	remote_drive.add_controller_actions(controller_mgr);
+	for (auto& dev : controller_mgr.devices()) {
+		if (dev.present() && dev.is_gamepad()) {
+			dev.get_gamepad_axis(gamepad::right_trigger).set_action(controller_mgr.find_action("Accelerate"));
+			dev.get_gamepad_axis(gamepad::left_x).set_action(controller_mgr.find_action("Steer"));
+			dev.get_gamepad_axis(gamepad::left_trigger).set_action(controller_mgr.find_action("Reverse"));
+		}
+	}
 
 	Console::add_setup_routine([](Console& new_console) {
 		new_console.load_library("ctrl", lua_ctrl_lib::open);
 		new_console.load_library("bs", lua_basestation_lib::open);
+	});
+
+	subsystem_sender.set_error_callback([](boost::system::error_code ec) {
+		static int last_code = boost::system::errc::success;
+		static std::chrono::steady_clock::time_point last_reported_err{};
+
+		if (last_code != ec.value() || std::chrono::duration<double>(std::chrono::steady_clock::now() - last_reported_err).count() >= 1.0) {
+			std::cerr << "Error sending to subsystem: " << ec.message() << std::endl;
+
+			last_code = ec.value();
+			last_reported_err = std::chrono::steady_clock::now();
+		}
 	});
 }
 
@@ -103,8 +124,44 @@ void Basestation::schedule(const std::function<void(Basestation&)>& callback) {
 const struct luaL_Reg Basestation::lua_basestation_lib::lib[] = {
 	{"shutdown", shutdown},
 	{"new_screen", new_screen},
+	{"new_module", open_module},
 	{NULL, NULL}
 };
+
+int Basestation::lua_basestation_lib::open_module(lua_State* L) {
+	const char* name = luaL_checkstring(L, 1);
+	int act = 0;
+	if (strcmp("net", name) == 0) {
+		act = 1;
+	} else if (strcmp("ctrl", name) == 0) {
+		act = 2;
+	} else if (strcmp("console", name) == 0) {
+		act = 3;
+	}
+	if (act != 0) {
+		Basestation::async([act](Basestation& bs) {
+			auto s = bs.get_focused_screen();
+			nanogui::Window* wnd = nullptr;
+			switch (act) {
+				case 1:
+					wnd = new NetworkConfig(s);
+					break;
+				case 2:
+					wnd = new ControllerConfig(s, bs.controller_manager());
+					break;
+				case 3:
+					wnd = new Console(s);
+					break;
+			}
+			if (wnd != nullptr) {
+				wnd->center();
+			}
+		});
+	} else {
+		luaL_error(L, "error: unknown module type");
+	}
+	return 0;
+}
 
 int Basestation::lua_basestation_lib::shutdown(lua_State*) {
 	main_instance->continue_operating = false;

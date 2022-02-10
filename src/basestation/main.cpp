@@ -8,6 +8,7 @@ int main() {
 	std::cout << "Copyright (C) 2022 Binghamton University Rover Team\n";
 
 	try {
+		register_messages();
 
 		nanogui::init();
 

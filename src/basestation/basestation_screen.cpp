@@ -2,6 +2,7 @@
 #include <basestation.hpp>
 
 #include <modules/console.hpp>
+#include <modules/network_config.hpp>
 
 ScreenPositioning::ScreenPositioning(const nanogui::Vector2i& size, const nanogui::Vector2i& window_pos, int monitor, bool use_fullscreen) :
 	size(size),
@@ -18,6 +19,9 @@ BasestationScreen::BasestationScreen(const ScreenPositioning& pos)
 	perform_layout();
 	draw_all();
 	set_visible(true);
+
+	auto wnd = new NetworkConfig(this);
+	wnd->center();
 }
 
 void BasestationScreen::set_fullscreen(GLFWmonitor* monitor) {

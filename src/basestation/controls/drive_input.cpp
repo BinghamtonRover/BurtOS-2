@@ -8,13 +8,15 @@ DriveInput::DriveInput(net::MessageSender& to_subsystem)
 void DriveInput::poll_events() {
 	if (update_ready()) {
 		merge_input_sources();
+		set_speed(out_speed);
+		set_angle(out_angle);
 		send_update();
 	}
 }
 
 void DriveInput::merge_input_sources() {
 	float controller_speed = std::max(controller_fwd_speed, controller_rev_speed);
-	if (controller_rev_speed > controller_speed)
+	if (controller_rev_speed > controller_fwd_speed)
 		controller_speed = -controller_speed;
 
 	// Future: This is where keyboard input will be compared with controller inputs
