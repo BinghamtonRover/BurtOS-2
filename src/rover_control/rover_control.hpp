@@ -18,6 +18,13 @@ class Drive {
 		void set_angle(float angle);
 		void set_movement(float speed, float angle);
 
+		static float actual_left_speed;
+		static float actual_right_speed;
+		static ::drive::DriveMode_Mode actual_drive_mode;
+		static std::chrono::steady_clock::time_point last_update_received;
+
+		void register_listen_handlers(net::MessageReceiver& m);
+
 	private:
 		int interval = 100;
 		net::MessageSender& sender;

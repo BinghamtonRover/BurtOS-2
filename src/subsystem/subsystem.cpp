@@ -45,6 +45,7 @@ int main() {
 	register_messages();
 
 	net::MessageReceiver receiver(ctx, subsystem_receive_port);
+	net::MessageSender sender(ctx, net::Destination(boost::asio::ip::address::from_string("127.0.0.1"), subsystem_receive_port));
 
 	receiver.register_handler<drive_msg::Velocity>([](const uint8_t buf[], std::size_t len) {
 		drive::Velocity msg;
@@ -94,6 +95,16 @@ int main() {
 
 			ctx.poll();
 			drive_controller.update_motor_acceleration();
+
+			drive_msg::ActualSpeed speed_message;
+			speed_message.data.set_left(drive_controller.get_left_speed());
+			speed_message.data.set_right(drive_controller.get_right_speed());
+			sender.send_message(speed_message);
+
+			drive_msg::DriveMode mode_message;
+			::drive::DriveMode_Mode new_mode = static_cast<::drive::DriveMode_Mode>(drive_controller.get_drive_mode());
+			mode_message.data.set_mode(new_mode);
+			sender.send_message(mode_message);
 
 		}
 	} catch (const std::exception& err) {
