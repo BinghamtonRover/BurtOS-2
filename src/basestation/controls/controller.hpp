@@ -4,7 +4,6 @@
 #include <string>
 #include <functional>
 #include <nanogui/opengl.h>
-#include <array>
 
 class AxisAction {
 	private:
@@ -21,7 +20,7 @@ class AxisAction {
 		// @param final_value Value sent to callback when this action is unbound
 		// @param callback The action to run
 		AxisAction(const std::string& name, float final_value = 0.0F, const decltype(callback)& callback = nullptr);
-
+		
 		inline const std::string& name() const {
 			return display_name;
 		}
@@ -69,7 +68,7 @@ class AxisCalibration {
 		void set_center(float);
 		inline float center() const { return center_pos; }
 
-		// The dead-zone is a region around the center where input is ignored. Should be in range [0.0, 1.0]
+		// The dead-zone is a region around the center where input is ignored. Should be in range [0.0, 1.0] 
 		void set_dead_zone(float percent);
 		inline float dead_zone() const { return deadzone; }
 
@@ -95,7 +94,7 @@ class JoystickAxis {
 		inline AxisCalibration& calibration() {
 			return cal;
 		}
-		inline float value() const {
+		inline float value() const { 
 			return last_value_translated;
 		}
 		inline float raw_value() const {
@@ -113,7 +112,7 @@ class JoystickAxis {
 		void end_calibration();
 
 	private:
-
+		
 		AxisCalibration cal;
 
 		float last_value_raw;
@@ -163,15 +162,13 @@ namespace gamepad {
 		"Right Trigger",
 		GLFW_GAMEPAD_AXIS_RIGHT_TRIGGER
 	};
-	std::array<const Axis, 6> AXES = {left_x, left_y, right_x, right_y, left_trigger, right_trigger};
+	constexpr std::array<const Axis, 6> AXES = {left_x, left_y, right_x, right_y, left_trigger, right_trigger};
 }
 
 /*
 	One Controller/Gamepad device on the system
-
 	Name and order of axes are system dependent, but if GLFW supports "Gamepad" mappings (1)
 	for this device, then the gamepad axes order is used (2)
-
 	1. https://www.glfw.org/docs/3.3/input_guide.html#gamepad
 	2. https://www.glfw.org/docs/3.3/group__gamepad__axes.html
 */
@@ -191,13 +188,13 @@ class Controller {
 		void update_axes();
 
 		JoystickAxis& get_gamepad_axis(int glfw_gamepad_axis);
-
+		
 		inline JoystickAxis& get_gamepad_axis(const gamepad::Axis& a) {
 			return get_gamepad_axis(a.IDX);
 		}
 
 		const char* device_name() const;
-
+	
 		inline void set_joystick_id(int id) {
 			_joystick_id = id;
 		}
