@@ -12,37 +12,28 @@ DriveController drive_controller;
 boost::asio::io_context ctx;
 
 uint16_t subsystem_receive_port;
+uint16_t subsystem_update_port;
 
-std::chrono::steady_clock::time_point last_message_sent = std::chrono::steady_clock::now();;
-int message_interval = 100; //milliseconds
-std::string subsystem_update_ip = "127.0.0.1";
+std::string subsystem_update_ip;
+std::chrono::steady_clock::time_point last_message_sent{};
+int message_interval_ms;
 
 void read_subsystem_config(const std::string& fname) {
 	namespace ptree = boost::property_tree;
 	ptree::ptree subsystem_cfg;
 	try {
 		ptree::json_parser::read_json(fname, subsystem_cfg);
-		subsystem_receive_port = subsystem_cfg.get<uint16_t>("subsystem.network.recv_port", 22101);
-
 	} catch (const ptree::json_parser_error& err) {
 		std::cerr << "Warning: Using default config after error reading config file: "
 				<< err.message() << " (" << err.filename() << ":" << err.line() << ")" << std::endl;
 	}
-}
+	// Reading from empty ptree will apply the default values
+	subsystem_receive_port = subsystem_cfg.get<uint16_t>("subsystem.network.recv_port", 22101);
 
-bool read_from(boost::property_tree::ptree& src) {
-	bool success = true;
-	try {
-		message_interval = src.get<float>("subsystem.message.interval");
-		subsystem_update_ip = src.get<std::string>("subsystem.message.addr");
-	} catch (const boost::property_tree::ptree_bad_path& e) {
-		std::cerr << "Missing required config value: " << e.what() << "\n";
-		success = false;
-	} catch (const boost::property_tree::ptree_bad_data& e) {
-		std::cerr << "Could not interpret config value: " << e.data<std::string>() << "\n";
-		success = false;
-	}
-	return success;
+	message_interval_ms = subsystem_cfg.get<int>("subsystem.update_interval_ms", 100);
+	subsystem_update_ip = subsystem_cfg.get<std::string>("subsystem.network.update_ip.addr", "239.255.123.123");
+	subsystem_update_port = subsystem_cfg.get<uint16_t>("subsystem.network.update_ip.port", 22201);
+
 }
 
 // Try to deinitialize critical systems (like the ODrives) after the program has encountered a critical error
@@ -64,7 +55,14 @@ int main() {
 	register_messages();
 
 	net::MessageReceiver receiver(ctx, subsystem_receive_port);
-	net::MessageSender sender(ctx, net::Destination(boost::asio::ip::address::from_string(subsystem_update_ip), subsystem_receive_port));
+	net::MessageSender sender(ctx);
+	try {
+		sender.set_destination_endpoint(net::Destination(boost::asio::ip::address::from_string(subsystem_update_ip), subsystem_update_port));
+		sender.enable();
+	} catch (const boost::system::system_error& err) {
+		std::cerr << "Warning: Updates are disabled due to error in IP endpoint: " << err.what() << std::endl;
+		sender.disable();
+	}
 
 	receiver.register_handler<drive_msg::Velocity>([](const uint8_t buf[], std::size_t len) {
 		drive::Velocity msg;
@@ -118,7 +116,7 @@ int main() {
 			auto time_now = std::chrono::steady_clock::now();
 			std::chrono::duration<double, std::milli> time_passed = time_now - last_message_sent;
 
-			if (time_passed.count() >= message_interval) {
+			if (time_passed.count() >= message_interval_ms) {
 				drive_msg::ActualSpeed speed_message;
 				speed_message.data.set_left(drive_controller.get_left_speed());
 				speed_message.data.set_right(drive_controller.get_right_speed());
