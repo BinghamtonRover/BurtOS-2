@@ -7,6 +7,7 @@
 
 #include <network.hpp>
 #include "drive_controller.hpp"
+#include "can/rover_can.hpp"
 
 DriveController drive_controller;
 boost::asio::io_context ctx;
@@ -100,6 +101,11 @@ int main() {
 		std::cerr << "Fatal error: Segmentation fault!\n";
 		panic_shutdown();
 	});
+
+	// Open the CAN Socket
+	if (!can_open_socket()) {
+		// CAN Socket did not open successfully
+	}
 
 	std::cout << "Initialization complete; Entering main event loop.\n";
 
