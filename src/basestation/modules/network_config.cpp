@@ -83,16 +83,16 @@ NetworkConfig::NetworkConfig(nanogui::Screen* screen) :
 			Basestation::get().get_subsystem_sender().disable();
 	});
 
-	interval = Basestation::get().get_remote_drive_controller().get_interval();
+	interval = Basestation::get().remote_drive().get_interval();
 	auto interval_entry = form->add_variable("Movement Update Interval", interval);
 	interval_entry->set_format("\\d*");
 	interval_entry->set_units("millis");
 	interval_entry->set_callback([this](int new_interval) {
 		if (new_interval >= 0) {
-			Basestation::get().get_remote_drive_controller().set_interval(new_interval);
+			Basestation::get().remote_drive().set_interval(new_interval);
 			return true;
 		}
-		interval = Basestation::get().get_remote_drive_controller().get_interval();
+		interval = Basestation::get().remote_drive().get_interval();
 		return false;
 	});
 

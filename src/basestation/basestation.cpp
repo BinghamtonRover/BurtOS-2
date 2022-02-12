@@ -12,7 +12,8 @@ Basestation* Basestation::main_instance = nullptr;
 
 Basestation::Basestation()
 	: subsystem_sender(main_thread_ctx),
-	remote_drive(subsystem_sender) {
+	subsystem_feed(main_thread_ctx),
+	m_remote_drive(subsystem_sender) {
 
 	if (main_instance != nullptr) {
 		throw std::runtime_error("Basestation::Basestation: duplicate instance not allowed");
@@ -20,7 +21,7 @@ Basestation::Basestation()
 	main_instance = this;
 
 	controller_mgr.init();
-	remote_drive.add_controller_actions(controller_mgr);
+	m_remote_drive.add_controller_actions(controller_mgr);
 	for (auto& dev : controller_mgr.devices()) {
 		if (dev.present() && dev.is_gamepad()) {
 			dev.get_gamepad_axis(gamepad::right_trigger).set_action(controller_mgr.find_action("Accelerate"));
@@ -28,6 +29,7 @@ Basestation::Basestation()
 			dev.get_gamepad_axis(gamepad::left_trigger).set_action(controller_mgr.find_action("Reverse"));
 		}
 	}
+	m_remote_drive.register_listen_handlers(subsystem_feed);
 
 	Console::add_setup_routine([](Console& new_console) {
 		new_console.load_library("ctrl", lua_ctrl_lib::open);
@@ -45,6 +47,7 @@ Basestation::Basestation()
 			last_reported_err = std::chrono::steady_clock::now();
 		}
 	});
+	subsystem_feed.set_listen_port(22201);
 }
 
 Basestation::~Basestation() {
@@ -77,7 +80,7 @@ void Basestation::mainloop() {
 		glfwPollEvents();
 		main_thread_ctx.poll();
 
-		remote_drive.poll_events();
+		m_remote_drive.poll_events();
 
 		controller_mgr.update_controls();
 

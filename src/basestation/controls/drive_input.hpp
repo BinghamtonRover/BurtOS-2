@@ -15,6 +15,9 @@ class DriveInput : public rc::Drive {
 		void poll_events();
 		void add_controller_actions(ControllerManager&);
 
+		float throttle() const { return controller_speed_cap; }
+		void set_throttle(float t) { controller_speed_cap = t; }
+
 	private:
 		float controller_speed_cap = 2.0F;
 		float controller_fwd_speed = 0.0F;

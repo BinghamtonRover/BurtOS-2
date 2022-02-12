@@ -40,8 +40,8 @@ class Basestation {
 		inline net::MessageSender& get_subsystem_sender() {
 			return subsystem_sender;
 		}
-		inline DriveInput& get_remote_drive_controller() {
-			return remote_drive;
+		inline DriveInput& remote_drive() {
+			return m_remote_drive;
 		}
 
 		void schedule(const std::function<void(Basestation&)>& callback);
@@ -68,7 +68,8 @@ class Basestation {
 	private:
 		boost::asio::io_context main_thread_ctx;
 		net::MessageSender subsystem_sender;
-		DriveInput remote_drive;
+		net::MessageReceiver subsystem_feed;
+		DriveInput m_remote_drive;
 
 		ControllerManager controller_mgr;
 

@@ -1,5 +1,6 @@
 #include <network.hpp>
 #include <rover_system_messages.hpp>
+#include <events.hpp>
 
 namespace rc {
 
@@ -26,6 +27,10 @@ class Drive {
 		float get_actual_right_speed();
 		::drive::DriveMode_Mode get_actual_drive_mode();
 		inline const std::chrono::steady_clock::time_point& get_last_update_received() const { return last_update_received; }
+
+		// public events
+		event::Emitter<drive::DriveMode_Mode> EVENT_DRIVEMODE;
+		event::Emitter<float, float> EVENT_SPEED;
 
 	private:
 		int interval = 100;
