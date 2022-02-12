@@ -13,6 +13,9 @@ class DriveController {
 		void halt();
 		float get_target_velocity();
 
+		float get_left_speed();
+		float get_right_speed();
+
 		enum class DriveMode { NEUTRAL, DRIVE, COUNT };
 
 		DriveMode get_drive_mode();

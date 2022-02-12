@@ -27,6 +27,14 @@ float DriveController::get_target_velocity() {
 	return target_velocity_mps;
 }
 
+float DriveController::get_left_speed() {
+	return left_speed;
+}
+
+float DriveController::get_right_speed() {
+	return right_speed;
+}
+
 void DriveController::update_motor_acceleration() {
 	auto time_now = std::chrono::steady_clock::now();
 	std::chrono::duration<double> time_passed = time_now - last_active_time;

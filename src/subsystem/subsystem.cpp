@@ -12,18 +12,28 @@ DriveController drive_controller;
 boost::asio::io_context ctx;
 
 uint16_t subsystem_receive_port;
+uint16_t subsystem_update_port;
+
+std::string subsystem_update_ip;
+std::chrono::steady_clock::time_point last_message_sent{};
+int message_interval_ms;
 
 void read_subsystem_config(const std::string& fname) {
 	namespace ptree = boost::property_tree;
 	ptree::ptree subsystem_cfg;
 	try {
 		ptree::json_parser::read_json(fname, subsystem_cfg);
-		subsystem_receive_port = subsystem_cfg.get<uint16_t>("subsystem.network.recv_port", 22101);
-
 	} catch (const ptree::json_parser_error& err) {
 		std::cerr << "Warning: Using default config after error reading config file: "
 				<< err.message() << " (" << err.filename() << ":" << err.line() << ")" << std::endl;
 	}
+	// Reading from empty ptree will apply the default values
+	subsystem_receive_port = subsystem_cfg.get<uint16_t>("subsystem.network.recv_port", 22101);
+
+	message_interval_ms = subsystem_cfg.get<int>("subsystem.update_interval_ms", 100);
+	subsystem_update_ip = subsystem_cfg.get<std::string>("subsystem.network.update_ip.addr", "239.255.123.123");
+	subsystem_update_port = subsystem_cfg.get<uint16_t>("subsystem.network.update_ip.port", 22201);
+
 }
 
 // Try to deinitialize critical systems (like the ODrives) after the program has encountered a critical error
@@ -45,6 +55,14 @@ int main() {
 	register_messages();
 
 	net::MessageReceiver receiver(ctx, subsystem_receive_port);
+	net::MessageSender sender(ctx);
+	try {
+		sender.set_destination_endpoint(net::Destination(boost::asio::ip::address::from_string(subsystem_update_ip), subsystem_update_port));
+		sender.enable();
+	} catch (const boost::system::system_error& err) {
+		std::cerr << "Warning: Updates are disabled due to error in IP endpoint: " << err.what() << std::endl;
+		sender.disable();
+	}
 
 	receiver.register_handler<drive_msg::Velocity>([](const uint8_t buf[], std::size_t len) {
 		drive::Velocity msg;
@@ -94,6 +112,23 @@ int main() {
 
 			ctx.poll();
 			drive_controller.update_motor_acceleration();
+
+			auto time_now = std::chrono::steady_clock::now();
+			std::chrono::duration<double, std::milli> time_passed = time_now - last_message_sent;
+
+			if (time_passed.count() >= message_interval_ms) {
+				drive_msg::ActualSpeed speed_message;
+				speed_message.data.set_left(drive_controller.get_left_speed());
+				speed_message.data.set_right(drive_controller.get_right_speed());
+				sender.send_message(speed_message);
+
+				drive_msg::DriveMode mode_message;
+				::drive::DriveMode_Mode new_mode = static_cast<::drive::DriveMode_Mode>(drive_controller.get_drive_mode());
+				mode_message.data.set_mode(new_mode);
+				sender.send_message(mode_message);
+
+				last_message_sent = std::chrono::steady_clock::now();
+			}
 
 		}
 	} catch (const std::exception& err) {
