@@ -167,8 +167,10 @@ namespace gamepad {
 
 /*
 	One Controller/Gamepad device on the system
+
 	Name and order of axes are system dependent, but if GLFW supports "Gamepad" mappings (1)
 	for this device, then the gamepad axes order is used (2)
+
 	1. https://www.glfw.org/docs/3.3/input_guide.html#gamepad
 	2. https://www.glfw.org/docs/3.3/group__gamepad__axes.html
 */
