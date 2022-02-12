@@ -4,7 +4,6 @@
 
 rc::Drive::Drive(net::MessageSender& ms)
 	: sender(ms) {
-		
 }
 
 void rc::Drive::set_interval(int milliseconds) {
@@ -55,4 +54,34 @@ void rc::Drive::set_angle(float angle) {
 void rc::Drive::set_movement(float speed, float angle) {
 	movement_message.data.set_speed(speed);
 	movement_message.data.set_angle(angle);
+}
+
+void rc::Drive::register_listen_handlers(net::MessageReceiver& m) {
+	m.register_handler<drive_msg::ActualSpeed>([this](const uint8_t buf[], std::size_t len) {
+		drive::ActualSpeed msg;
+		if (msg.ParseFromArray(buf, len)) {
+			actual_left_speed = msg.right();
+			actual_right_speed = msg.right();
+			last_update_received = std::chrono::steady_clock::now();
+		}
+	});
+	m.register_handler<drive_msg::DriveMode>([this](const uint8_t buf[], std::size_t len) {
+		drive::DriveMode msg;
+		if (msg.ParseFromArray(buf, len)) {
+			actual_drive_mode = msg.mode();
+			last_update_received = std::chrono::steady_clock::now();
+		}
+	});
+}
+
+float rc::Drive::get_actual_left_speed() {
+	return actual_left_speed;
+}
+
+float rc::Drive::get_actual_right_speed() {
+	return actual_right_speed;
+}
+
+::drive::DriveMode_Mode rc::Drive::get_actual_drive_mode() {
+	return actual_drive_mode;
 }
