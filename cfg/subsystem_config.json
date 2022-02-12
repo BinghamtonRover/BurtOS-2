@@ -1,0 +1,15 @@
+{
+	"subsystem":
+	{
+		"network":
+		{
+			"recv_port": 22101,
+			"update_ip":
+			{
+				"port": 22201,
+				"addr": "239.255.123.123"
+			}
+		},
+		"update_interval_ms": 100
+	}
+}

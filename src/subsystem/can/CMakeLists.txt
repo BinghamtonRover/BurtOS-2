@@ -1,6 +1,7 @@
 add_library(rover_can rover_can.hpp constants.hpp commands.hpp commands.cpp)
 
 target_include_directories(rover_can PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_compile_features(rover_can PRIVATE cxx_std_20)
 
 # If ONBOARD_CAN_BUS has been manually defined (or is cached), then don't override it with auto-detection
 if (NOT DEFINED ONBOARD_CAN_BUS)

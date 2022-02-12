@@ -60,6 +60,11 @@ void rover_lua::InteractivePrompt::add_function(const char* lua_name, int(*lua_c
 	lua_setglobal(L, lua_name);
 }
 
+void rover_lua::InteractivePrompt::load_library(const char* lua_name, const std::function<void(lua_State*)>& open_lib) {
+	open_lib(L);
+	lua_setglobal(L, lua_name);
+}
+
 int rover_lua::InteractivePrompt::report_error(int status) {
 	if (status != LUA_OK) {
 		const char *msg = lua_tostring(L, -1);
@@ -77,7 +82,7 @@ void rover_lua::InteractivePrompt::lua_print() {
 		lua_insert(L, 1);
 		if (lua_pcall(L, n, 0, 0) != LUA_OK) {
 			constexpr const char* error_msg = "error calling 'print' (%s)";
-			constexpr std::size_t error_msg_len = strlen(error_msg);
+			const static std::size_t error_msg_len = strlen(error_msg);
 
 			const char* error_desc = lua_tostring(L, -1);
 			std::size_t error_desc_len = strlen(error_desc);
@@ -219,7 +224,7 @@ int rover_lua::InteractivePrompt::loadline() {
 	lua_assert(lua_gettop(L) == 1);
 	return status;
 }
-void rover_lua::InteractivePrompt::check_interrupt(lua_State* L, lua_Debug* db) {
+void rover_lua::InteractivePrompt::check_interrupt(lua_State* L, lua_Debug*) {
 	InteractivePrompt* self = static_cast<InteractivePrompt*>(rover_lua::get_custom_ptr(L));
 
 	if (self->should_interrupt) {
@@ -228,6 +233,24 @@ void rover_lua::InteractivePrompt::check_interrupt(lua_State* L, lua_Debug* db) 
 	} else if (self->should_close) {
 		throw SignalShutdown();
 	}
+}
+
+void rover_lua::InteractivePrompt::run_paused() {
+	{
+		// Reuse the stream cv/lock for pausing the startup
+		std::unique_lock lock(execute_stream_lock);
+		if (!_prompt_active) {
+			cv_line_available.wait(lock);
+		}
+	}
+	
+	run();
+}
+
+void rover_lua::InteractivePrompt::run_resume() {
+	std::unique_lock lock(execute_stream_lock);
+	_prompt_active = true;
+	cv_line_available.notify_all();
 }
 
 void rover_lua::InteractivePrompt::run() {

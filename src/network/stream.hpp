@@ -92,7 +92,7 @@ private:
 	// Hold buffers and other metadata necessary for reconstructing a single stream
 	struct Stream {
 		// Allocate and use n buffers for reconstructing this stream. Any previously buffered data is lost
-		void alloc_buffers(std::size_t size, int n);
+		void alloc_buffers(std::size_t size, unsigned n);
 		void free_buffers();
 		Stream(Stream&& src);
 		Stream();

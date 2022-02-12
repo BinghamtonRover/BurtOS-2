@@ -27,9 +27,23 @@ float DriveController::get_target_velocity() {
 	return target_velocity_mps;
 }
 
+float DriveController::get_left_speed() {
+	return left_speed;
+}
+
+float DriveController::get_right_speed() {
+	return right_speed;
+}
+
 void DriveController::update_motor_acceleration() {
 	auto time_now = std::chrono::steady_clock::now();
-	std::chrono::duration<double> time_difference = time_now - time_updated;
+
+	std::chrono::duration<double> inactive_time = time_now - last_active_time;
+	if (inactive_time.count() > 1) {
+		set_forward_velocity(0.0F);
+	}
+
+	std::chrono::duration<double> time_difference = time_now - time_can_updated;
 
 	if (time_difference.count() < .002 || target_left_speed == left_speed && target_right_speed == right_speed) {
 		return;
@@ -58,14 +72,16 @@ void DriveController::update_motor_acceleration() {
 			if ((last_right_speed > target_right_speed && right_speed < target_left_speed) ||
 				(last_right_speed < target_right_speed && right_speed > target_left_speed)) { right_speed = target_right_speed; }
 		}
+
 	}
 	can_send(Node::DRIVE_AXIS_5, Command::SET_INPUT_VEL, right_speed);
 	can_send(Node::DRIVE_AXIS_4, Command::SET_INPUT_VEL, left_speed);
 
-	time_updated = std::chrono::steady_clock::now();
+	time_can_updated = std::chrono::steady_clock::now();
 }
 
 void DriveController::set_forward_velocity(float mps) {
+	last_active_time = std::chrono::steady_clock::now();
 	mps = fmin(fmax(mps, -MAX_SPEED), MAX_SPEED);
 	target_velocity_mps = mps;
 	// M_PI is technically non-standard C++
@@ -76,6 +92,7 @@ void DriveController::set_forward_velocity(float mps) {
 
 // -90 = sharp left, 0 = straight, 90 = sharp right
 void DriveController::set_steering_angle(float angle) { 
+	last_active_time = std::chrono::steady_clock::now();
 	target_angle = fmin(fmax(angle, -180), 180);
 	update_target_velocity();
 }
@@ -86,6 +103,7 @@ DriveController::DriveMode DriveController::get_drive_mode() {
 
 void DriveController::set_drive_mode(DriveMode mode) {
 	if (mode < DriveMode::COUNT) {
+		last_active_time = std::chrono::steady_clock::now();
 		current_mode = mode;
 		update_motor_acceleration();
 	}

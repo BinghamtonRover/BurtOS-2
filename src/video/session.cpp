@@ -52,7 +52,7 @@ bool VideoConfig::read_from(boost::property_tree::ptree& src) {
 }
 
 Session::Session(const VideoConfig& config, boost::asio::io_context& ctx) :
-    ctrl_message_receiver(config.video_command_port, ctx),
+    ctrl_message_receiver(ctx, config.video_command_port),
     video_streams_out(ctx),
     cfg(config),
     compressor(tjInitCompress()),

@@ -2,7 +2,7 @@
 
 #include <cstdint>
 #include <chrono>
-#include "can/rover_can.hpp"
+#include <rover_can.hpp>
 
 class DriveController {
 	public:
@@ -14,14 +14,13 @@ class DriveController {
 		void halt();
 		float get_target_velocity();
 
+		float get_left_speed();
+		float get_right_speed();
+
 		enum class DriveMode { NEUTRAL, DRIVE, COUNT };
 
 		DriveMode get_drive_mode();
 		void set_drive_mode(DriveMode mode);
-
-		float target_left_speed = 0.0F;
-		float target_right_speed = 0.0F;
- 
 
 	private:
 		constexpr static float GEARBOX_RATIO = 6.923F;
@@ -35,6 +34,10 @@ class DriveController {
 		float target_velocity_rps = 0.0F;
 		float target_angle = 0.0F;
 
+		// Goal speeds to reach safely
+		float target_left_speed = 0.0F;
+		float target_right_speed = 0.0F;
+
 		// Actual speeds to be sent to ODrives (revolutions per second)
 		float left_speed = 0.0F;
 		float right_speed = 0.0F;
@@ -43,7 +46,9 @@ class DriveController {
 		std::chrono::time_point<std::chrono::steady_clock> time_updated = std::chrono::steady_clock::now();
 
 		// Call whenever target_angle or target_velocity changes
-		void update_target_velocity();		
-		
+		void update_target_velocity();
+
 		DriveMode current_mode = DriveMode::NEUTRAL;
+
+		std::chrono::steady_clock::time_point last_active_time = std::chrono::steady_clock::now();
 };

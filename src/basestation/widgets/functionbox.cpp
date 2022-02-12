@@ -27,7 +27,26 @@ bool FunctionBox::keyboard_event(int key, int scancode, int key_act, int modifie
 				focus_event(true);
 			}
 			return true;
+		} else if (key == GLFW_KEY_ESCAPE && key_act == GLFW_PRESS) {
+			focus_event(false);
+			return true;
 		}
 	}
-	return nanogui::TextBox::keyboard_event(key, scancode, key_act, modifiers);
+	if (nanogui::TextBox::keyboard_event(key, scancode, key_act, modifiers)) {
+		if (validate_callback) {
+			m_valid_format = validate_callback(m_value_temp);
+		}
+		return true;
+	}
+	return false;
+}
+
+bool FunctionBox::keyboard_character_event(unsigned int codepoint) {
+	if (nanogui::TextBox::keyboard_character_event(codepoint)) {
+		if (validate_callback) {
+			m_valid_format = validate_callback(m_value_temp);
+		}
+		return true;
+	}
+	return false;
 }
