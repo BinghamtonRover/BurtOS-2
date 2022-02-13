@@ -66,9 +66,12 @@ class MessageReceiver : public msg::Receiver {
 
 		void set_listen_port(uint_least16_t port);
 		void subscribe(const boost::asio::ip::udp::endpoint& mcast_feed);
+		inline int listen_port() const { return listen_ep.port(); }
+		inline const Destination& listen_endpoint() const { return listen_ep; }
 
 		void open();
 		void close();
+		inline bool opened() const { return socket.is_open(); }
 		inline Destination& remote_sender() { return remote; }
 	private:
 		boost::asio::ip::udp::socket socket;

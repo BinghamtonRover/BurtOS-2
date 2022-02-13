@@ -40,6 +40,9 @@ class Basestation {
 		inline net::MessageSender& get_subsystem_sender() {
 			return subsystem_sender;
 		}
+		inline net::MessageReceiver& subsystem_feed() {
+			return m_subsystem_feed;
+		}
 		inline DriveInput& remote_drive() {
 			return m_remote_drive;
 		}
@@ -68,7 +71,7 @@ class Basestation {
 	private:
 		boost::asio::io_context main_thread_ctx;
 		net::MessageSender subsystem_sender;
-		net::MessageReceiver subsystem_feed;
+		net::MessageReceiver m_subsystem_feed;
 		DriveInput m_remote_drive;
 
 		ControllerManager controller_mgr;

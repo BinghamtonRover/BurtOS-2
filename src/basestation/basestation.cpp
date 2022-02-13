@@ -1,6 +1,7 @@
 #include <basestation.hpp>
 #include <modules/console.hpp>
-#include <modules/network_config.hpp>
+#include <modules/network_settings.hpp>
+#include <modules/drive_stats.hpp>
 #include <modules/input_config/controller_config.hpp>
 #include <controls/lua_ctrl_lib.hpp>
 
@@ -12,7 +13,7 @@ Basestation* Basestation::main_instance = nullptr;
 
 Basestation::Basestation()
 	: subsystem_sender(main_thread_ctx),
-	subsystem_feed(main_thread_ctx),
+	m_subsystem_feed(main_thread_ctx),
 	m_remote_drive(subsystem_sender) {
 
 	if (main_instance != nullptr) {
@@ -29,7 +30,7 @@ Basestation::Basestation()
 			dev.get_gamepad_axis(gamepad::left_trigger).set_action(controller_mgr.find_action("Reverse"));
 		}
 	}
-	m_remote_drive.register_listen_handlers(subsystem_feed);
+	m_remote_drive.register_listen_handlers(m_subsystem_feed);
 
 	Console::add_setup_routine([](Console& new_console) {
 		new_console.load_library("ctrl", lua_ctrl_lib::open);
@@ -47,7 +48,6 @@ Basestation::Basestation()
 			last_reported_err = std::chrono::steady_clock::now();
 		}
 	});
-	subsystem_feed.set_listen_port(22201);
 }
 
 Basestation::~Basestation() {
@@ -140,6 +140,8 @@ int Basestation::lua_basestation_lib::open_module(lua_State* L) {
 		act = 2;
 	} else if (strcmp("console", name) == 0) {
 		act = 3;
+	} else if (strcmp("drive", name) == 0) {
+		act = 4;
 	}
 	if (act != 0) {
 		Basestation::async([act](Basestation& bs) {
@@ -147,13 +149,16 @@ int Basestation::lua_basestation_lib::open_module(lua_State* L) {
 			nanogui::Window* wnd = nullptr;
 			switch (act) {
 				case 1:
-					wnd = new NetworkConfig(s);
+					wnd = new gui::NetworkSettings(s);
 					break;
 				case 2:
 					wnd = new ControllerConfig(s, bs.controller_manager());
 					break;
 				case 3:
 					wnd = new Console(s);
+					break;
+				case 4:
+					wnd = new gui::DriveStats(s);
 					break;
 			}
 			if (wnd != nullptr) {

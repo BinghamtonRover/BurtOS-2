@@ -60,20 +60,22 @@ void rc::Drive::register_listen_handlers(net::MessageReceiver& m) {
 	m.register_handler<drive_msg::ActualSpeed>([this](const uint8_t buf[], std::size_t len) {
 		drive::ActualSpeed msg;
 		if (msg.ParseFromArray(buf, len)) {
-			actual_left_speed = msg.right();
-			actual_right_speed = msg.right();
 			last_update_received = std::chrono::steady_clock::now();
-
-			EVENT_SPEED(actual_left_speed, actual_right_speed);
+			if (msg.left() != actual_left_speed || msg.right() != actual_right_speed) {
+				actual_left_speed = msg.left();
+				actual_right_speed = msg.right();
+				EVENT_SPEED(actual_left_speed, actual_right_speed);
+			}
 		}
 	});
 	m.register_handler<drive_msg::DriveMode>([this](const uint8_t buf[], std::size_t len) {
 		drive::DriveMode msg;
 		if (msg.ParseFromArray(buf, len)) {
-			actual_drive_mode = msg.mode();
 			last_update_received = std::chrono::steady_clock::now();
-
-			EVENT_DRIVEMODE(actual_drive_mode);
+			if (msg.mode() != actual_drive_mode) {
+				actual_drive_mode = msg.mode();
+				EVENT_DRIVEMODE(actual_drive_mode);
+			}
 		}
 	});
 }
