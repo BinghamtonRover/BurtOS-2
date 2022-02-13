@@ -12,9 +12,9 @@
 Basestation* Basestation::main_instance = nullptr;
 
 Basestation::Basestation()
-	: subsystem_sender(main_thread_ctx),
+	: m_subsystem_sender(main_thread_ctx),
 	m_subsystem_feed(main_thread_ctx),
-	m_remote_drive(subsystem_sender) {
+	m_remote_drive(m_subsystem_sender) {
 
 	if (main_instance != nullptr) {
 		throw std::runtime_error("Basestation::Basestation: duplicate instance not allowed");
@@ -37,7 +37,7 @@ Basestation::Basestation()
 		new_console.load_library("bs", lua_basestation_lib::open);
 	});
 
-	log_sender_error.subscribe(subsystem_sender.event_send_error(), [](const boost::system::error_code& ec) {
+	log_sender_error.subscribe(m_subsystem_sender.event_send_error(), [](const boost::system::error_code& ec) {
 		static int last_code = boost::system::errc::success;
 		static std::chrono::steady_clock::time_point last_reported_err{};
 

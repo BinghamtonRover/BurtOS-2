@@ -94,10 +94,10 @@ gui::NetworkSettings::NetworkSettings(nanogui::Screen* screen) :
 	// This terrifying regex for IP validation was provided by:
 	// https://stackoverflow.com/a/36760050
 	ip_entry->set_format("^((25[0-5]|(2[0-4]|1\\d|[1-9]|)\\d)(\\.(?!$)|$)){4}$");
-	ip_entry->set_value(Basestation::get().get_subsystem_sender().destination_endpoint().address().to_string());
+	ip_entry->set_value(Basestation::get().subsystem_sender().destination_endpoint().address().to_string());
 	ip_entry->set_fixed_width(text_entry_width);
 	ip_entry->set_callback([this](const std::string& str) {
-		net::MessageSender& subsys = Basestation::get().get_subsystem_sender();
+		net::MessageSender& subsys = Basestation::get().subsystem_sender();
 		if (str.size() != 0) {
 			try {
 
@@ -113,13 +113,13 @@ gui::NetworkSettings::NetworkSettings(nanogui::Screen* screen) :
 		return false;
 	});
 
-	port = Basestation::get().get_subsystem_sender().destination_endpoint().port();
+	port = Basestation::get().subsystem_sender().destination_endpoint().port();
 	auto port_entry = form->add_variable("Receiver Port", port);
 	// Regex: https://3widgets.com/, range: 0 - 65535
 	port_entry->set_format("(\\d|[1-9]\\d{1,3}|[1-5]\\d{4}|6[0-4]\\d{3}|65[0-4]\\d{2}|655[0-2]\\d|6553[0-5])");
 	port_entry->set_fixed_width(text_entry_width);
 	port_entry->set_callback([this](int set_port) {
-		net::MessageSender& subsys = Basestation::get().get_subsystem_sender();
+		net::MessageSender& subsys = Basestation::get().subsystem_sender();
 		if (set_port >= 0 && set_port <= std::numeric_limits<uint16_t>().max()) {
 			auto ep = subsys.destination_endpoint();
 			ep.port(set_port);
@@ -130,13 +130,13 @@ gui::NetworkSettings::NetworkSettings(nanogui::Screen* screen) :
 		return false;
 	});
 
-	enable = Basestation::get().get_subsystem_sender().enabled();
+	enable = Basestation::get().subsystem_sender().enabled();
 	auto enable_box = form->add_variable("Open", enable);
 	enable_box->set_callback([](bool checked) {
 		if (checked)
-			Basestation::get().get_subsystem_sender().enable();
+			Basestation::get().subsystem_sender().enable();
 		else
-			Basestation::get().get_subsystem_sender().disable();
+			Basestation::get().subsystem_sender().disable();
 	});
 
 	interval = Basestation::get().remote_drive().get_interval();

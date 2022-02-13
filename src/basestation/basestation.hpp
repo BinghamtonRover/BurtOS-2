@@ -37,8 +37,8 @@ class Basestation {
 		inline const std::vector<BasestationScreen*>& get_screens() const {
 			return screens;
 		}
-		inline net::MessageSender& get_subsystem_sender() {
-			return subsystem_sender;
+		inline net::MessageSender& subsystem_sender() {
+			return m_subsystem_sender;
 		}
 		inline net::MessageReceiver& subsystem_feed() {
 			return m_subsystem_feed;
@@ -70,7 +70,7 @@ class Basestation {
 
 	private:
 		boost::asio::io_context main_thread_ctx;
-		net::MessageSender subsystem_sender;
+		net::MessageSender m_subsystem_sender;
 		net::MessageReceiver m_subsystem_feed;
 		DriveInput m_remote_drive;
 
