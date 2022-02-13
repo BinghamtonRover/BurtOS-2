@@ -42,6 +42,7 @@ class Drive {
 		float actual_left_speed = 0.0F;
 		float actual_right_speed = 0.0F;
 		::drive::DriveMode_Mode actual_drive_mode = drive::DriveMode_Mode::DriveMode_Mode_NEUTRAL;
+		drive::DriveMode_Mode requested_drive_mode = drive::DriveMode_Mode::DriveMode_Mode_NEUTRAL;
 		
 		std::chrono::steady_clock::time_point last_update_received{};
 };

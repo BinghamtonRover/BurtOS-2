@@ -8,8 +8,7 @@ DriveInput::DriveInput(net::MessageSender& to_subsystem)
 void DriveInput::poll_events() {
 	if (update_ready()) {
 		merge_input_sources();
-		set_speed(out_speed);
-		set_angle(out_angle);
+		set_movement(out_speed, out_angle);
 		send_update();
 	}
 }

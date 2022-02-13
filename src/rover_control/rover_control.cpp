@@ -22,6 +22,9 @@ bool rc::Drive::update_ready() {
 }
 
 void rc::Drive::send_update() {
+	if (actual_drive_mode != requested_drive_mode) {
+		set_drive_mode(requested_drive_mode);
+	}
 	sender.send_message(movement_message);
 	last_message_sent = std::chrono::steady_clock::now();
 }
@@ -35,6 +38,8 @@ void rc::Drive::set_drive_mode(::drive::DriveMode_Mode mode) {
 	drive_msg::DriveMode mode_message;
 	mode_message.data.set_mode(mode);
 	sender.send_message(mode_message);
+
+	requested_drive_mode = mode;
 }
 
 void rc::Drive::halt() {
