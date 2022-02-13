@@ -57,8 +57,8 @@ void net::MessageSender::begin_sending() {
 		}
 		async_start_lock.unlock();
 
-		if (ec && error_callback) {
-			error_callback(ec);
+		if (ec) {
+			error_emitter(ec);
 		}
 
 	});
@@ -162,13 +162,23 @@ void net::MessageReceiver::open() {
 		socket.open(boost::asio::ip::udp::v4());
 		socket.bind(boost::asio::ip::udp::endpoint(boost::asio::ip::udp::v4(), listen_ep.port()));
 	}
-
-	listen();
+	if (!listening)
+		listen();
 }
 
 void net::MessageReceiver::listen() {
-	socket.async_receive_from(boost::asio::buffer(recv_buffer), remote, [this](boost::system::error_code, std::size_t bytes_transferred) {
+	if (!socket.is_open()) {
+		listening = false;
+		return;
+	}
+	listening = true;
+	socket.async_receive_from(boost::asio::buffer(recv_buffer), remote, [this](boost::system::error_code ec, std::size_t bytes_transferred) {
 		read_messages(recv_buffer.data(), bytes_transferred);
+
+		if (ec && ec != boost::asio::error::operation_aborted) {
+			error_emitter(ec);
+		}
+
 		listen();
 	});
 }

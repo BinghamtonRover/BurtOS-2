@@ -37,12 +37,23 @@ Basestation::Basestation()
 		new_console.load_library("bs", lua_basestation_lib::open);
 	});
 
-	subsystem_sender.set_error_callback([](boost::system::error_code ec) {
+	log_sender_error.subscribe(subsystem_sender.event_send_error(), [](const boost::system::error_code& ec) {
 		static int last_code = boost::system::errc::success;
 		static std::chrono::steady_clock::time_point last_reported_err{};
 
 		if (last_code != ec.value() || std::chrono::duration<double>(std::chrono::steady_clock::now() - last_reported_err).count() >= 1.0) {
 			std::cerr << "Error sending to subsystem: " << ec.message() << std::endl;
+
+			last_code = ec.value();
+			last_reported_err = std::chrono::steady_clock::now();
+		}
+	});
+	log_feed_error.subscribe(m_subsystem_feed.event_send_error(), [](const boost::system::error_code& ec) {
+		static int last_code = boost::system::errc::success;
+		static std::chrono::steady_clock::time_point last_reported_err{};
+
+		if (last_code != ec.value() || std::chrono::duration<double>(std::chrono::steady_clock::now() - last_reported_err).count() >= 1.0) {
+			std::cerr << "Error listening to subsystem feed: " << ec.message() << std::endl;
 
 			last_code = ec.value();
 			last_reported_err = std::chrono::steady_clock::now();

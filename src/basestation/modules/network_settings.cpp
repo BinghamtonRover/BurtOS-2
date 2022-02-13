@@ -81,9 +81,10 @@ gui::NetworkSettings::NetworkSettings(nanogui::Screen* screen) :
 				Basestation::get().subsystem_feed().open();
 			else
 				Basestation::get().subsystem_feed().close();
-		} catch (const boost::system::system_error& err) {
+		} catch (const std::exception& err) {
 			new nanogui::MessageDialog(this->screen(), nanogui::MessageDialog::Type::Warning, "Error Opening Feed", err.what());
 		}
+		mcast_enable = Basestation::get().subsystem_feed().opened();
 	});
 
 	form->add_group("Subsystem Device Link");

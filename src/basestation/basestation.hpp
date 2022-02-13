@@ -74,6 +74,9 @@ class Basestation {
 		net::MessageReceiver m_subsystem_feed;
 		DriveInput m_remote_drive;
 
+		event::Handler log_feed_error;
+		event::Handler log_sender_error;
+
 		ControllerManager controller_mgr;
 
 		std::vector<BasestationScreen*> screens;

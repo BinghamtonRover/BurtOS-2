@@ -81,6 +81,9 @@ class Handler {
 	public:
 		template<class EmitterT>
 		void subscribe(EmitterT& ev, const typename EmitterT::HandlerType& handler) {
+			if (deleter)
+				unsubscribe();
+			
 			deleter = ev.subscribe_handler(this, handler);
 		}
 

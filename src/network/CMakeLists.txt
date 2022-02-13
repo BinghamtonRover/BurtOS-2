@@ -10,7 +10,7 @@ else()
 endif()
 
 target_include_directories(network PUBLIC ${Boost_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR} ${Protobuf_INCLUDE_DIRS})
-target_link_libraries(network PUBLIC ${Boost_LIBRARIES} ${Protobuf_LIBRARIES})
+target_link_libraries(network PUBLIC ${Boost_LIBRARIES} ${Protobuf_LIBRARIES} events)
 target_compile_features(network PUBLIC cxx_std_17)
 
 add_subdirectory(apps)
