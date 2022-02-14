@@ -6,8 +6,8 @@
 #include <rover_system_messages.hpp>
 
 #include <network.hpp>
+#include <rover_can.hpp>
 #include "drive_controller.hpp"
-#include "can/rover_can.hpp"
 
 DriveController drive_controller;
 boost::asio::io_context ctx;
@@ -104,7 +104,7 @@ int main() {
 
 	// Open the CAN Socket
 	if (!can_open_socket()) {
-		// CAN Socket did not open successfully
+		std::cout << "Warning: Unable to open CAN socket\n";
 	}
 
 	std::cout << "Initialization complete; Entering main event loop.\n";

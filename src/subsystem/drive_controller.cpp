@@ -2,6 +2,7 @@
 
 #include <cmath>
 #include <boost/math/constants/constants.hpp>
+#include <rover_can.hpp>
 
 void DriveController::halt() {
 	target_velocity_mps = 0;

@@ -2,7 +2,6 @@
 
 #include <cstdint>
 #include <chrono>
-#include <rover_can.hpp>
 
 class DriveController {
 	public:
