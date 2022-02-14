@@ -4,6 +4,14 @@
 #include <boost/math/constants/constants.hpp>
 #include <rover_can.hpp>
 
+float DriveController::to_rps(float mps) {
+	return (GEARBOX_RATIO * mps) / (boost::math::constants::pi<float>() * WHEEL_DIAMETER_METERS);
+}
+
+float DriveController::to_mps(float rps) {
+	return (boost::math::constants::pi<float>() * WHEEL_DIAMETER_METERS * rps) / GEARBOX_RATIO;
+}
+
 void DriveController::halt() {
 	target_velocity_mps = 0;
 	target_velocity_rps = 0;
@@ -29,11 +37,11 @@ float DriveController::get_target_velocity() {
 }
 
 float DriveController::get_left_speed() {
-	return left_speed;
+	return to_mps(left_speed);
 }
 
 float DriveController::get_right_speed() {
-	return right_speed;
+	return to_mps(right_speed);
 }
 
 void DriveController::update_motor_acceleration() {
@@ -69,9 +77,7 @@ void DriveController::set_forward_velocity(float mps) {
 	last_active_time = std::chrono::steady_clock::now();
 	mps = fmin(fmax(mps, -MAX_SPEED), MAX_SPEED);
 	target_velocity_mps = mps;
-	// M_PI is technically non-standard C++
-	// When C++20 support becomes ubiquitous, replace Boost with std::numbers::pi_v<float>
-	target_velocity_rps = (GEARBOX_RATIO * mps) / (boost::math::constants::pi<float>() * WHEEL_DIAMETER_METERS);
+	target_velocity_rps = to_rps(mps);
 	update_target_velocity();
 }
 

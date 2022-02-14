@@ -1,5 +1,8 @@
 #include <basestation.hpp>
 #include <modules/console.hpp>
+#include <modules/network_settings.hpp>
+#include <modules/drive_stats.hpp>
+#include <modules/input_config/controller_config.hpp>
 #include <controls/lua_ctrl_lib.hpp>
 
 #include <stdexcept>
@@ -8,18 +11,58 @@
 
 Basestation* Basestation::main_instance = nullptr;
 
-Basestation::Basestation() {
+Basestation::Basestation()
+	: m_subsystem_sender(main_thread_ctx),
+	m_subsystem_feed(main_thread_ctx),
+	m_remote_drive(m_subsystem_sender) {
+
 	if (main_instance != nullptr) {
 		throw std::runtime_error("Basestation::Basestation: duplicate instance not allowed");
 	}
 	main_instance = this;
 
 	controller_mgr.init();
+	m_remote_drive.add_controller_actions(controller_mgr);
+	for (auto& dev : controller_mgr.devices()) {
+		if (dev.present() && dev.is_gamepad()) {
+			dev.get_gamepad_axis(gamepad::right_trigger).set_action(controller_mgr.find_action("Accelerate"));
+			dev.get_gamepad_axis(gamepad::left_x).set_action(controller_mgr.find_action("Steer"));
+			dev.get_gamepad_axis(gamepad::left_trigger).set_action(controller_mgr.find_action("Reverse"));
+		}
+	}
+	m_remote_drive.register_listen_handlers(m_subsystem_feed);
 
 	Console::add_setup_routine([](Console& new_console) {
 		new_console.load_library("ctrl", lua_ctrl_lib::open);
 		new_console.load_library("bs", lua_basestation_lib::open);
 	});
+
+	log_sender_error.subscribe(m_subsystem_sender.event_send_error(), [](const boost::system::error_code& ec) {
+		static int last_code = boost::system::errc::success;
+		static std::chrono::steady_clock::time_point last_reported_err{};
+
+		if (last_code != ec.value() || std::chrono::duration<double>(std::chrono::steady_clock::now() - last_reported_err).count() >= 1.0) {
+			std::cerr << "Error sending to subsystem: " << ec.message() << std::endl;
+
+			last_code = ec.value();
+			last_reported_err = std::chrono::steady_clock::now();
+		}
+	});
+	log_feed_error.subscribe(m_subsystem_feed.event_receive_error(), [](const boost::system::error_code& ec) {
+		static int last_code = boost::system::errc::success;
+		static std::chrono::steady_clock::time_point last_reported_err{};
+
+		if (last_code != ec.value() || std::chrono::duration<double>(std::chrono::steady_clock::now() - last_reported_err).count() >= 1.0) {
+			std::cerr << "Error listening to subsystem feed: " << ec.message() << std::endl;
+
+			last_code = ec.value();
+			last_reported_err = std::chrono::steady_clock::now();
+		}
+	});
+	// TODO: Do not hard code these default values. They will be in the config file later.
+	// Related bug: #50 on GitHub <https://github.com/BinghamtonRover/BurtOS-2/issues/50>
+	m_subsystem_feed.subscribe(net::Destination(boost::asio::ip::address_v4::from_string("239.255.123.123"), 22201));
+	m_subsystem_feed.open();
 }
 
 Basestation::~Basestation() {
@@ -50,7 +93,10 @@ BasestationScreen* Basestation::get_focused_screen() const {
 void Basestation::mainloop() {
 	while (continue_operating) {
 		glfwPollEvents();
-		
+		main_thread_ctx.poll();
+
+		m_remote_drive.poll_events();
+
 		controller_mgr.update_controls();
 
 		{
@@ -96,8 +142,62 @@ void Basestation::schedule(const std::function<void(Basestation&)>& callback) {
 const struct luaL_Reg Basestation::lua_basestation_lib::lib[] = {
 	{"shutdown", shutdown},
 	{"new_screen", new_screen},
+	{"new_module", open_module},
+	{"set_throttle", set_throttle},
 	{NULL, NULL}
 };
+
+int Basestation::lua_basestation_lib::set_throttle(lua_State* L) {
+	double new_throttle = luaL_checknumber(L, 1);
+
+	if (new_throttle > 0.0F) {
+		main_instance->m_remote_drive.set_throttle(new_throttle);
+	} else {
+		luaL_error(L, "error: throttle must be positive number");
+	}
+
+	return 0;
+}
+
+int Basestation::lua_basestation_lib::open_module(lua_State* L) {
+	const char* name = luaL_checkstring(L, 1);
+	int act = 0;
+	if (strcmp("net", name) == 0) {
+		act = 1;
+	} else if (strcmp("ctrl", name) == 0) {
+		act = 2;
+	} else if (strcmp("console", name) == 0) {
+		act = 3;
+	} else if (strcmp("drive", name) == 0) {
+		act = 4;
+	}
+	if (act != 0) {
+		Basestation::async([act](Basestation& bs) {
+			auto s = bs.get_focused_screen();
+			nanogui::Window* wnd = nullptr;
+			switch (act) {
+				case 1:
+					wnd = new gui::NetworkSettings(s);
+					break;
+				case 2:
+					wnd = new ControllerConfig(s, bs.controller_manager());
+					break;
+				case 3:
+					wnd = new Console(s);
+					break;
+				case 4:
+					wnd = new gui::DriveStats(s);
+					break;
+			}
+			if (wnd != nullptr) {
+				wnd->center();
+			}
+		});
+	} else {
+		luaL_error(L, "error: unknown module type");
+	}
+	return 0;
+}
 
 int Basestation::lua_basestation_lib::shutdown(lua_State*) {
 	main_instance->continue_operating = false;

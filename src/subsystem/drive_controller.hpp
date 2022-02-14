@@ -21,6 +21,9 @@ class DriveController {
 		DriveMode get_drive_mode();
 		void set_drive_mode(DriveMode mode);
 
+		static float to_rps(float mps);
+		static float to_mps(float rps);
+
 	private:
 		constexpr static float GEARBOX_RATIO = 6.923F;
 		constexpr static float WHEEL_DIAMETER_METERS = 0.271F;
