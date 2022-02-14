@@ -2,6 +2,7 @@
 
 #include <cmath>
 #include <boost/math/constants/constants.hpp>
+#include <rover_can.hpp>
 
 void DriveController::halt() {
 	target_velocity_mps = 0;
@@ -37,18 +38,31 @@ float DriveController::get_right_speed() {
 
 void DriveController::update_motor_acceleration() {
 	auto time_now = std::chrono::steady_clock::now();
-	std::chrono::duration<double> time_passed = time_now - last_active_time;
-	if (time_passed.count() > 1) {
+
+	std::chrono::duration<double> inactive_time = time_now - last_active_time;
+	if (inactive_time.count() > 1) {
 		set_forward_velocity(0.0F);
-	} else {
-		if (get_drive_mode() == DriveMode::NEUTRAL) {
-			left_speed = 0;
-			right_speed = 0;
-		} else {
-			left_speed = target_left_speed;
-			right_speed = target_right_speed;
-		}
 	}
+
+	std::chrono::duration<double> time_difference = time_now - time_can_updated;
+
+	if (time_difference.count() < .002 || target_left_speed == left_speed && target_right_speed == right_speed) {
+		return;
+	} else if (current_mode == DriveMode::NEUTRAL) {
+		left_speed = 0;
+		right_speed = 0;
+	} else {
+		left_speed = target_left_speed;
+		right_speed = target_right_speed;
+	}
+	can_send(Node::DRIVE_AXIS_5, Command::SET_INPUT_VEL, right_speed);
+	can_send(Node::DRIVE_AXIS_4, Command::SET_INPUT_VEL, left_speed);
+	can_send(Node::DRIVE_AXIS_3, Command::SET_INPUT_VEL, right_speed);
+	can_send(Node::DRIVE_AXIS_2, Command::SET_INPUT_VEL, left_speed);
+	can_send(Node::DRIVE_AXIS_1, Command::SET_INPUT_VEL, right_speed);
+	can_send(Node::DRIVE_AXIS_0, Command::SET_INPUT_VEL, left_speed);
+
+	time_can_updated = std::chrono::steady_clock::now();
 }
 
 void DriveController::set_forward_velocity(float mps) {

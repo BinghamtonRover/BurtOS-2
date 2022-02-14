@@ -6,6 +6,7 @@
 #include <rover_system_messages.hpp>
 
 #include <network.hpp>
+#include <rover_can.hpp>
 #include "drive_controller.hpp"
 
 DriveController drive_controller;
@@ -100,6 +101,11 @@ int main() {
 		std::cerr << "Fatal error: Segmentation fault!\n";
 		panic_shutdown();
 	});
+
+	// Open the CAN Socket
+	if (!can_open_socket()) {
+		std::cout << "Warning: Unable to open CAN socket\n";
+	}
 
 	std::cout << "Initialization complete; Entering main event loop.\n";
 
