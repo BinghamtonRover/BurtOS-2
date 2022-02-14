@@ -59,6 +59,10 @@ Basestation::Basestation()
 			last_reported_err = std::chrono::steady_clock::now();
 		}
 	});
+	// TODO: Do not hard code these default values. They will be in the config file later.
+	// Related bug: #50 on GitHub <https://github.com/BinghamtonRover/BurtOS-2/issues/50>
+	m_subsystem_feed.subscribe(net::Destination(boost::asio::ip::address_v4::from_string("239.255.123.123"), 22201));
+	m_subsystem_feed.open();
 }
 
 Basestation::~Basestation() {
@@ -139,8 +143,21 @@ const struct luaL_Reg Basestation::lua_basestation_lib::lib[] = {
 	{"shutdown", shutdown},
 	{"new_screen", new_screen},
 	{"new_module", open_module},
+	{"set_throttle", set_throttle},
 	{NULL, NULL}
 };
+
+int Basestation::lua_basestation_lib::set_throttle(lua_State* L) {
+	double new_throttle = luaL_checknumber(L, 1);
+
+	if (new_throttle > 0.0F) {
+		main_instance->m_remote_drive.set_throttle(new_throttle);
+	} else {
+		luaL_error(L, "error: throttle must be positive number");
+	}
+
+	return 0;
+}
 
 int Basestation::lua_basestation_lib::open_module(lua_State* L) {
 	const char* name = luaL_checkstring(L, 1);
