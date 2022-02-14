@@ -74,7 +74,7 @@ class MessageReceiver : public msg::Receiver {
 		void close();
 		inline bool opened() const { return socket.is_open(); }
 		inline Destination& remote_sender() { return remote; }
-		inline event::Emitter<const boost::system::error_code&>& event_send_error() { return error_emitter; }
+		inline event::Emitter<const boost::system::error_code&>& event_receive_error() { return error_emitter; }
 	private:
 		boost::asio::ip::udp::socket socket;
 		Destination remote;

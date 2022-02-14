@@ -48,7 +48,7 @@ Basestation::Basestation()
 			last_reported_err = std::chrono::steady_clock::now();
 		}
 	});
-	log_feed_error.subscribe(m_subsystem_feed.event_send_error(), [](const boost::system::error_code& ec) {
+	log_feed_error.subscribe(m_subsystem_feed.event_receive_error(), [](const boost::system::error_code& ec) {
 		static int last_code = boost::system::errc::success;
 		static std::chrono::steady_clock::time_point last_reported_err{};
 
