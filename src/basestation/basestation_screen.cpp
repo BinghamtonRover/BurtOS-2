@@ -65,6 +65,24 @@ void BasestationScreen::set_windowed(int w, int h) {
 	resize_callback_event(w, h);
 }
 
+bool BasestationScreen::fullscreen() const {
+	return window_idx() >= 0;
+}
+
+int BasestationScreen::window_idx() const {
+	int count;
+	GLFWmonitor** monitors = glfwGetMonitors(&count);
+
+	GLFWmonitor* wnd = glfwGetWindowMonitor(m_glfw_window);
+
+	while (count--) {
+		if (wnd == monitors[count]) {
+			return count;
+		}
+	}
+	return -1;
+}
+
 bool BasestationScreen::keyboard_event(int key, int scancode, int action, int mods) {
 	if (Screen::keyboard_event(key, scancode, action, mods)) {
 		return true;

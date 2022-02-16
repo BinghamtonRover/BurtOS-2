@@ -38,6 +38,9 @@ class BasestationScreen : public nanogui::Screen {
 		// Make this window fullscreen on the provided monitor. If monitor is null, the primary monitor is used
 		void set_fullscreen(GLFWmonitor* monitor);
 
+		bool fullscreen() const;
+		int window_idx() const;
+
 		void set_windowed(int w = -1, int h = -1);
 
 		inline void set_windowed(nanogui::Vector2i size) {
