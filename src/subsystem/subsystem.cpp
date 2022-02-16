@@ -7,6 +7,7 @@
 
 #include <network.hpp>
 #include "drive_controller.hpp"
+#include "can/rover_can.hpp"
 
 DriveController drive_controller;
 boost::asio::io_context ctx;
@@ -31,8 +32,13 @@ void read_subsystem_config(const std::string& fname) {
 void panic_shutdown() {
 	std::cerr << "Attempting to stop critical systems...\n";
 
-	// TODO: (IMPORTANT) Send CAN commands to stop all subsystems
-	// Unlike the peaceful shutdown, this should only shutdown critical systems (ODrives, other motor drivers)
+	//Send emergency stop messages to the odrives
+	can_send(Node::DRIVE_AXIS_0, Command::DRIVE_EMERGENCY_STOP_MESSAGE, 0);
+	can_send(Node::DRIVE_AXIS_1, Command::DRIVE_EMERGENCY_STOP_MESSAGE, 0);
+	can_send(Node::DRIVE_AXIS_2, Command::DRIVE_EMERGENCY_STOP_MESSAGE, 0);
+	can_send(Node::DRIVE_AXIS_3, Command::DRIVE_EMERGENCY_STOP_MESSAGE, 0);
+	can_send(Node::DRIVE_AXIS_4, Command::DRIVE_EMERGENCY_STOP_MESSAGE, 0);
+	can_send(Node::DRIVE_AXIS_5, Command::DRIVE_EMERGENCY_STOP_MESSAGE, 0);
 
 	std::cerr << "Critical system shutdown finished. Terminating.\n";
 	exit(1);

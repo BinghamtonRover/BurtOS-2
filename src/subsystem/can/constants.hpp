@@ -50,3 +50,10 @@ enum Command {
     VOLTAGE_SENSOR_READINGS = 0x1D,
     GYROSCOPE_SENSOR_READINGS = 0x1E
 };
+
+enum CAN_Status {
+    UNSET = 0x0,
+    SUCCESS = 0x1,
+    FAILED_READ = 0x2,
+    FAILED_WRITE = 0x3
+};

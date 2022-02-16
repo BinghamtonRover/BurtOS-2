@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <chrono>
+#include "can/rover_can.hpp"
 
 class DriveController {
 	public:
@@ -17,6 +18,8 @@ class DriveController {
 
 		DriveMode get_drive_mode();
 		void set_drive_mode(DriveMode mode);
+
+		bool drive_init();
 
 	private:
 		constexpr static float GEARBOX_RATIO = 6.923F;
