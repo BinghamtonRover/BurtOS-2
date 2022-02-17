@@ -51,19 +51,37 @@ int main(int argc, char* argv[]) {
 		
 		session.mainloop();
 
-		std::cout << "Saving user settings\n";
+
 		try {
 			boost::property_tree::ptree settings;
 			session.write_settings(settings);
 
+			// Because we are saving after all windows are closed, carry over the launch screen settings
+			settings.erase("screens");
+			auto scr_cfg = basestation_settings.get_child_optional("screens");
+			if (scr_cfg)
+				settings.put_child("screens", scr_cfg.get());
+
 			namespace fs = std::filesystem;
-			fs::path executable_path(argv[0]);
-			fs::path settings_file = executable_path.parent_path() / "userdata" / "basestation-settings.json";
+			fs::path userdata(fs::path(argv[0]).parent_path() / "userdata");
+			if (!fs::exists(userdata)) {
+				fs::create_directory(userdata);
+			}
+			if (fs::is_directory(userdata)) {
 
-			boost::property_tree::ptree wrapped;
-			wrapped.add_child("basestation", settings);
+				fs::path settings_file = userdata / "basestation-settings.json";
 
-			boost::property_tree::json_parser::write_json(settings_file.string(), wrapped);
+				boost::property_tree::ptree wrapped;
+				wrapped.add_child("basestation", settings);
+
+				if (settings != basestation_settings) {
+					std::cout << "Saving changes to user settings\n";
+					boost::property_tree::json_parser::write_json(settings_file.string(), wrapped);
+				}
+
+			} else {
+				throw std::runtime_error("userdata is not a directory");
+			}
 
 		} catch (const std::exception& e) {
 			std::cerr << "Unable to save user settings: " << e.what() << "\n";

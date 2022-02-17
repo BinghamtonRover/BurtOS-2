@@ -72,6 +72,25 @@ gui::NetworkSettings::NetworkSettings(nanogui::Screen* screen) :
 		return false;
 	});
 
+	subsys_feed_mcast = Basestation::get().subsystem_feed().is_multicast();
+	auto feed_mcast_mode_box = form->add_variable("Multicast", subsys_feed_mcast);
+	feed_mcast_mode_box->set_callback([feed_ip_entry](bool checked) {
+		auto& feed = Basestation::get().subsystem_feed();
+		feed_ip_entry->set_editable(checked);
+		if (checked) {
+			feed_ip_entry->set_value(feed.listen_endpoint().address().to_string());
+		} else {
+			feed_ip_entry->set_value("");
+		}
+		if (feed.opened()) {
+			if (checked)
+				feed.subscribe(feed.listen_endpoint());
+			else
+				feed.set_listen_port(feed.listen_port());
+		}
+	});
+	feed_mcast_mode_box->callback()(subsys_feed_mcast);
+
 	
 	mcast_enable = Basestation::get().subsystem_feed().opened();
 	auto feed_enable_box = form->add_variable("Open", mcast_enable);

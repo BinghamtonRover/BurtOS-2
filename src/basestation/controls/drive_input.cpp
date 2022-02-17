@@ -34,6 +34,6 @@ void DriveInput::add_controller_actions(ControllerManager& m) {
 	}, -1.0F);
 
 	m.add_axis_action("Steer", [this](float x) {
-		controller_angle = x * 90.0F;
+		controller_angle = x * controller_max_angle;
 	}, 0.0F);
 }

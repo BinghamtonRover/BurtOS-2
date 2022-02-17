@@ -69,6 +69,7 @@ Basestation::Basestation(const boost::property_tree::ptree& config)
 		auto subsys_feed_cfg = net_cfg.get().get_child_optional("subsystem_feed");
 		if (subsys_feed_cfg) {
 			bool enable = subsys_feed_cfg.get().get<bool>("enable", true);
+			bool mcast = subsys_feed_cfg.get().get<bool>("multicast", true);
 			auto port = subsys_feed_cfg.get().get_optional<uint16_t>("port");
 			auto ip = subsys_feed_cfg.get().get_optional<std::string>("addr");
 
@@ -85,9 +86,17 @@ Basestation::Basestation(const boost::property_tree::ptree& config)
 				feed_ep.port(port.get());
 			}
 
-			m_subsystem_feed.subscribe(feed_ep);
-			if (enable && ip && port) {
-				m_subsystem_feed.open();
+			try {
+				// Always running subscribe causes the sender to save the configured IP even if we aren't using multicast
+				m_subsystem_feed.subscribe(feed_ep);
+				if (!mcast) {
+					m_subsystem_feed.set_listen_port(feed_ep.port());
+				}
+				if (enable && (ip || !mcast) && port) {
+					m_subsystem_feed.open();
+				}
+			} catch (const boost::system::system_error& err) {
+				std::cerr << "Invalid configuration for subsystem feed: " << err.what() << "\n";
 			}
 		}
 
@@ -109,12 +118,16 @@ Basestation::Basestation(const boost::property_tree::ptree& config)
 			if (port) {
 				subsys_ep.port(port.get());
 			}
-			if (enable && ip && port) {
-				m_subsystem_sender.enable();
-			} else {
-				m_subsystem_sender.disable();
+			try {
+				if (enable && ip && port) {
+					m_subsystem_sender.enable();
+				} else {
+					m_subsystem_sender.disable();
+				}
+				m_subsystem_sender.set_destination_endpoint(subsys_ep);
+			} catch (const boost::system::system_error& err) {
+				std::cerr << "Invalid configuration for subsystem endpoint: " << err.what() << "\n";
 			}
-			m_subsystem_sender.set_destination_endpoint(subsys_ep);
 
 		}
 
@@ -158,6 +171,7 @@ void Basestation::write_settings(boost::property_tree::ptree& to) {
 			subsys_feed_cfg.put("port", m_subsystem_feed.listen_endpoint().port());
 			subsys_feed_cfg.put("addr", m_subsystem_feed.listen_endpoint().address().to_string());
 			subsys_feed_cfg.put("enable", m_subsystem_feed.opened());
+			subsys_feed_cfg.put("multicast", m_subsystem_feed.is_multicast());
 
 			network_cfg.add_child("subsystem_feed", subsys_feed_cfg);
 		}
@@ -267,8 +281,17 @@ const struct luaL_Reg Basestation::lua_basestation_lib::lib[] = {
 	{"new_screen", new_screen},
 	{"new_module", open_module},
 	{"set_throttle", set_throttle},
+	{"set_turn_scale", set_turn_scale},
 	{NULL, NULL}
 };
+
+int Basestation::lua_basestation_lib::set_turn_scale(lua_State* L) {
+	double new_scale = luaL_checknumber(L, 1);
+
+	main_instance->m_remote_drive.set_turn_scale(new_scale);
+
+	return 0;
+}
 
 int Basestation::lua_basestation_lib::set_throttle(lua_State* L) {
 	double new_throttle = luaL_checknumber(L, 1);

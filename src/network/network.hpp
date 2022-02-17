@@ -69,6 +69,7 @@ class MessageReceiver : public msg::Receiver {
 		void subscribe(const boost::asio::ip::udp::endpoint& mcast_feed);
 		inline int listen_port() const { return listen_ep.port(); }
 		inline const Destination& listen_endpoint() const { return listen_ep; }
+		inline bool is_multicast() const { return use_multicast; }
 
 		void open();
 		void close();
