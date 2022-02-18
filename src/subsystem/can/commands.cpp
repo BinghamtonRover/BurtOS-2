@@ -327,6 +327,12 @@ bool can_open_socket() {
     flags |= ~(O_NONBLOCK);
     fcntl(can_socket, F_SETFL, flags);
 
+    //Make the socket timeout when failing to read
+    struct timeval tv;
+    tv.tv_sec = MAX_READ_TIME;
+    tv.tv_usec = 0;
+    setsockopt(can_socket, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
+
     //Disable receive filter, then open socket
     if (bind(can_socket, (struct sockaddr *)&addr, sizeof(addr)) < 0) { return false; }
 #endif
