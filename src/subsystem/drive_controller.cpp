@@ -76,18 +76,19 @@ void DriveController::set_drive_mode(DriveMode mode) {
 bool DriveController::drive_init() {
 	for (int i = static_cast<int>(Node::DRIVE_AXIS_0); i <= static_cast<int>(Node::DRIVE_AXIS_5); i++) {
 #ifdef ONBOARD_CAN_BUS
-		can_send((static_cast<Node>(i), Command::SET_AXIS_REQUESTED_STATE, 3); //START INIT SEQUENCE
+		can_send(static_cast<Node>(i), Command::SET_AXIS_REQUESTED_STATE, 3); //START INIT SEQUENCE
 #endif
 		std::chrono::steady_clock::time_point start_time = std::chrono::steady_clock::now();
 		std::chrono::duration<double> delta_time = start_time - start_time;
 		int tick = 0;
 
-		while (delta_time.count() <= 30.0 && !can_check_hearbeat(static_cast<Node>(i))) { 
+		bool working = false;
+		while (delta_time.count() <= 20.0) { 
         	delta_time = std::chrono::steady_clock::now() - start_time;
+			if (can_check_hearbeat(static_cast<Node>(i))) { working = true; }
 		}
 
-		//Initialization failed
-		if (delta_time.count() > 30.0) { return false; }
+		if (!working) { return false; }
 
 		//Set motors settings
 #ifdef ONBOARD_CAN_BUS
