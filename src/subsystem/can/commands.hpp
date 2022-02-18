@@ -29,20 +29,28 @@ int can_send(Node device, Command command, float data);
 //Send out a CAN message
 int can_send(Node device, Command command, int num_bytes, unsigned int data);
 
+//Send out a can request read message
+int can_request(Node device, Command command);
+
 //Request to read a CAN message
 float can_read_float(Node device, Command command);
 int can_read_int(Node device, Command command);
+long can_read_long(Node device, Command command);
 
 //Recieve a CAN message
 unsigned int can_receive(Node device, Command command);
+long can_receive_long(Node device, Command command);
 
 //Recieve a CAN frame and check it's ID
 bool can_check_hearbeat(Node device);
 
+//Receive all the vital information from the control teensy
+float* get_control_information();
+
 #ifdef ONBOARD_CAN_BUS
 //Create a can frame
 can_frame get_can_frame(int modifier, Node device, Command command, int num_bytes, unsigned int data);
-can_frame get_can_receive_frame(int modifier, Node device, Command command);
+can_frame get_can_request_frame(int modifier, Node device, Command command);
 #endif
 
 //Converts unsigned int to big endian
@@ -55,3 +63,6 @@ void can_close_socket();
 //CAN status information
 CAN_Status get_can_status();
 bool can_status_success();
+
+//Check if a device is an odrive
+bool is_odrive_device(Node device);
