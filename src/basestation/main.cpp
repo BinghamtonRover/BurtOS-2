@@ -48,19 +48,15 @@ int main(int argc, char* argv[]) {
 		nanogui::init();
 
 		Basestation session(basestation_settings);
+
+		session.add_screen(new BasestationScreen());
 		
 		session.mainloop();
-
 
 		try {
 			boost::property_tree::ptree settings;
 			session.write_settings(settings);
 
-			// Because we are saving after all windows are closed, carry over the launch screen settings
-			settings.erase("screens");
-			auto scr_cfg = basestation_settings.get_child_optional("screens");
-			if (scr_cfg)
-				settings.put_child("screens", scr_cfg.get());
 
 			namespace fs = std::filesystem;
 			fs::path userdata(fs::path(argv[0]).parent_path() / "userdata");

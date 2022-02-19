@@ -62,16 +62,29 @@ Basestation::Basestation(const boost::property_tree::ptree& config)
 		}
 	});
 
+	read_settings(config);
+
+}
+
+Basestation::~Basestation() {
+	main_instance = nullptr;
+}
+
+void Basestation::read_settings(const boost::property_tree::ptree& settings_tree) {
 	// network settings
-	auto net_cfg = config.get_child_optional("network");
+	auto net_cfg = settings_tree.get_child_optional("network");
 	if (net_cfg) {
 
 		auto subsys_feed_cfg = net_cfg.get().get_child_optional("subsystem_feed");
 		if (subsys_feed_cfg) {
 			bool enable = subsys_feed_cfg.get().get<bool>("enable", true);
-			bool mcast = subsys_feed_cfg.get().get<bool>("multicast", true);
-			auto port = subsys_feed_cfg.get().get_optional<uint16_t>("port");
-			auto ip = subsys_feed_cfg.get().get_optional<std::string>("addr");
+			bool use_multicast = subsys_feed_cfg.get().get<bool>("multicast", true);
+			boost::optional port = subsys_feed_cfg.get().get_optional<uint16_t>("port");
+			boost::optional ip = subsys_feed_cfg.get().get_optional<std::string>("addr");
+
+			// If the IP is not specified, assume multicast should be disabled since it requires both IP and port
+			if (!ip)
+				use_multicast = false;
 
 			boost::asio::ip::udp::endpoint feed_ep;
 			if (ip) {
@@ -87,12 +100,9 @@ Basestation::Basestation(const boost::property_tree::ptree& config)
 			}
 
 			try {
-				// Always running subscribe causes the sender to save the configured IP even if we aren't using multicast
-				m_subsystem_feed.subscribe(feed_ep);
-				if (!mcast) {
-					m_subsystem_feed.set_listen_port(feed_ep.port());
-				}
-				if (enable && (ip || !mcast) && port) {
+				m_subsystem_feed.set_listen_endpoint(feed_ep);
+
+				if (enable && (ip || !use_multicast) && port && !m_subsystem_feed.opened()) {
 					m_subsystem_feed.open();
 				}
 			} catch (const boost::system::system_error& err) {
@@ -136,31 +146,6 @@ Basestation::Basestation(const boost::property_tree::ptree& config)
 
 	}	// end network settings
 
-	// screen configuration
-	auto screen_cfg = config.get_child_optional("screens");
-	if (screen_cfg) {
-		for (auto& scr : screen_cfg.get()) {
-			
-			ScreenPositioning pos;
-			pos.size.x() = scr.second.get<int>("width", ScreenPositioning::DEFAULT_WIDTH);
-			pos.size.y() = scr.second.get<int>("height", ScreenPositioning::DEFAULT_HEIGHT);
-			pos.use_fullscreen = scr.second.get<bool>("fullscreen", false);
-			pos.monitor = scr.second.get<int>("monitor", -1);
-
-			add_screen(new BasestationScreen(pos));
-
-		}
-	}
-
-	// Ensure there is at least one screen
-	if (screens.size() == 0) {
-		add_screen(new BasestationScreen());
-	}
-
-}
-
-Basestation::~Basestation() {
-	main_instance = nullptr;
 }
 
 void Basestation::write_settings(boost::property_tree::ptree& to) {
