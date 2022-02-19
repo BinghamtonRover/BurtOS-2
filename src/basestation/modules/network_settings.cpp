@@ -14,6 +14,10 @@
 
 #include <widgets/functionbox.hpp>
 
+void gui::NetworkSettings::open_error_popup(const std::exception& err) {
+	auto popup = new nanogui::MessageDialog(this->screen(), nanogui::MessageDialog::Type::Warning, "Error Applying Network Settings", err.what());
+}
+
 gui::NetworkSettings::NetworkSettings(nanogui::Screen* screen) :
 	nanogui::Window(screen, "Network Settings") {
 
@@ -41,13 +45,12 @@ gui::NetworkSettings::NetworkSettings(nanogui::Screen* screen) :
 		net::MessageReceiver& feed = Basestation::get().subsystem_feed();
 		if (str.size() != 0) {
 			try {
-
 				auto ep = feed.listen_endpoint();
 				ep.address(boost::asio::ip::address_v4::from_string(str));
-				feed.subscribe(ep);
+				feed.set_listen_endpoint(ep);
 				return true;
 			} catch (const std::exception& err) {
-				new nanogui::MessageDialog(this, nanogui::MessageDialog::Type::Warning, "Unexpected Error", err.what());
+				open_error_popup(err);
 			}
 		}
 		mcast_feed_str = feed.listen_endpoint().address().to_string();
@@ -62,11 +65,15 @@ gui::NetworkSettings::NetworkSettings(nanogui::Screen* screen) :
 	feed_port_entry->set_fixed_width(text_entry_width);
 	feed_port_entry->set_callback([this](int set_port) {
 		auto& feed = Basestation::get().subsystem_feed();
-		if (set_port >= 0 && set_port <= std::numeric_limits<uint16_t>().max()) {
-			auto ep = feed.listen_endpoint();
-			ep.port(set_port);
-			feed.subscribe(ep);
-			return true;
+		try {
+			if (set_port >= 0 && set_port <= std::numeric_limits<uint16_t>().max()) {
+				auto ep = feed.listen_endpoint();
+				ep.port(set_port);
+				feed.set_listen_endpoint(ep);
+				return true;
+			}
+		} catch (const std::exception& e) {
+			open_error_popup(e);
 		}
 		mcast_feed_port = feed.listen_endpoint().port();
 		return false;
@@ -74,26 +81,26 @@ gui::NetworkSettings::NetworkSettings(nanogui::Screen* screen) :
 
 	subsys_feed_mcast = Basestation::get().subsystem_feed().is_multicast();
 	auto feed_mcast_mode_box = form->add_variable("Multicast", subsys_feed_mcast);
-	feed_mcast_mode_box->set_callback([feed_ip_entry](bool checked) {
+	feed_mcast_mode_box->set_callback([this, feed_ip_entry](bool checked) {
 		auto& feed = Basestation::get().subsystem_feed();
-		feed_ip_entry->set_editable(checked);
-		if (checked) {
-			feed_ip_entry->set_value(feed.listen_endpoint().address().to_string());
-		} else {
-			feed_ip_entry->set_value("");
+		try {
+			feed_ip_entry->set_editable(checked);
+			if (checked) {
+				feed_ip_entry->set_value(feed.listen_endpoint().address().to_string());
+			} else {
+				feed_ip_entry->set_value("");
+			}
+			feed.set_multicast(checked);
+		} catch (const std::exception& err) {
+			open_error_popup(err);
 		}
-		if (feed.opened()) {
-			if (checked)
-				feed.subscribe(feed.listen_endpoint());
-			else
-				feed.set_listen_port(feed.listen_port());
-		}
+		subsys_feed_mcast = feed.is_multicast();
 	});
 	feed_mcast_mode_box->callback()(subsys_feed_mcast);
 
 	
-	mcast_enable = Basestation::get().subsystem_feed().opened();
-	auto feed_enable_box = form->add_variable("Open", mcast_enable);
+	subsys_feed_enable = Basestation::get().subsystem_feed().is_multicast();
+	auto feed_enable_box = form->add_variable("Open", subsys_feed_enable);
 	feed_enable_box->set_callback([this](bool checked) {
 		try {
 			if (checked)
@@ -101,9 +108,9 @@ gui::NetworkSettings::NetworkSettings(nanogui::Screen* screen) :
 			else
 				Basestation::get().subsystem_feed().close();
 		} catch (const std::exception& err) {
-			new nanogui::MessageDialog(this->screen(), nanogui::MessageDialog::Type::Warning, "Error Opening Feed", err.what());
+			open_error_popup(err);
 		}
-		mcast_enable = Basestation::get().subsystem_feed().opened();
+		subsys_feed_enable = Basestation::get().subsystem_feed().opened();
 	});
 
 	form->add_group("Subsystem Device Link");
@@ -125,7 +132,7 @@ gui::NetworkSettings::NetworkSettings(nanogui::Screen* screen) :
 				subsys.set_destination_endpoint(ep);
 				return true;
 			} catch (const std::exception& err) {
-				new nanogui::MessageDialog(this, nanogui::MessageDialog::Type::Warning, "Unexpected Error", err.what());
+				open_error_popup(err);
 			}
 		}
 		ip_str = subsys.destination_endpoint().address().to_string();

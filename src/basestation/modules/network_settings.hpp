@@ -18,10 +18,12 @@ class NetworkSettings : public nanogui::Window {
 		int port;
 		int interval;
 		bool enable;
-		bool mcast_enable;
+		bool subsys_feed_enable;
 		bool subsys_feed_mcast;
 
 		int text_entry_width = 150;
+
+		void open_error_popup(const std::exception& err);
 
 
 };

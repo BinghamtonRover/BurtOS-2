@@ -146,9 +146,25 @@ void net::MessageReceiver::subscribe(const boost::asio::ip::udp::endpoint& mcast
 	}
 }
 
+void net::MessageReceiver::set_listen_endpoint(const boost::asio::ip::udp::endpoint& ep) {
+	listen_ep = ep;
+
+	if (socket.is_open()) {
+		open();
+	}
+}
+
+void net::MessageReceiver::set_multicast(bool on) {
+	if (on != use_multicast) {
+		use_multicast = on;
+		if (socket.is_open()) {
+			open();
+		}
+	}
+}
+
 void net::MessageReceiver::open() {
-	if (socket.is_open())
-		socket.close();
+	close();
 
 	if (use_multicast) {
 		socket.open(listen_ep.protocol());
@@ -184,5 +200,7 @@ void net::MessageReceiver::listen() {
 }
 
 void net::MessageReceiver::close() {
-	socket.close();
+	if (socket.is_open()) {
+		socket.close();
+	}
 }
