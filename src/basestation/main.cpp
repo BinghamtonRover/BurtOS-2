@@ -50,8 +50,8 @@ static bool read_command_line_options(int argc, char* argv[]) {
 			("settings,s", opt::value<std::string>(&settings_path_str), "specify a file to read settings from")
 			("userdata,u", opt::value<std::string>(&userdata_path_str), "specify the userdata directory")
 			("fullscreen,f", "open an initial window in fullscreen mode")
-			("width,w", opt::value<int>(&w)->default_value(1280), "specify window width (windowed mode only)")
-			("height,h", opt::value<int>(&h)->default_value(720), "specify window height (windowed mode only)")
+			("width,W", opt::value<int>(&w)->default_value(1280), "specify window width (windowed mode only)")
+			("height,H", opt::value<int>(&h)->default_value(720), "specify window height (windowed mode only)")
 			("set,D", opt::value< std::vector<std::string> >(), "specify settings override values with path=value pairs")
 		;
 
