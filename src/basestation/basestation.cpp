@@ -172,23 +172,6 @@ void Basestation::write_settings(boost::property_tree::ptree& to) {
 
 		to.add_child("network", network_cfg);
 	}
-	{
-		int c = 0;
-		boost::property_tree::ptree screen_cfg;
-		for (BasestationScreen* screen : screens) {
-			boost::property_tree::ptree this_scr;
-
-			this_scr.put("width", screen->width());
-			this_scr.put("height", screen->height());
-			this_scr.put("fullscreen", screen->fullscreen());
-			this_scr.put("window", screen->window_idx());
-
-			// ha c++
-			screen_cfg.add_child("screen" + std::to_string(c++), this_scr);
-		}
-
-		to.add_child("screens", screen_cfg);
-	}
 }
 
 void Basestation::add_screen(BasestationScreen* new_scr) {
