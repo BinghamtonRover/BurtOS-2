@@ -80,7 +80,6 @@ bool DriveController::drive_init() {
 #endif
 		std::chrono::steady_clock::time_point start_time = std::chrono::steady_clock::now();
 		std::chrono::duration<double> delta_time = start_time - start_time;
-		int tick = 0;
 
 		bool working = false;
 		while (delta_time.count() <= 20.0) { 
