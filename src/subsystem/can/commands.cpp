@@ -426,5 +426,5 @@ bool can_status_success() {
 
 //Check if a device is an odrive
 bool is_odrive_device(Node device) {
-    return (device <= 5);
+    return (device >= 1) && (device <= 6);
 }
