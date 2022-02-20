@@ -83,8 +83,8 @@ float can_read_float(Node device, Command command) {
     unsigned int received = 0;
     received = can_receive(device, command);
 
-    //Convert convert from big endian (conversion is symmetrical) if from an odrive
-    if (is_odrive_device(device)) { received = get_big_endian(received); }
+    //Convert convert from big endian (conversion is symmetrical) if not from an odrive
+    if (!is_odrive_device(device)) { received = get_big_endian(received); }
     
     //Convert unsigned int back to float, then return
     union { unsigned int ul; float f; } conv = { .ul = received };
@@ -97,8 +97,8 @@ int can_read_int(Node device, Command command) {
     unsigned int received = 0;
     received = can_receive(device, command);
 
-    //Convert convert from big endian (conversion is symmetrical) if from an odrive, and return
-    if (is_odrive_device(device)) { received = get_big_endian(received); }
+    //Convert convert from big endian (conversion is symmetrical) if not from an odrive, and return
+    if (!is_odrive_device(device)) { received = get_big_endian(received); }
     return (int)received;
 }
 
@@ -144,18 +144,23 @@ unsigned int can_receive(Node device, Command command) {
 
     //Read the frame
     int read_size = 0;
-    while (read_size <= 0) {
+    frame.can_id = 0;
+    std::chrono::steady_clock::time_point start_time = std::chrono::steady_clock::now();
+	std::chrono::duration<double> delta_time = start_time - start_time;
+    
+    while ((read_size <= 0 || frame.can_id != expected_can_id) && delta_time.count() <= MAX_READ_TIME) {
         read_size = read(can_socket, &frame, sizeof(struct can_frame));
+        delta_time = std::chrono::steady_clock::now() - start_time;
     }
 
     //Check if invalid read
-    if (read_size <= 0) {
+    if (read_size <= 0 || frame.can_id != expected_can_id) {
         status = CAN_Status::FAILED_READ;
         return 0;
     }
 
     //Put data into unsigned integer
-    for (int i = 0; i < read_size; i++) {
+    for (int i = 0; i < 4; i++) {
         return_value |= ((unsigned int)(frame.data[i]) << (8 * i));
     }
     
@@ -183,9 +188,15 @@ long can_receive_long(Node device, Command command) {
     int expected_can_id = command | (device << 5);
     frame.can_id = expected_can_id;
 
+    //Set the filter
+    struct can_filter rfilter[1];
+	rfilter[0].can_id = expected_can_id;
+	rfilter[0].can_mask = expected_can_id;
+	setsockopt(can_socket, SOL_CAN_RAW, CAN_RAW_FILTER, &rfilter, sizeof(rfilter));
+
     //Read the frame
     int read_size = 0;
-    while (read_size <= 0) {
+    while (read_size <= 0 && frame.can_id != expected_can_id) {
         read_size = read(can_socket, &frame, sizeof(struct can_frame));
     }
 
@@ -269,7 +280,7 @@ can_frame get_can_frame(int modifier, Node device, Command command, int num_byte
     frame.__pad = 0;
     frame.__res0 = 0;
     frame.__res1 = 0;
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < 4 && i < num_bytes; i++) {
         frame.data[i] = (data >> (8 * (3 - i))) & 0xFF;
     }
     for (int i = 4; i < num_bytes; i++) {
@@ -326,12 +337,6 @@ bool can_open_socket() {
     int flags = fcntl(can_socket, F_GETFL);
     flags |= ~(O_NONBLOCK);
     fcntl(can_socket, F_SETFL, flags);
-
-    //Make the socket timeout when failing to read
-    struct timeval tv;
-    tv.tv_sec = MAX_READ_TIME;
-    tv.tv_usec = 0;
-    setsockopt(can_socket, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
 
     //Disable receive filter, then open socket
     if (bind(can_socket, (struct sockaddr *)&addr, sizeof(addr)) < 0) { return false; }
