@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package video;
+
+message Quality {
+	uint32 jpeg_quality = 1;
+	bool grayscale = 2;
+}
+
+message Switch {
+	uint32 stream = 1;
+	bool enabled = 2;
+}

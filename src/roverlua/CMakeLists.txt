@@ -1,0 +1,6 @@
+find_package(Lua REQUIRED)
+add_library(roverlua rover_lua.hpp rover_lua.cpp interactive_lua.hpp interactive_lua.cpp)
+target_link_libraries(roverlua PUBLIC ${LUA_LIBRARIES})
+target_include_directories(roverlua PUBLIC ${LUA_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
+set_target_properties(roverlua PROPERTIES LINKER_LANGUAGE CXX)
+target_compile_features(roverlua PRIVATE cxx_std_17)
