@@ -166,12 +166,15 @@ int main(int argc, char* argv[]) {
 		return 1;
 	}
 
-	boost::property_tree::ptree user_settings;
+	boost::property_tree::ptree load_user_settings;
 
 	if (!use_default_settings) {
 		// Load settings can find userdata relative to the executable path (argv[0])
-		load_settings(user_settings, argc > 0 ? argv[0] : nullptr);
+		load_settings(load_user_settings, argc > 0 ? argv[0] : nullptr);
 	}
+	
+	// Make a copy so they can be compared for changes upon exit
+	boost::property_tree::ptree user_settings = load_user_settings;
 
 	// Apply command line overrides to the tree
 	for (const auto& kv_pair : override_settings) {
@@ -197,7 +200,7 @@ int main(int argc, char* argv[]) {
 		if (save_settings) {
 			boost::property_tree::ptree settings;
 			session.write_settings(settings);
-			if (user_settings != settings) {
+			if (load_user_settings != settings) {
 				std::cout << "Saving changes to settings.\n";
 				write_settings(settings);
 			}
