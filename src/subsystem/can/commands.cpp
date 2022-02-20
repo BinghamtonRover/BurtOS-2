@@ -250,9 +250,9 @@ bool can_check_hearbeat(Node device) {
 }
 
 //Receive all the vital information from the control teensy
-float* get_control_information() {
+ControlInformation get_control_information() {
     //return information
-    float* ret = new float[10];
+    ControlInformation ret;
 
     //fetch information
     long p1 = can_read_long(Node::CONTROL_TEENSY, Command::TEENSY_DATA_PACKET_1);
@@ -260,14 +260,74 @@ float* get_control_information() {
     long p2 = can_read_long(Node::CONTROL_TEENSY, Command::TEENSY_DATA_PACKET_2);
     if (!can_status_success()) { return ret; }
 
-    //after successful reads, interpret the data (loop may be faster)
-    ret[0] = (float)(p1 & 0xFFFF000000000000l >> 48) / 10.0f;
-    for (int i = 5; i >= 0; i--) {
-        ret[7 - i] = (float)((p1 & (0xFFl << (i * 8))) >> (i * 8)) / 10.0f;
-    }
-    ret[7] = (float)((p2 & (0xFFl << 56)) >> 56) / 10.0f;
-    ret[8] = (float)((p2 & (0xFFl << 48)) >> 48) / 10.0f;
-    ret[9] = (float)((p2 & (0xFFl << 40)) >> 40) / 10.0f;
+    //after successful reads, interpret the data
+    ret.ps_batt = (float(((0xFF00000000000000l & p1) >> 56) | ((0x00FF000000000000l & p1) >> 40))) / 10.0f;
+    ret.ps12_volt = (float((0x0000FF0000000000l & p1) >> 40)) / 10.0f;
+    ret.ps5_volt = (float((0x000000FF00000000l & p1) >> 32)) / 10.0f;
+    ret.ps12_curr = (float((0x00000000FF000000l & p1) >> 24)) / 10.0f;
+    ret.ps5_curr = (float((0x0000000000FF0000l & p1) >> 16)) / 10.0f;
+    ret.temp12 = (float((0x000000000000FF00l & p1) >> 8)) / 10.0f;
+    ret.temp5 = (float(0x00000000000000FFl & p1)) / 10.0f;
+    ret.odrv0_curr = (float((0xFF00000000000000l & p2) >> 56)) / 10.0f;
+    ret.odrv1_curr = (float((0x00FF000000000000l & p2) >> 48)) / 10.0f;
+    ret.odrv2_curr = (float((0x0000FF0000000000l & p2) >> 40)) / 10.0f;
+    ret.main_curr = (float((0x000000FF00000000l & p2) >> 32)) / 10.0f;
+    return ret;
+}
+
+//Receive all the information from the arm
+ArmInformation get_arm_information() {
+    //return information
+    ArmInformation ret;
+
+    //fetch information
+    long p = can_read_long(Node::ARM_TEENSY, Command::TEENSY_DATA_PACKET_1);
+    if (!can_status_success()) { return ret; }
+
+    //after a successful read, interpret the data
+    ret.temp1 = (float((0xFF00000000000000l & p) >> 56)) / 10.0f;
+    ret.temp2 = (float((0x00FF000000000000l & p) >> 48)) / 10.0f;
+    ret.temp3 = (float((0x0000FF0000000000l & p) >> 40)) / 10.0f;
+    ret.gyro_x = (float((0x000000FF00000000l & p) >> 32)) / 10.0f;
+    ret.gyro_y = (float((0x00000000FF000000l & p) >> 24)) / 10.0f;
+    ret.gyro_z = (float((0x0000000000FF0000l & p) >> 16)) / 10.0f;
+    return ret;
+}
+
+//Receive all the information from the gripper
+GripperInformation get_gripper_information() {
+    //return information
+    GripperInformation ret;
+
+    //fetch information
+    long p = can_read_long(Node::GRIPPER_TEENSY, Command::TEENSY_DATA_PACKET_1);
+    if (!can_status_success()) { return ret; }
+
+    //after a successful read, interpret the data
+    ret.temp1 = (float((0xFF00000000000000l & p) >> 56)) / 10.0f;
+    ret.temp2 = (float((0x00FF000000000000l & p) >> 48)) / 10.0f;
+    ret.temp3 = (float((0x0000FF0000000000l & p) >> 40)) / 10.0f;
+    ret.gyro_x = (float((0x000000FF00000000l & p) >> 32)) / 10.0f;
+    ret.gyro_y = (float((0x00000000FF000000l & p) >> 24)) / 10.0f;
+    ret.gyro_z = (float((0x0000000000FF0000l & p) >> 16)) / 10.0f;
+    return ret;
+}
+
+//Receive all the information for environmental analysis
+EAInformation get_environmental_analysis_information() {
+    //return information
+    EAInformation ret;
+
+    //fetch information
+    long p = can_read_long(Node::EA_TEENSY, Command::TEENSY_DATA_PACKET_1);
+    if (!can_status_success()) { return ret; }
+
+    //after a successful read, interpret the data
+    ret.temp = (float((0xFF00000000000000l & p) >> 56)) / 10.0f;
+    ret.methane = (float((0x00FF000000000000l & p) >> 48)) / 10.0f;
+    ret.c02 = (float((0x0000FF0000000000l & p) >> 40)) / 10.0f;
+    ret.ph = (float((0x000000FF00000000l & p) >> 32)) / 10.0f;
+    ret.humidity = (float((0x00000000FF000000l & p) >> 24)) / 10.0f;
     return ret;
 }
 

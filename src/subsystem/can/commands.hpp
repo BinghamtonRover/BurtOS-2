@@ -45,7 +45,7 @@ long can_receive_long(Node device, Command command);
 bool can_check_hearbeat(Node device);
 
 //Receive all the vital information from each specific teensy
-float* get_control_information();
+ControlInformation get_control_information();
 ArmInformation get_arm_information();
 GripperInformation get_gripper_information();
 EAInformation get_environmental_analysis_information();
