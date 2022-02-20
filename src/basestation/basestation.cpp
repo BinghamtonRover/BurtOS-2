@@ -249,17 +249,8 @@ const struct luaL_Reg Basestation::lua_basestation_lib::lib[] = {
 	{"new_screen", new_screen},
 	{"new_module", open_module},
 	{"set_throttle", set_throttle},
-	{"set_turn_scale", set_turn_scale},
 	{NULL, NULL}
 };
-
-int Basestation::lua_basestation_lib::set_turn_scale(lua_State* L) {
-	double new_scale = luaL_checknumber(L, 1);
-
-	main_instance->m_remote_drive.set_turn_scale(new_scale);
-
-	return 0;
-}
 
 int Basestation::lua_basestation_lib::set_throttle(lua_State* L) {
 	double new_throttle = luaL_checknumber(L, 1);
