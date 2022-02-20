@@ -3,14 +3,14 @@
 //Specific information on nodes and commands here
 
 enum Node {
-    DRIVE_AXIS_0 = 0x0,
-    DRIVE_AXIS_1 = 0x1,
-    DRIVE_AXIS_2 = 0x2,
-    DRIVE_AXIS_3 = 0x3,
-    DRIVE_AXIS_4 = 0x4,
-    DRIVE_AXIS_5 = 0x5,
-    RASPBERRY_PI = 0x6,
-    CONTROL_TEENSY = 0x7,
+    CONTROL_TEENSY = 0x0,
+    DRIVE_AXIS_0 = 0x1,
+    DRIVE_AXIS_1 = 0x2,
+    DRIVE_AXIS_2 = 0x3,
+    DRIVE_AXIS_3 = 0x4,
+    DRIVE_AXIS_4 = 0x5,
+    DRIVE_AXIS_5 = 0x6,
+    RASPBERRY_PI = 0x7,
     ARM_TEENSY = 0x8,
     GRIPPER_TEENSY = 0x9,
     EA_TEENSY = 0xA
