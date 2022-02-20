@@ -19,7 +19,7 @@
 #include "constants.hpp"
 
 //Max time allowed for reading (in seconds)
-#define MAX_READ_TIME 0.1
+constexpr double MAX_READ_TIME = 0.1;
 
 //Overloads for can_send
 int can_send(Node device, Command command, unsigned int data);
@@ -44,8 +44,11 @@ long can_receive_long(Node device, Command command);
 //Recieve a CAN frame and check it's ID
 bool can_check_hearbeat(Node device);
 
-//Receive all the vital information from the control teensy
+//Receive all the vital information from each specific teensy
 float* get_control_information();
+ArmInformation get_arm_information();
+GripperInformation get_gripper_information();
+EAInformation get_environmental_analysis_information();
 
 #ifdef ONBOARD_CAN_BUS
 //Create a can frame

@@ -2,6 +2,7 @@
 
 #include <cmath>
 #include <boost/math/constants/constants.hpp>
+#include "can/rover_can.hpp"
 
 void DriveController::halt() {
 	target_velocity_mps = 0;
@@ -75,9 +76,8 @@ void DriveController::set_drive_mode(DriveMode mode) {
 //Initialize the drive (CAN bus initialization commands)
 bool DriveController::drive_init() {
 	for (int i = static_cast<int>(Node::DRIVE_AXIS_0); i <= static_cast<int>(Node::DRIVE_AXIS_5); i++) {
-#ifdef ONBOARD_CAN_BUS
 		can_send(static_cast<Node>(i), Command::SET_AXIS_REQUESTED_STATE, 3); //START INIT SEQUENCE
-#endif
+
 		std::chrono::steady_clock::time_point start_time = std::chrono::steady_clock::now();
 		std::chrono::duration<double> delta_time = start_time - start_time;
 		int tick = 0;
@@ -91,10 +91,8 @@ bool DriveController::drive_init() {
 		if (!working) { return false; }
 
 		//Set motors settings
-#ifdef ONBOARD_CAN_BUS
 		can_send(static_cast<Node>(i), Command::SET_AXIS_REQUESTED_STATE, 8); //AXIS_STATE_CLOSED_LOOP_CONTROL
 		can_send(static_cast<Node>(i), Command::SET_CONTROLLER_MODES, 2);     //CONTROL_MODE_VELOCITY_CONTROL
-#endif
 	}
 
     //Successfully initialized

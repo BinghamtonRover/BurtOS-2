@@ -56,3 +56,43 @@ enum CAN_Status {
     FAILED_WRITE = 0x3,
     FAILED_REQUEST = 0x4
 };
+
+struct ControlInformation {
+    float ps_batt;
+    float ps12_volt;
+    float ps5_volt;
+    float ps12_curr;
+    float ps5_curr;
+    float temp12;
+    float temp5;
+    float odrv0_curr;
+    float odrv1_curr;
+    float odrv2_curr;
+    float main_curr;
+};
+
+struct ArmInformation {
+    float temp1;
+    float temp2;
+    float temp3;
+    float gyro_x;
+    float gyro_y;
+    float gyro_z;
+};
+
+struct GripperInformation {
+    float temp1;
+    float temp2;
+    float temp3;
+    float gyro_x;
+    float gyro_y;
+    float gyro_z;
+};
+
+struct EAInformation {
+    float temp;
+    float methane;
+    float c02;
+    float ph;
+    float humidity;
+};
