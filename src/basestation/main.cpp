@@ -1,5 +1,6 @@
 #include <iostream>
 #include <filesystem>
+#include <cstdlib>
 
 #include <boost/program_options.hpp>
 #include <boost/property_tree/ptree.hpp>
@@ -94,10 +95,12 @@ static bool read_command_line_options(int argc, char* argv[]) {
 	return true;
 }
 
-// Load base station settings into the property tree
-// Uses the userdata_path from the command line if it is specified. Otherwise, search relative to
-// the executable:
-//	../basestation.exe -> ../userdata/basestation-settings.json
+// Load base station settings into the property tree from a JSON
+// Search order:
+// 1. Specific file supplied with --settings
+// 2. Userdata directory supplied with --userdata
+// 3. Userdata directory from the environmental variable BURTOS_USERDATA
+// 4. Directory relative the argv[0] (ex: build/bin/basestation.exe -> build/bin/userdata/basestation-settings.json)
 static void load_settings(boost::property_tree::ptree& ld_to, const char* exe_path = nullptr) {
 	namespace fs = std::filesystem;
 
@@ -106,6 +109,9 @@ static void load_settings(boost::property_tree::ptree& ld_to, const char* exe_pa
 		if (!settings_path_str.empty()) {
 			settings_file = fs::path(settings_path_str);
 		} else if (!userdata_path_str.empty()) {
+			settings_file = fs::path(userdata_path_str) / "basestation-settings.json";
+		} else if (const char* env_userdata = std::getenv("BURTOS_USERDATA")) {
+			userdata_path_str = env_userdata;
 			settings_file = fs::path(userdata_path_str) / "basestation-settings.json";
 		} else if (exe_path) {
 			fs::path userdata = fs::path(exe_path).parent_path() / "userdata";
