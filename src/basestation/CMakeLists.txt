@@ -1,5 +1,4 @@
 set(MODULE_HDR
-	modules/window.hpp
 	modules/console.hpp
 	modules/network_settings.cpp
 	modules/drive_stats.hpp
@@ -8,7 +7,6 @@ set(MODULE_HDR
 	modules/input_config/controller_binding_popup.hpp
 )
 set(MODULE_SRC
-	modules/window.cpp
 	modules/console.cpp
 	modules/network_settings.cpp
 	modules/drive_stats.cpp
@@ -18,10 +16,12 @@ set(MODULE_SRC
 )
 
 set(WIDGET_HDR
+	widgets/window.hpp
 	widgets/textarea.hpp
 	widgets/functionbox.hpp
 )
 set(WIDGET_SRC
+	widgets/window.cpp
 	widgets/textarea.cpp
 	widgets/functionbox.cpp
 )

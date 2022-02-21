@@ -11,7 +11,7 @@ namespace gui {
 */
 class Window : public nanogui::Window {
 	public:
-		Window(nanogui::Widget* parent, const std::string& title = "Untitled", bool resizable = true, bool minimizable = false, bool closable = true);
+		Window(nanogui::Widget* parent, const std::string& title = "Untitled", bool resizable = false, bool minimizable = false, bool closable = true);
 
 		bool resizable() const { return m_resizable; }
 		void set_resizable(bool resizable) { m_resizable = resizable; }

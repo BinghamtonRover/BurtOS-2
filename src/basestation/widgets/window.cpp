@@ -1,4 +1,4 @@
-#include <modules/window.hpp>
+#include <widgets/window.hpp>
 
 #include <nanogui/opengl.h>
 #include <nanogui/screen.h>
