@@ -2,9 +2,43 @@
 
 #include <nanogui/opengl.h>
 #include <nanogui/screen.h>
+#include <nanogui/icons.h>
+#include <nanogui/button.h>
 
-gui::Module::Module(nanogui::Widget* parent, const std::string& title, bool resizable)
-	: nanogui::Window(parent, title), m_resize_dir{ResizeSide::NONE}, m_min_size(nanogui::Vector2i(m_theme->m_window_header_height)), m_resizable(resizable) {}
+#include <basestation.hpp>
+
+gui::Module::Module(nanogui::Widget* parent, const std::string& title, bool resizable, bool minimizable, bool closable)
+	: nanogui::Window(parent, title),
+	m_resize_dir{ResizeSide::NONE},
+	m_min_size(nanogui::Vector2i(m_theme->m_window_header_height)),
+	m_resizable(resizable),
+	m_resize(false),
+	m_closable(closable),
+	m_minimizable(minimizable) {
+
+	if (m_minimizable) {
+		button_panel()->add<nanogui::Button>("", FA_WINDOW_MINIMIZE)->set_callback([this] {
+			set_visible(false);
+		});
+	}
+
+	if (m_closable) {
+		button_panel()->add<nanogui::Button>("", FA_WINDOW_CLOSE)->set_callback([this] {
+			close();
+		});
+	}
+
+}
+
+void gui::Module::close() {
+	Basestation::async([this](Basestation&) {
+		if (nanogui::Screen* screen = dynamic_cast<nanogui::Screen*>(m_parent)) {
+			screen->dispose_window(this);
+		} else {
+			m_parent->remove_child(this);
+		}
+	});
+}
 
 bool gui::Module::mouse_drag_event(const nanogui::Vector2i& p, const nanogui::Vector2i& rel, int button, int mods) {
 	if (m_resize && (button & (1 << GLFW_MOUSE_BUTTON_1))) {
