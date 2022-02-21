@@ -2,13 +2,13 @@
 
 #include <events.hpp>
 
-#include <nanogui/window.h>
+#include <widgets/window.hpp>
 #include <nanogui/vector.h>
 #include <nanogui/common.h>
 
 namespace gui {
 
-class DriveStats : public nanogui::Window {
+class DriveStats : public gui::Window {
 	public:
 		DriveStats(nanogui::Screen* screen, nanogui::Vector2i size = 0);
 

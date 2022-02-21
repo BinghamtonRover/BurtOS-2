@@ -1,9 +1,9 @@
 #pragma once
 
-#include <nanogui/window.h>
 #include <nanogui/widget.h>
 #include <nanogui/button.h>
 
+#include <widgets/window.hpp>
 #include <widgets/functionbox.hpp>
 #include <widgets/textarea.hpp>
 
@@ -12,7 +12,7 @@
 #include <iostream>
 #include <thread>
 
-class Console : public nanogui::Window, public rover_lua::InteractivePrompt {
+class Console : public gui::Window, public rover_lua::InteractivePrompt {
 protected:
 	struct Builtin {
 		static int clear(lua_State* L);

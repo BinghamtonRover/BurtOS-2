@@ -1,13 +1,13 @@
 #pragma once
 
-#include <nanogui/nanogui.h>
+#include <string>
+#include <stdexcept>
 
-#include <nanogui/window.h>
-#include <nanogui/formhelper.h>
+#include <widgets/window.hpp>
 
 namespace gui {
 
-class NetworkSettings : public nanogui::Window {
+class NetworkSettings : public gui::Window {
 	public:
 		NetworkSettings(nanogui::Screen* screen);
 	private:

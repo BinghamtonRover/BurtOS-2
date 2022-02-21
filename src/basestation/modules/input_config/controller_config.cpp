@@ -1,7 +1,7 @@
 #include "controller_config.hpp"
 
 ControllerConfig::ControllerConfig(nanogui::Screen* screen, ControllerManager& mgr) :
-		nanogui::Window(screen, "Controllers"),
+		gui::Window(screen, "Controllers"),
 		mgr(mgr) {
 
 	set_layout(new nanogui::GroupLayout());
@@ -21,12 +21,6 @@ ControllerConfig::ControllerConfig(nanogui::Screen* screen, ControllerManager& m
 
 	auto option_bar = new nanogui::Widget(this);
 	option_bar->set_layout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal, nanogui::Alignment::Middle, 0, 16));
-
-	auto close_button = new nanogui::Button(option_bar, "Close");
-	close_button->set_icon(FA_WINDOW_CLOSE);
-	close_button->set_callback([this]() {
-		this->screen()->dispose_window(this);
-	});
 
 	refresh();
 
@@ -184,5 +178,5 @@ void ControllerConfig::draw(NVGcontext* ctx) {
 			++it;
 		}
 	}
-	nanogui::Window::draw(ctx);
+	gui::Window::draw(ctx);
 }
