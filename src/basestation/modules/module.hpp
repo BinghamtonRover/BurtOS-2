@@ -16,10 +16,19 @@ class Module : public nanogui::Window {
 		virtual bool mouse_button_event(const nanogui::Vector2i& pos, int button, bool down, int mods) override;
 
 	protected:
-		int check_vertical_resize(const nanogui::Vector2i& mouse_pos);
-		int check_horizontal_resize(const nanogui::Vector2i& mouse_pos);
+		enum class ResizeSide {
+			NONE,
+			LEFT,
+			RIGHT,
+			UP,
+			DOWN
+		};
+		ResizeSide check_vertical_resize(const nanogui::Vector2i& mouse_pos);
+		ResizeSide check_horizontal_resize(const nanogui::Vector2i& mouse_pos);
 
-		nanogui::Vector2i m_resize_dir;
+		constexpr static int RESIZE_ZONE_RADIUS = 15;
+
+		ResizeSide m_resize_dir[2];
 		nanogui::Vector2i m_min_size;
 		bool m_resizable;
 		bool m_resize;

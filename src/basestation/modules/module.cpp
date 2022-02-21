@@ -4,24 +4,32 @@
 #include <nanogui/screen.h>
 
 gui::Module::Module(nanogui::Widget* parent, const std::string& title, bool resizable)
-	: nanogui::Window(parent, title), m_resize_dir(nanogui::Vector2i(5)), m_min_size(nanogui::Vector2i(m_theme->m_window_header_height)), m_resizable(resizable) {}
+	: nanogui::Window(parent, title), m_resize_dir{ResizeSide::NONE}, m_min_size(nanogui::Vector2i(m_theme->m_window_header_height)), m_resizable(resizable) {}
 
 bool gui::Module::mouse_drag_event(const nanogui::Vector2i& p, const nanogui::Vector2i& rel, int button, int mods) {
-	if (nanogui::Window::mouse_drag_event(p, rel, button, mods))
-		return true;
+	if (m_resize && (button & (1 << GLFW_MOUSE_BUTTON_1))) {
 
-	if (m_resizable && m_resize && (button & (1 << GLFW_MOUSE_BUTTON_1))) {
+		auto screen = this->screen();
+
+		auto abs_pos = screen->absolute_position();
+		if (p.x() < abs_pos.x() || p.x() > abs_pos.x() + screen->size().x() ||
+				p.y() < abs_pos.y() || p.y() > abs_pos.y() + screen->size().y()) {
+
+			m_resize = false;
+			return false;
+		}
+
 		const nanogui::Vector2i lower_right_corner(m_pos + m_size);
 		const nanogui::Vector2i upper_left_corner(m_pos);
-		NVGcontext* ctx = screen()->nvg_context();
+		NVGcontext* ctx = screen->nvg_context();
 		bool resized = false;
 
-		if (m_resize_dir.x() == 1) {
+		if (m_resize_dir[0] == ResizeSide::RIGHT) {
 			if ((rel.x() > 0 && p.x() >= lower_right_corner.x()) || (rel.x() < 0)) {
 				m_size.x() += rel.x();
 				resized = true;
 			}
-		} else if (m_resize_dir.x() == -1) {
+		} else if (m_resize_dir[0] == ResizeSide::LEFT) {
 			if ((rel.x() < 0 && p.x() <= upper_left_corner.x()) || (rel.x() > 0)) {
 				m_size.x() += -rel.x();
 				m_size = max(m_size, m_min_size);
@@ -30,29 +38,27 @@ bool gui::Module::mouse_drag_event(const nanogui::Vector2i& p, const nanogui::Ve
 			}
 		}
 
-		if (m_resize_dir.y() == 1) {
+		if (m_resize_dir[1] == ResizeSide::DOWN) {
 			if ((rel.y() > 0 && p.y() >= lower_right_corner.y()) || (rel.y() < 0)) {
 				m_size.y() += rel.y();
 				resized = true;
 			}
-		} 
+		}
 		m_size = max(m_size, m_min_size);
+		
 
 		if (resized) perform_layout(ctx);
 
 		return true;
 	}
 
-	return false;
+	return nanogui::Window::mouse_drag_event(p, rel, button, mods);
 }
 
 bool gui::Module::mouse_motion_event(const nanogui::Vector2i &p, const nanogui::Vector2i &rel, int button, int modifiers) {
-	if (nanogui::Window::mouse_motion_event(p, rel, button, modifiers))
-		return true;
-
 	if (m_resizable) {
-		int hresize = check_horizontal_resize(p);
-		int vresize = check_vertical_resize(p);
+		bool hresize = check_horizontal_resize(p) != ResizeSide::NONE;
+		bool vresize = check_vertical_resize(p) != ResizeSide::NONE;
 		if (hresize && vresize) {
 			m_cursor = nanogui::Cursor::Crosshair;
 		} else if (hresize) {
@@ -65,39 +71,42 @@ bool gui::Module::mouse_motion_event(const nanogui::Vector2i &p, const nanogui::
 		return true;
 	}
    
-	return false;
+	return nanogui::Window::mouse_motion_event(p, rel, button, modifiers);
 }
 
-int gui::Module::check_vertical_resize(const nanogui::Vector2i &mouse_pos) {
-	int offset = 20;
+gui::Module::ResizeSide gui::Module::check_vertical_resize(const nanogui::Vector2i &mouse_pos) {
 	nanogui::Vector2i lower_right_corner = absolute_position() + size();
 
 	// Do not check for resize area on top of the window. It is to prevent conflict drag and resize event.
-	if (mouse_pos.y() >= lower_right_corner.y() - offset && mouse_pos.y() <= lower_right_corner.y()) {
-		return 1;
+	if (mouse_pos.y() >= lower_right_corner.y() - RESIZE_ZONE_RADIUS && mouse_pos.y() <= lower_right_corner.y()) {
+		return ResizeSide::DOWN;
 	}
 
-	return 0;
+	return ResizeSide::NONE;
 }
 
-int gui::Module::check_horizontal_resize(const nanogui::Vector2i &mouse_pos) {
-	int offset = 20;
-	nanogui::Vector2i lower_right_corner = absolute_position() + size();
-	int header_lower_left_corner_y = absolute_position().y() + m_theme->m_window_header_height;
+gui::Module::ResizeSide gui::Module::check_horizontal_resize(const nanogui::Vector2i &mouse_pos) {
+	auto abs_pos = absolute_position();
+	nanogui::Vector2i lower_right_corner = abs_pos + size();
+	int header_lower_left_corner_y = abs_pos.y() + m_theme->m_window_header_height;
 
-	if (mouse_pos.y() > header_lower_left_corner_y && mouse_pos.x() <= absolute_position().x() + offset && mouse_pos.x() >= absolute_position().x()) return -1;
-	else if ( mouse_pos.y() > header_lower_left_corner_y && mouse_pos.x() >= lower_right_corner.x() - offset && mouse_pos.x() <= lower_right_corner.x()) return 1;
+	if (mouse_pos.y() > header_lower_left_corner_y) {
 
-	return 0;
+		if (mouse_pos.x() <= abs_pos.x() + RESIZE_ZONE_RADIUS && mouse_pos.x() >= abs_pos.x()) return ResizeSide::LEFT;
+		else if (mouse_pos.x() >= lower_right_corner.x() - RESIZE_ZONE_RADIUS && mouse_pos.x() <= lower_right_corner.x()) return ResizeSide::RIGHT;
+	}
+
+
+	return ResizeSide::NONE;
 }
 
 bool gui::Module::mouse_button_event(const nanogui::Vector2i& pos, int button, bool down, int mods) {
 	if (button == GLFW_MOUSE_BUTTON_1) {
 		m_resize = false;
 		if (m_resizable && !m_drag && down) {
-			m_resize_dir.x() = check_horizontal_resize(pos);
-			m_resize_dir.y() = check_vertical_resize(pos);
-			m_resize = m_resize_dir.x() != 0 || m_resize_dir.y() != 0;
+			m_resize_dir[0] = check_horizontal_resize(pos);
+			m_resize_dir[1] = check_vertical_resize(pos);
+			m_resize = m_resize_dir[0] != ResizeSide::NONE || m_resize_dir[1] != ResizeSide::NONE;
 			if (m_resize)
 				return true;
 		}
