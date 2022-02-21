@@ -62,7 +62,7 @@ void Console::draw(NVGcontext* ctx) {
 			submit->set_enabled(false);
 
 		}
-		nanogui::Window::draw(ctx);	
+		gui::Window::draw(ctx);	
 }
 
 const struct luaL_Reg Console::term_lib[] = {
@@ -80,7 +80,7 @@ int Console::luaopen_term(lua_State* L) {
 }
 
 Console::Console(nanogui::Screen* screen) : 
-		nanogui::Window(screen, "Console"),
+		gui::Window(screen, "Console"),
 		lua_runtime(&rover_lua::InteractivePrompt::run_paused, static_cast<rover_lua::InteractivePrompt*>(this)) {
 
 	set_position(nanogui::Vector2i(15, 15));

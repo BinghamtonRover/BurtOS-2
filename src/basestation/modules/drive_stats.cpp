@@ -33,7 +33,7 @@ void gui::DriveStats::update_speed_displays(float l, float r) {
 	speed_text->set_value(text_ss.str());
 }
 
-gui::DriveStats::DriveStats(nanogui::Screen* screen, nanogui::Vector2i size) : nanogui::Window(screen, "Drive Stats") {
+gui::DriveStats::DriveStats(nanogui::Screen* screen, nanogui::Vector2i size) : gui::Window(screen, "Drive Stats") {
 	if (size == 0)
 		set_fixed_width(200);
 	else
