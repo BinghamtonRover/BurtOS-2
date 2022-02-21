@@ -15,8 +15,6 @@ class Module : public nanogui::Window {
 		virtual bool mouse_motion_event(const nanogui::Vector2i&, const nanogui::Vector2i&, int, int) override;
 		virtual bool mouse_button_event(const nanogui::Vector2i& pos, int button, bool down, int mods) override;
 
-		virtual void perform_layout(NVGcontext* ctx) override;
-
 	protected:
 		int check_vertical_resize(const nanogui::Vector2i& mouse_pos);
 		int check_horizontal_resize(const nanogui::Vector2i& mouse_pos);
