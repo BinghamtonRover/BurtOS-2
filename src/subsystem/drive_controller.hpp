@@ -27,7 +27,7 @@ class DriveController {
 	private:
 		constexpr static float GEARBOX_RATIO = 6.923F;
 		constexpr static float WHEEL_DIAMETER_METERS = 0.271F;
-		constexpr static float MAX_SPEED = 6.1F;
+		constexpr static float MAX_SPEED = 2.1F;
 
 		// Desired movement parameters for primary drive mode
 		float target_velocity_mps = 0.0F;

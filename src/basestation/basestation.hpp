@@ -4,6 +4,8 @@
 #include <mutex>
 #include <functional>
 
+#include <boost/property_tree/ptree.hpp>
+
 #include <network.hpp>
 
 #include <rover_lua.hpp>
@@ -17,6 +19,7 @@
 class Basestation {
 	public:
 		Basestation();
+		Basestation(const boost::property_tree::ptree& config);
 		~Basestation();
 
 		Basestation(const Basestation&) = delete;
@@ -29,6 +32,8 @@ class Basestation {
 		void mainloop();
 
 		void add_screen(BasestationScreen*);
+		void write_settings(boost::property_tree::ptree&);
+		void read_settings(const boost::property_tree::ptree&);
 
 		// Return the focused screen. Guaranteed to return a valid screen.
 		// If there are no valid screens, throws a runtime error

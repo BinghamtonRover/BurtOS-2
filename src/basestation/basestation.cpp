@@ -11,7 +11,9 @@
 
 Basestation* Basestation::main_instance = nullptr;
 
-Basestation::Basestation()
+Basestation::Basestation() : Basestation(boost::property_tree::ptree()) {}
+
+Basestation::Basestation(const boost::property_tree::ptree& config)
 	: m_subsystem_sender(main_thread_ctx),
 	m_subsystem_feed(main_thread_ctx),
 	m_remote_drive(m_subsystem_sender) {
@@ -59,14 +61,117 @@ Basestation::Basestation()
 			last_reported_err = std::chrono::steady_clock::now();
 		}
 	});
-	// TODO: Do not hard code these default values. They will be in the config file later.
-	// Related bug: #50 on GitHub <https://github.com/BinghamtonRover/BurtOS-2/issues/50>
-	m_subsystem_feed.subscribe(net::Destination(boost::asio::ip::address_v4::from_string("239.255.123.123"), 22201));
-	m_subsystem_feed.open();
+
+	read_settings(config);
+
 }
 
 Basestation::~Basestation() {
 	main_instance = nullptr;
+}
+
+void Basestation::read_settings(const boost::property_tree::ptree& settings_tree) {
+	// network settings
+	auto net_cfg = settings_tree.get_child_optional("network");
+	if (net_cfg) {
+
+		auto subsys_feed_cfg = net_cfg.get().get_child_optional("subsystem_feed");
+		if (subsys_feed_cfg) {
+			bool enable = subsys_feed_cfg.get().get<bool>("enable", true);
+			bool use_multicast = subsys_feed_cfg.get().get<bool>("multicast", true);
+			boost::optional port = subsys_feed_cfg.get().get_optional<uint16_t>("port");
+			boost::optional ip = subsys_feed_cfg.get().get_optional<std::string>("addr");
+
+			// If the IP is not specified, assume multicast should be disabled since it requires both IP and port
+			if (!ip)
+				use_multicast = false;
+
+			boost::asio::ip::udp::endpoint feed_ep;
+			if (ip) {
+				try {
+					feed_ep.address(boost::asio::ip::address_v4::from_string(ip.get()));
+				} catch (const boost::system::system_error& err) {
+					std::cerr << "Invalid subsystem feed IP address: " << ip.get() << " (" << err.what() << ")\n";
+					enable = false;
+				}
+			}
+			if (port) {
+				feed_ep.port(port.get());
+			}
+
+			try {
+				m_subsystem_feed.set_listen_endpoint(feed_ep);
+
+				if (enable && (ip || !use_multicast) && port && !m_subsystem_feed.opened()) {
+					m_subsystem_feed.open();
+				}
+			} catch (const boost::system::system_error& err) {
+				std::cerr << "Invalid configuration for subsystem feed: " << err.what() << "\n";
+			}
+		}
+
+		auto subsys_ep_cfg = net_cfg.get().get_child_optional("subsystem_endpoint");
+		if (subsys_ep_cfg) {
+			bool enable = subsys_ep_cfg.get().get<bool>("enable", true);
+			auto port = subsys_ep_cfg.get().get_optional<uint16_t>("port");
+			auto ip = subsys_ep_cfg.get().get_optional<std::string>("addr");
+
+			boost::asio::ip::udp::endpoint subsys_ep;
+			if (ip) {
+				try {
+					subsys_ep.address(boost::asio::ip::address_v4::from_string(ip.get()));
+				} catch (const boost::system::system_error& err) {
+					std::cerr << "Invalid subsystem endpoint IP address: " << ip << " (" << err.what() << ")\n";
+					enable = false;
+				}
+			}
+			if (port) {
+				subsys_ep.port(port.get());
+			}
+			try {
+				if (enable && ip && port) {
+					m_subsystem_sender.enable();
+				} else {
+					m_subsystem_sender.disable();
+				}
+				m_subsystem_sender.set_destination_endpoint(subsys_ep);
+			} catch (const boost::system::system_error& err) {
+				std::cerr << "Invalid configuration for subsystem endpoint: " << err.what() << "\n";
+			}
+
+		}
+
+		auto movement_interval_ms = net_cfg.get().get("movement_interval_ms", 100);
+		m_remote_drive.set_interval(movement_interval_ms);
+
+	}	// end network settings
+
+}
+
+void Basestation::write_settings(boost::property_tree::ptree& to) {
+	{
+		boost::property_tree::ptree network_cfg;
+		{
+			boost::property_tree::ptree subsys_feed_cfg;
+			subsys_feed_cfg.put("port", m_subsystem_feed.listen_endpoint().port());
+			subsys_feed_cfg.put("addr", m_subsystem_feed.listen_endpoint().address().to_string());
+			subsys_feed_cfg.put("enable", m_subsystem_feed.opened());
+			subsys_feed_cfg.put("multicast", m_subsystem_feed.is_multicast());
+
+			network_cfg.add_child("subsystem_feed", subsys_feed_cfg);
+		}
+		{
+			boost::property_tree::ptree subsys_ep_cfg;
+			subsys_ep_cfg.put("port", m_subsystem_sender.destination_endpoint().port());
+			subsys_ep_cfg.put("addr", m_subsystem_sender.destination_endpoint().address().to_string());
+			subsys_ep_cfg.put("enable", m_subsystem_sender.enabled());
+
+			network_cfg.add_child("subsystem_endpoint", subsys_ep_cfg);
+		}
+		network_cfg.put("movement_interval_ms", m_remote_drive.get_interval());
+
+		to.add_child("network", network_cfg);
+	}
 }
 
 void Basestation::add_screen(BasestationScreen* new_scr) {

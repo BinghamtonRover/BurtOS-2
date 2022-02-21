@@ -46,8 +46,10 @@ add_executable(basestation
 	${WIDGET_SRC} 
 )
 
-target_include_directories(basestation PUBLIC nanogui roverlua ${CMAKE_CURRENT_SOURCE_DIR} rover_control)
-target_link_libraries(basestation nanogui ${NANOGUI_EXTRA_LIBS} roverlua rover_control)
+find_package(Boost COMPONENTS program_options REQUIRED)
+
+target_include_directories(basestation PUBLIC nanogui roverlua ${CMAKE_CURRENT_SOURCE_DIR} rover_control Boost::headers)
+target_link_libraries(basestation nanogui ${NANOGUI_EXTRA_LIBS} roverlua rover_control Boost::program_options)
 
 # NanoGUI requires C++17
 target_compile_features(basestation PUBLIC cxx_std_17)
