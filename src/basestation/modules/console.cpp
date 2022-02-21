@@ -4,6 +4,8 @@
 #include <nanogui/layout.h>
 #include <nanogui/screen.h>
 
+#include <widgets/layouts/simple_row.hpp>
+
 #include <basestation.hpp>
 
 /*
@@ -94,7 +96,8 @@ Console::Console(nanogui::Screen* screen) :
 	console_out->set_font("mono");
 
 	entry_bar = new Widget(this);
-	entry_bar->set_layout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal, nanogui::Alignment::Maximum, layout_margin, layout_spacing));
+	//entry_bar->set_layout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal, nanogui::Alignment::Maximum, layout_margin, layout_spacing));
+	entry_bar->set_layout(new gui::SimpleRowLayout());
 
 	entry = new FunctionBox(entry_bar, "");
 	entry->set_placeholder("");
@@ -146,13 +149,15 @@ Console::Console(nanogui::Screen* screen) :
 	});
 
 	submit = new nanogui::Button(entry_bar, "Run");
+	submit->set_fixed_size(submit->preferred_size(screen->nvg_context()));
 	submit->set_callback([this] {
 		entry->action(FunctionBox::Action::SUBMIT);
 	});
 
-	perform_layout(screen->nvg_context());
+	//perform_layout(screen->nvg_context());
 
-	compute_size();
+	//compute_size();
+	m_parent->perform_layout(screen->nvg_context());
 
 	save_instance(*this);
 	set_write_line_callback([this] (const char* str) {
