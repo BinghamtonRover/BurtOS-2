@@ -1,5 +1,5 @@
 set(MODULE_HDR
-	modules/module.hpp
+	modules/window.hpp
 	modules/console.hpp
 	modules/network_settings.cpp
 	modules/drive_stats.hpp
@@ -8,7 +8,7 @@ set(MODULE_HDR
 	modules/input_config/controller_binding_popup.hpp
 )
 set(MODULE_SRC
-	modules/module.cpp
+	modules/window.cpp
 	modules/console.cpp
 	modules/network_settings.cpp
 	modules/drive_stats.cpp

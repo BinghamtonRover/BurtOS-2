@@ -4,9 +4,14 @@
 
 namespace gui {
 
-class Module : public nanogui::Window {
+/*
+	Window is an extension of nanogui::Window providing additional features needed to build the GUI
+
+	These windows may be resized, minimized, and closed
+*/
+class Window : public nanogui::Window {
 	public:
-		Module(nanogui::Widget* parent, const std::string& title = "Untitled", bool resizable = true, bool minimizable = true, bool closable = true);
+		Window(nanogui::Widget* parent, const std::string& title = "Untitled", bool resizable = true, bool minimizable = false, bool closable = true);
 
 		bool resizable() const { return m_resizable; }
 		void set_resizable(bool resizable) { m_resizable = resizable; }

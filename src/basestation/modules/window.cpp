@@ -1,4 +1,4 @@
-#include <modules/module.hpp>
+#include <modules/window.hpp>
 
 #include <nanogui/opengl.h>
 #include <nanogui/screen.h>
@@ -7,7 +7,7 @@
 
 #include <basestation.hpp>
 
-gui::Module::Module(nanogui::Widget* parent, const std::string& title, bool resizable, bool minimizable, bool closable)
+gui::Window::Window(nanogui::Widget* parent, const std::string& title, bool resizable, bool minimizable, bool closable)
 	: nanogui::Window(parent, title),
 	m_resize_dir{ResizeSide::NONE},
 	m_min_size(nanogui::Vector2i(m_theme->m_window_header_height)),
@@ -30,7 +30,7 @@ gui::Module::Module(nanogui::Widget* parent, const std::string& title, bool resi
 
 }
 
-void gui::Module::close() {
+void gui::Window::close() {
 	Basestation::async([this](Basestation&) {
 		if (nanogui::Screen* screen = dynamic_cast<nanogui::Screen*>(m_parent)) {
 			screen->dispose_window(this);
@@ -40,7 +40,7 @@ void gui::Module::close() {
 	});
 }
 
-bool gui::Module::mouse_drag_event(const nanogui::Vector2i& p, const nanogui::Vector2i& rel, int button, int mods) {
+bool gui::Window::mouse_drag_event(const nanogui::Vector2i& p, const nanogui::Vector2i& rel, int button, int mods) {
 	if (m_resize && (button & (1 << GLFW_MOUSE_BUTTON_1))) {
 
 		auto screen = this->screen();
@@ -89,7 +89,7 @@ bool gui::Module::mouse_drag_event(const nanogui::Vector2i& p, const nanogui::Ve
 	return nanogui::Window::mouse_drag_event(p, rel, button, mods);
 }
 
-bool gui::Module::mouse_motion_event(const nanogui::Vector2i &p, const nanogui::Vector2i &rel, int button, int modifiers) {
+bool gui::Window::mouse_motion_event(const nanogui::Vector2i &p, const nanogui::Vector2i &rel, int button, int modifiers) {
 	if (m_resizable) {
 		bool hresize = check_horizontal_resize(p) != ResizeSide::NONE;
 		bool vresize = check_vertical_resize(p) != ResizeSide::NONE;
@@ -108,7 +108,7 @@ bool gui::Module::mouse_motion_event(const nanogui::Vector2i &p, const nanogui::
 	return nanogui::Window::mouse_motion_event(p, rel, button, modifiers);
 }
 
-gui::Module::ResizeSide gui::Module::check_vertical_resize(const nanogui::Vector2i &mouse_pos) {
+gui::Window::ResizeSide gui::Window::check_vertical_resize(const nanogui::Vector2i &mouse_pos) {
 	nanogui::Vector2i lower_right_corner = absolute_position() + size();
 
 	// Do not check for resize area on top of the window. It is to prevent conflict drag and resize event.
@@ -119,7 +119,7 @@ gui::Module::ResizeSide gui::Module::check_vertical_resize(const nanogui::Vector
 	return ResizeSide::NONE;
 }
 
-gui::Module::ResizeSide gui::Module::check_horizontal_resize(const nanogui::Vector2i &mouse_pos) {
+gui::Window::ResizeSide gui::Window::check_horizontal_resize(const nanogui::Vector2i &mouse_pos) {
 	auto abs_pos = absolute_position();
 	nanogui::Vector2i lower_right_corner = abs_pos + size();
 	int header_lower_left_corner_y = abs_pos.y() + m_theme->m_window_header_height;
@@ -134,7 +134,7 @@ gui::Module::ResizeSide gui::Module::check_horizontal_resize(const nanogui::Vect
 	return ResizeSide::NONE;
 }
 
-bool gui::Module::mouse_button_event(const nanogui::Vector2i& pos, int button, bool down, int mods) {
+bool gui::Window::mouse_button_event(const nanogui::Vector2i& pos, int button, bool down, int mods) {
 	if (button == GLFW_MOUSE_BUTTON_1) {
 		m_resize = false;
 		if (m_resizable && !m_drag && down) {
