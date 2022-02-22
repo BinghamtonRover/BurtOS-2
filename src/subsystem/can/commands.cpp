@@ -102,8 +102,8 @@ int can_read_int(Node device, Command command) {
     return (int)received;
 }
 
-//Request to read a CAN message, with an long output
-long can_read_long(Node device, Command command) {
+//Request to read a CAN message, with an long long output
+long long can_read_long(Node device, Command command) {
     //Do not allow odrive to read longs (this can be changed in the future if needed)
     if (is_odrive_device(device)) { 
         status = CAN_Status::FAILED_READ;
@@ -111,7 +111,7 @@ long can_read_long(Node device, Command command) {
     }
 
     //Read value
-    long received = 0;
+    long long received = 0;
     received = can_receive_long(device, command);
     return received;
 }
@@ -130,9 +130,8 @@ unsigned int can_receive(Node device, Command command) {
     
     //Create the frame
     can_frame frame;
-    frame = get_can_frame(0, device, command, 0, 0);
     int expected_can_id = command | (device << 5);
-    frame.can_id = expected_can_id;
+    frame = get_can_frame(0, device, command, 0, 0);
 
     //Request the frame (odrive only)
     if (is_odrive_device(device)) {
@@ -143,8 +142,7 @@ unsigned int can_receive(Node device, Command command) {
     }
 
     //Read the frame
-    int read_size = 0;
-    frame.can_id = 0;
+    int read_size = -1;
     std::chrono::steady_clock::time_point start_time = std::chrono::steady_clock::now();
 	std::chrono::duration<double> delta_time = start_time - start_time;
     
@@ -171,9 +169,9 @@ unsigned int can_receive(Node device, Command command) {
 }
 
 //receive a CAN message
-long can_receive_long(Node device, Command command) {
+long long can_receive_long(Node device, Command command) {
     //Define return value
-    unsigned int return_value = 0;
+    long long return_value = 0;
 
     //Set status to unset
     status = CAN_Status::UNSET;
@@ -184,20 +182,24 @@ long can_receive_long(Node device, Command command) {
     
     //Create the frame
     can_frame frame;
-    frame = get_can_frame(0, device, command, 0, 0);
+    frame.can_id = 0;
     int expected_can_id = command | (device << 5);
-    frame.can_id = expected_can_id;
-
-    //Set the filter
-    struct can_filter rfilter[1];
-	rfilter[0].can_id = expected_can_id;
-	rfilter[0].can_mask = expected_can_id;
-	setsockopt(can_socket, SOL_CAN_RAW, CAN_RAW_FILTER, &rfilter, sizeof(rfilter));
+    frame = get_can_frame(0, device, command, 0, 0);
 
     //Read the frame
-    int read_size = 0;
-    while (read_size <= 0 && frame.can_id != expected_can_id) {
+    int read_size = -1;
+    std::chrono::steady_clock::time_point start_time = std::chrono::steady_clock::now();
+	std::chrono::duration<double> delta_time = start_time - start_time;
+    
+    while ((read_size <= 0 || frame.can_id != expected_can_id) && delta_time.count() <= MAX_READ_TIME) {
         read_size = read(can_socket, &frame, sizeof(struct can_frame));
+        delta_time = std::chrono::steady_clock::now() - start_time;
+    }
+
+    //Check if invalid read
+    if (read_size <= 0 || frame.can_id != expected_can_id) {
+        status = CAN_Status::FAILED_READ;
+        return 0;
     }
 
     //Check if invalid read
@@ -206,9 +208,9 @@ long can_receive_long(Node device, Command command) {
         return 0;
     }
 
-    //Put data into long
-    for (int i = 0; i < read_size; i++) {
-        return_value |= ((long)(frame.data[i]) << (8 * i));
+    //Put data into long long
+    for (int i = 0; i < 8; i++) {
+        return_value |= ((long long)(frame.data[i]) << (8 * (-i + 7)));
     }
     
 #endif
@@ -253,11 +255,12 @@ bool can_check_hearbeat(Node device) {
 ControlInformation get_control_information() {
     //return information
     ControlInformation ret;
+    status = CAN_Status::UNSET;
 
     //fetch information
-    long p1 = can_read_long(Node::CONTROL_TEENSY, Command::TEENSY_DATA_PACKET_1);
+    long long p1 = can_read_long(Node::CONTROL_TEENSY, Command::TEENSY_DATA_PACKET_1);
     if (!can_status_success()) { return ret; }
-    long p2 = can_read_long(Node::CONTROL_TEENSY, Command::TEENSY_DATA_PACKET_2);
+    long long p2 = can_read_long(Node::CONTROL_TEENSY, Command::TEENSY_DATA_PACKET_2);
     if (!can_status_success()) { return ret; }
 
     //after successful reads, interpret the data
@@ -272,6 +275,7 @@ ControlInformation get_control_information() {
     ret.odrv1_curr = (float((0x00FF000000000000l & p2) >> 48)) / 10.0f;
     ret.odrv2_curr = (float((0x0000FF0000000000l & p2) >> 40)) / 10.0f;
     ret.main_curr = (float((0x000000FF00000000l & p2) >> 32)) / 10.0f;
+    status = CAN_Status::SUCCESS;
     return ret;
 }
 
@@ -281,7 +285,7 @@ ArmInformation get_arm_information() {
     ArmInformation ret;
 
     //fetch information
-    long p = can_read_long(Node::ARM_TEENSY, Command::TEENSY_DATA_PACKET_1);
+    long long p = can_read_long(Node::ARM_TEENSY, Command::TEENSY_DATA_PACKET_1);
     if (!can_status_success()) { return ret; }
 
     //after a successful read, interpret the data
@@ -300,7 +304,7 @@ GripperInformation get_gripper_information() {
     GripperInformation ret;
 
     //fetch information
-    long p = can_read_long(Node::GRIPPER_TEENSY, Command::TEENSY_DATA_PACKET_1);
+    long long p = can_read_long(Node::GRIPPER_TEENSY, Command::TEENSY_DATA_PACKET_1);
     if (!can_status_success()) { return ret; }
 
     //after a successful read, interpret the data
@@ -319,7 +323,7 @@ EAInformation get_environmental_analysis_information() {
     EAInformation ret;
 
     //fetch information
-    long p = can_read_long(Node::EA_TEENSY, Command::TEENSY_DATA_PACKET_1);
+    long long p = can_read_long(Node::EA_TEENSY, Command::TEENSY_DATA_PACKET_1);
     if (!can_status_success()) { return ret; }
 
     //after a successful read, interpret the data
@@ -386,12 +390,11 @@ bool can_open_socket() {
     //Specifically for opening sockets for CAN
     struct sockaddr_can addr;
     addr.can_family = AF_CAN;
-    addr.can_ifindex = ifr.ifr_ifindex;
+    addr.can_ifindex = if_nametoindex("can0"); //ifr.ifr_ifindex;
 
     //Set to "CAN FD mode"
-    // TODO: Test if this is still needed (probably not?)
-    //int enable_canfd = 1;
-    //setsockopt(can_socket, SOL_CAN_RAW, CAN_RAW_FD_FRAMES, &enable_canfd, sizeof(enable_canfd));
+    const int enable_canfd = 1;
+    setsockopt(can_socket, SOL_CAN_RAW, CAN_RAW_FD_FRAMES, &enable_canfd, sizeof(enable_canfd));
 
     //Set socket to "non-blocking" (for reading)
     int flags = fcntl(can_socket, F_GETFL);
