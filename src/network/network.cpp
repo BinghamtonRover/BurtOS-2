@@ -46,7 +46,7 @@ void net::MessageSender::begin_sending() {
 	async_send_active = true;
 	msg_buffer.swap();
 	auto& to_send = msg_buffer.read_only_buffer();
-	socket.async_send_to(boost::asio::buffer(to_send.data(), to_send.usage()), dest, [this](boost::system::error_code, std::size_t) {
+	socket.async_send_to(boost::asio::buffer(to_send.data(), to_send.usage()), dest, [this](boost::system::error_code ec, std::size_t) {
 		// On send finished:
 
 		msg_buffer.read_only_buffer().clear();
@@ -56,6 +56,10 @@ void net::MessageSender::begin_sending() {
 			begin_sending();
 		}
 		async_start_lock.unlock();
+
+		if (ec) {
+			error_emitter(ec);
+		}
 
 	});
 }
@@ -142,9 +146,25 @@ void net::MessageReceiver::subscribe(const boost::asio::ip::udp::endpoint& mcast
 	}
 }
 
+void net::MessageReceiver::set_listen_endpoint(const boost::asio::ip::udp::endpoint& ep) {
+	listen_ep = ep;
+
+	if (socket.is_open()) {
+		open();
+	}
+}
+
+void net::MessageReceiver::set_multicast(bool on) {
+	if (on != use_multicast) {
+		use_multicast = on;
+		if (socket.is_open()) {
+			open();
+		}
+	}
+}
+
 void net::MessageReceiver::open() {
-	if (socket.is_open())
-		socket.close();
+	close();
 
 	if (use_multicast) {
 		socket.open(listen_ep.protocol());
@@ -158,17 +178,29 @@ void net::MessageReceiver::open() {
 		socket.open(boost::asio::ip::udp::v4());
 		socket.bind(boost::asio::ip::udp::endpoint(boost::asio::ip::udp::v4(), listen_ep.port()));
 	}
-
-	listen();
+	if (!listening)
+		listen();
 }
 
 void net::MessageReceiver::listen() {
-	socket.async_receive_from(boost::asio::buffer(recv_buffer), remote, [this](boost::system::error_code, std::size_t bytes_transferred) {
+	if (!socket.is_open()) {
+		listening = false;
+		return;
+	}
+	listening = true;
+	socket.async_receive_from(boost::asio::buffer(recv_buffer), remote, [this](boost::system::error_code ec, std::size_t bytes_transferred) {
 		read_messages(recv_buffer.data(), bytes_transferred);
+
+		if (ec && ec != boost::asio::error::operation_aborted) {
+			error_emitter(ec);
+		}
+
 		listen();
 	});
 }
 
 void net::MessageReceiver::close() {
-	socket.close();
+	if (socket.is_open()) {
+		socket.close();
+	}
 }

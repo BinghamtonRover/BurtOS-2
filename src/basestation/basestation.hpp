@@ -4,9 +4,14 @@
 #include <mutex>
 #include <functional>
 
+#include <boost/property_tree/ptree.hpp>
+
+#include <network.hpp>
+
 #include <rover_lua.hpp>
 #include <basestation_screen.hpp>
 #include <controls/controller_manager.hpp>
+#include <controls/drive_input.hpp>
 
 /*
 	Container class for the main instance of the base station
@@ -14,6 +19,7 @@
 class Basestation {
 	public:
 		Basestation();
+		Basestation(const boost::property_tree::ptree& config);
 		~Basestation();
 
 		Basestation(const Basestation&) = delete;
@@ -26,6 +32,8 @@ class Basestation {
 		void mainloop();
 
 		void add_screen(BasestationScreen*);
+		void write_settings(boost::property_tree::ptree&);
+		void read_settings(const boost::property_tree::ptree&);
 
 		// Return the focused screen. Guaranteed to return a valid screen.
 		// If there are no valid screens, throws a runtime error
@@ -33,6 +41,15 @@ class Basestation {
 		
 		inline const std::vector<BasestationScreen*>& get_screens() const {
 			return screens;
+		}
+		inline net::MessageSender& subsystem_sender() {
+			return m_subsystem_sender;
+		}
+		inline net::MessageReceiver& subsystem_feed() {
+			return m_subsystem_feed;
+		}
+		inline DriveInput& remote_drive() {
+			return m_remote_drive;
 		}
 
 		void schedule(const std::function<void(Basestation&)>& callback);
@@ -51,11 +68,21 @@ class Basestation {
 			static const struct luaL_Reg lib[];
 			static int shutdown(lua_State*);
 			static int new_screen(lua_State*);
+			static int open_module(lua_State*);
+			static int set_throttle(lua_State*);
 
 			static void open(lua_State*);
 		};
 
 	private:
+		boost::asio::io_context main_thread_ctx;
+		net::MessageSender m_subsystem_sender;
+		net::MessageReceiver m_subsystem_feed;
+		DriveInput m_remote_drive;
+
+		event::Handler log_feed_error;
+		event::Handler log_sender_error;
+
 		ControllerManager controller_mgr;
 
 		std::vector<BasestationScreen*> screens;

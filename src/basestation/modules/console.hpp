@@ -1,9 +1,9 @@
 #pragma once
 
-#include <nanogui/window.h>
 #include <nanogui/widget.h>
 #include <nanogui/button.h>
 
+#include <widgets/window.hpp>
 #include <widgets/functionbox.hpp>
 #include <widgets/textarea.hpp>
 
@@ -12,7 +12,7 @@
 #include <iostream>
 #include <thread>
 
-class Console : public nanogui::Window, public rover_lua::InteractivePrompt {
+class Console : public gui::Window, public rover_lua::InteractivePrompt {
 protected:
 	struct Builtin {
 		static int clear(lua_State* L);
@@ -32,8 +32,6 @@ protected:
 	std::string uncommitted_entry;
 	std::thread lua_runtime;
 
-	void compute_size();
-
 	inline static std::vector<std::function<void(Console&)>> global_setup;
 	static const struct luaL_Reg term_lib[];
 	static int luaopen_term(lua_State*);
@@ -43,6 +41,7 @@ public:
 	~Console();
 
 	virtual void draw(NVGcontext* ctx);
+	virtual nanogui::Vector2i preferred_size(NVGcontext*) const;
 	
 	// Add a function to run when creating any new Console
 	// Intended for initializing Lua functions and variables 

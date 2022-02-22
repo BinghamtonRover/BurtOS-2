@@ -4,6 +4,7 @@
 #include <string>
 #include <functional>
 
+#include <widgets/window.hpp>
 #include <nanogui/button.h>
 #include <nanogui/progressbar.h>
 #include <nanogui/combobox.h>
@@ -17,7 +18,7 @@
 /*
 	Module for viewing, configuring, and calibrating connected controllers
 */
-class ControllerConfig : public nanogui::Window {
+class ControllerConfig : public gui::Window {
 	private:
 		struct TableRow {
 			nanogui::Button* bind_name;
