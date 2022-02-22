@@ -11,6 +11,7 @@
 #include <nanogui/checkbox.h>
 #include <nanogui/button.h>
 #include <nanogui/icons.h>
+#include <nanogui/formhelper.h>
 
 #include <widgets/functionbox.hpp>
 
@@ -19,7 +20,7 @@ void gui::NetworkSettings::open_error_popup(const std::exception& err) {
 }
 
 gui::NetworkSettings::NetworkSettings(nanogui::Screen* screen) :
-	nanogui::Window(screen, "Network Settings") {
+	gui::Window(screen, "Network Settings") {
 
 	auto layout = new nanogui::AdvancedGridLayout({10, 0, 10, 0}, {});
 	layout->set_margin(10);
@@ -183,10 +184,6 @@ gui::NetworkSettings::NetworkSettings(nanogui::Screen* screen) :
 		
 		(This section is a placeholder)
 	*/
-	
-	form->add_button("Close", [this] {
-		this->screen()->dispose_window(this);
-	});
 
 	set_position(15);
 	set_visible(true);

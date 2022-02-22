@@ -16,11 +16,13 @@ set(MODULE_SRC
 )
 
 set(WIDGET_HDR
+	widgets/window.hpp
 	widgets/textarea.hpp
 	widgets/functionbox.hpp
 	widgets/layouts/simple_row.hpp
 )
 set(WIDGET_SRC
+	widgets/window.cpp
 	widgets/textarea.cpp
 	widgets/functionbox.cpp
 	widgets/layouts/simple_row.cpp
