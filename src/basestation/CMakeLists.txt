@@ -20,12 +20,14 @@ set(WIDGET_HDR
 	widgets/textarea.hpp
 	widgets/functionbox.hpp
 	widgets/layouts/simple_row.hpp
+	widgets/layouts/simple_column.hpp
 )
 set(WIDGET_SRC
 	widgets/window.cpp
 	widgets/textarea.cpp
 	widgets/functionbox.cpp
 	widgets/layouts/simple_row.cpp
+	widgets/layouts/simple_column.cpp
 )
 
 add_executable(basestation

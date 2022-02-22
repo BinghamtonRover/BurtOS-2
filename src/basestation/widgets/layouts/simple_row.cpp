@@ -9,8 +9,12 @@ gui::SimpleRowLayout::SimpleRowLayout(int margin, int spacing, VerticalAnchor an
 
 nanogui::Vector2i gui::SimpleRowLayout::preferred_size(NVGcontext* ctx, const nanogui::Widget* container_widget) const {
 	int height = 0;
-	int width = m_margin * 2 + m_spacing * (container_widget->children().size());
+	int width = m_margin * 2;
+	int visible_children = 0;
 	for (nanogui::Widget* w : container_widget->children()) {
+		if (!w->visible())
+			continue;
+		++visible_children;
 		
 		nanogui::Vector2i ps = w->preferred_size(ctx);
 		height = std::max(height, (w->fixed_height() > 0) ? w->fixed_height() : ps.y());
@@ -18,6 +22,7 @@ nanogui::Vector2i gui::SimpleRowLayout::preferred_size(NVGcontext* ctx, const na
 		width += w->fixed_width() > 0 ? w->fixed_width() : ps.x();
 
 	}
+	width += std::max(0, m_spacing * (visible_children - 1));
 	return nanogui::Vector2i(width, height);
 }
 
@@ -70,7 +75,7 @@ void gui::SimpleRowLayout::perform_layout(NVGcontext* ctx, nanogui::Widget* cont
 			offset += w->fixed_width();
 		} else {
 			// Otherwise, ensure it has at least its preferred width
-			int use_width = std::max(preferred_sz.x(), spare_width / unsized_widgets--);
+			int use_width = std::max(std::min(spare_width, preferred_sz.x()), spare_width / unsized_widgets--);
 
 			spare_width -= use_width;
 
