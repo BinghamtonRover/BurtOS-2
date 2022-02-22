@@ -5,6 +5,7 @@
 #include <nanogui/screen.h>
 
 #include <widgets/layouts/simple_row.hpp>
+#include <widgets/layouts/simple_column.hpp>
 
 #include <basestation.hpp>
 
@@ -48,14 +49,6 @@ int Console::Builtin::get_autoscroll(lua_State* L) {
 	Console Definitions
 */
 
-void Console::compute_size() {
-		// Button should already be preferred size; only resize the text entry
-		int available_w = entry_bar->width() - submit->width() - layout_margin - layout_spacing;
-		if (available_w < 0) available_w = 0;
-		entry->set_fixed_width(available_w);
-		parent()->perform_layout(screen()->nvg_context());
-}
-
 void Console::draw(NVGcontext* ctx) {
 		if (!active()) {
 
@@ -81,28 +74,35 @@ int Console::luaopen_term(lua_State* L) {
 	return 1;
 }
 
+nanogui::Vector2i Console::preferred_size(NVGcontext* ctx) const {
+	return nanogui::Vector2i(
+		m_fixed_size.x() ? m_fixed_size.x() : m_size.x(),
+		m_fixed_size.y() ? m_fixed_size.y() : m_size.y()
+	);
+}
+
 Console::Console(nanogui::Screen* screen) : 
-		gui::Window(screen, "Console"),
+		gui::Window(screen, "Console", true),
 		lua_runtime(&rover_lua::InteractivePrompt::run_paused, static_cast<rover_lua::InteractivePrompt*>(this)) {
 
 	set_position(nanogui::Vector2i(15, 15));
-	set_layout(new nanogui::GroupLayout(6));
-	set_fixed_width(500);
+	set_layout(new gui::SimpleColumnLayout(6, 6, 6, gui::SimpleColumnLayout::HorizontalAnchor::STRETCH));
+	set_width(500);
+	set_height(400);
 
 	auto scroller = new nanogui::VScrollPanel(this);
-	scroller->set_fixed_height(300);
 	
 	console_out = new TextArea(scroller);
 	console_out->set_font("mono");
 
 	entry_bar = new Widget(this);
-	//entry_bar->set_layout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal, nanogui::Alignment::Maximum, layout_margin, layout_spacing));
 	entry_bar->set_layout(new gui::SimpleRowLayout());
 
 	entry = new FunctionBox(entry_bar, "");
 	entry->set_placeholder("");
 	entry->set_editable(true);
 	entry->set_alignment(nanogui::TextBox::Alignment::Left);
+	entry->set_fixed_height(entry->preferred_size(screen->nvg_context()).y());
 	entry->set_action_callback([this] (FunctionBox::Action a) {
 		switch (a) {
 			case FunctionBox::Action::SUBMIT:
@@ -153,10 +153,8 @@ Console::Console(nanogui::Screen* screen) :
 	submit->set_callback([this] {
 		entry->action(FunctionBox::Action::SUBMIT);
 	});
+	entry_bar->set_fixed_height(std::max(submit->fixed_height(), entry->fixed_height()));
 
-	//perform_layout(screen->nvg_context());
-
-	//compute_size();
 	m_parent->perform_layout(screen->nvg_context());
 
 	save_instance(*this);
