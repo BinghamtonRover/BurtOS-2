@@ -93,6 +93,9 @@ int main() {
 		std::cerr << "Fatal error: Segmentation fault!\n";
 		panic_shutdown();
 	});
+	
+	// Open can socket
+	can_open_socket();
 
 	std::cout << "Initialization complete; Entering main event loop.\n";
 
