@@ -8,7 +8,6 @@
 #include <network.hpp>
 #include <rover_can.hpp>
 #include "drive_controller.hpp"
-#include "can/rover_can.hpp"
 
 DriveController drive_controller;
 boost::asio::io_context ctx;
@@ -135,16 +134,15 @@ int main() {
 			drive_controller.update_motor_acceleration();
 			
 			auto time_now = std::chrono::steady_clock::now();
-			std::chrono::duration<double, std::milli> time_passed = time_now - last_heartbeat_sent;
-			if (time_passed.count() > heartbeat_interval_ms) {
+			std::chrono::duration<double, std::milli> heartbeat_time_passed = time_now - last_heartbeat_sent;
+			if (heartbeat_time_passed.count() > heartbeat_interval_ms) {
 				can_send(Node::CONTROL_TEENSY, Command::DRIVE_HEARTBEAT_MESSAGE, 0);
 				last_heartbeat_sent = time_now;
 			}
 
-			auto time_now = std::chrono::steady_clock::now();
-			std::chrono::duration<double, std::milli> time_passed = time_now - last_message_sent;
+			std::chrono::duration<double, std::milli> message_time_passed = time_now - last_message_sent;
 
-			if (time_passed.count() >= message_interval_ms) {
+			if (message_time_passed.count() >= message_interval_ms) {
 				drive_msg::ActualSpeed speed_message;
 				speed_message.data.set_left(drive_controller.get_left_speed());
 				speed_message.data.set_right(drive_controller.get_right_speed());
