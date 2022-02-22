@@ -6,21 +6,18 @@
 
 #include <basestation.hpp>
 #include <nanogui/nanogui.h>
+#include <widgets/layouts/simple_row.hpp>
+#include <widgets/layouts/simple_column.hpp>
 
-void gui::DriveStats::compute_size() {
-	int free_width = m_fixed_size.x() - margin * 2 - 2 * spacing - mode_button->width();
+void gui::DriveStats::perform_layout(NVGcontext* ctx) {
+	speed_bar->set_visible(true);
+	gui::Window::perform_layout(ctx);
 
-	if (free_width - box_width < min_bar_size) {
-		speed_bar->set_fixed_size(0);
+	if (speed_bar->width() < min_bar_size) {
 		speed_bar->set_visible(false);
-
-		speed_text->set_fixed_width(std::min(free_width, box_width));
-	} else {
-		speed_text->set_fixed_width(box_width);
-		speed_bar->set_fixed_width(free_width - box_width);
 	}
 
-	m_parent->perform_layout(screen()->nvg_context());
+	gui::Window::perform_layout(ctx);
 }
 
 void gui::DriveStats::update_speed_displays(float l, float r) {
@@ -33,18 +30,16 @@ void gui::DriveStats::update_speed_displays(float l, float r) {
 	speed_text->set_value(text_ss.str());
 }
 
-gui::DriveStats::DriveStats(nanogui::Screen* screen, nanogui::Vector2i size) : gui::Window(screen, "Drive Stats") {
+gui::DriveStats::DriveStats(nanogui::Screen* screen, nanogui::Vector2i size) : gui::Window(screen, "Drive Stats", true) {
 	if (size == 0)
-		set_fixed_width(200);
+		set_size(200);
 	else
-		set_fixed_size(size);
+		set_size(size);
 
-	auto wnd_layout = new nanogui::BoxLayout(nanogui::Orientation::Vertical);
-	wnd_layout->set_margin(margin);
+	auto wnd_layout = new gui::SimpleColumnLayout(margin, margin, 6, gui::SimpleColumnLayout::HorizontalAnchor::STRETCH);
 	set_layout(wnd_layout);
 	
-	auto speeds_layout = new nanogui::GridLayout();
-	speeds_layout->set_resolution(3);
+	auto speeds_layout = new gui::SimpleRowLayout();
 	speeds_layout->set_spacing(spacing);
 
 	auto speeds_container = new nanogui::Widget(this);
@@ -77,11 +72,11 @@ gui::DriveStats::DriveStats(nanogui::Screen* screen, nanogui::Vector2i size) : g
 
 	speed_text = new nanogui::TextBox(speeds_container);
 	speed_text->set_fixed_height(row_height);
+	speed_text->set_fixed_width(80);
 	speed_text->set_units("m/s");
 	speed_text->set_alignment(nanogui::TextBox::Alignment::Left);
 	
-	perform_layout(screen->nvg_context());
-	compute_size();
+	m_parent->perform_layout(screen->nvg_context());
 
 	update_speed_displays(0, 0);
 	speeds_update.subscribe(Basestation::get().remote_drive().EVENT_SPEED, [this](float left_speed, float right_speed) {

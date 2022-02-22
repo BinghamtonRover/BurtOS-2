@@ -12,6 +12,8 @@ class DriveStats : public gui::Window {
 	public:
 		DriveStats(nanogui::Screen* screen, nanogui::Vector2i size = 0);
 
+		virtual void perform_layout(NVGcontext*) override;
+
 	private:
 		constexpr static int box_width = 80;
 		constexpr static int min_bar_size = 70;
@@ -25,8 +27,6 @@ class DriveStats : public gui::Window {
 
 		event::Handler drive_mode_update;
 		event::Handler speeds_update;
-
-		void compute_size();
 
 		void update_speed_displays(float l, float r);
 
