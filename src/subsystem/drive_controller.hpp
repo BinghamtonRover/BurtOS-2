@@ -21,6 +21,7 @@ class DriveController {
 		DriveMode get_drive_mode();
 		void set_drive_mode(DriveMode mode);
 
+		bool drive_init();
 		static float to_rps(float mps);
 		static float to_mps(float rps);
 

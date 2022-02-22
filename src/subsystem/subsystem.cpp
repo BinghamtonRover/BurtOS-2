@@ -12,6 +12,9 @@
 DriveController drive_controller;
 boost::asio::io_context ctx;
 
+std::chrono::steady_clock::time_point last_heartbeat_sent{};
+int heartbeat_interval_ms;
+
 uint16_t subsystem_receive_port;
 uint16_t subsystem_update_port;
 
@@ -28,12 +31,15 @@ void read_subsystem_config(const std::string& fname) {
 		std::cerr << "Warning: Using default config after error reading config file: "
 				<< err.message() << " (" << err.filename() << ":" << err.line() << ")" << std::endl;
 	}
+	
 	// Reading from empty ptree will apply the default values
 	subsystem_receive_port = subsystem_cfg.get<uint16_t>("subsystem.network.recv_port", 22101);
 
 	message_interval_ms = subsystem_cfg.get<int>("subsystem.update_interval_ms", 100);
 	subsystem_update_ip = subsystem_cfg.get<std::string>("subsystem.network.update_ip.addr", "239.255.123.123");
 	subsystem_update_port = subsystem_cfg.get<uint16_t>("subsystem.network.update_ip.port", 22201);
+
+	heartbeat_interval_ms = subsystem_cfg.get<int>("subsystem.heartbeat_interval_ms", 300);
 
 }
 
@@ -42,8 +48,13 @@ void read_subsystem_config(const std::string& fname) {
 void panic_shutdown() {
 	std::cerr << "Attempting to stop critical systems...\n";
 
-	// TODO: (IMPORTANT) Send CAN commands to stop all subsystems
-	// Unlike the peaceful shutdown, this should only shutdown critical systems (ODrives, other motor drivers)
+	//Send emergency stop messages to the odrives
+	can_send(Node::DRIVE_AXIS_0, Command::DRIVE_EMERGENCY_STOP_MESSAGE, 0);
+	can_send(Node::DRIVE_AXIS_1, Command::DRIVE_EMERGENCY_STOP_MESSAGE, 0);
+	can_send(Node::DRIVE_AXIS_2, Command::DRIVE_EMERGENCY_STOP_MESSAGE, 0);
+	can_send(Node::DRIVE_AXIS_3, Command::DRIVE_EMERGENCY_STOP_MESSAGE, 0);
+	can_send(Node::DRIVE_AXIS_4, Command::DRIVE_EMERGENCY_STOP_MESSAGE, 0);
+	can_send(Node::DRIVE_AXIS_5, Command::DRIVE_EMERGENCY_STOP_MESSAGE, 0);
 
 	std::cerr << "Critical system shutdown finished. Terminating.\n";
 	exit(1);
@@ -101,6 +112,9 @@ int main() {
 		std::cerr << "Fatal error: Segmentation fault!\n";
 		panic_shutdown();
 	});
+	
+	// Open can socket
+	can_open_socket();
 
 	// Open the CAN Socket
 	if (!can_open_socket()) {
@@ -118,11 +132,17 @@ int main() {
 
 			ctx.poll();
 			drive_controller.update_motor_acceleration();
-
+			
 			auto time_now = std::chrono::steady_clock::now();
-			std::chrono::duration<double, std::milli> time_passed = time_now - last_message_sent;
+			std::chrono::duration<double, std::milli> heartbeat_time_passed = time_now - last_heartbeat_sent;
+			if (heartbeat_time_passed.count() > heartbeat_interval_ms) {
+				can_send(Node::CONTROL_TEENSY, Command::DRIVE_HEARTBEAT_MESSAGE, 0);
+				last_heartbeat_sent = time_now;
+			}
 
-			if (time_passed.count() >= message_interval_ms) {
+			std::chrono::duration<double, std::milli> message_time_passed = time_now - last_message_sent;
+
+			if (message_time_passed.count() >= message_interval_ms) {
 				drive_msg::ActualSpeed speed_message;
 				speed_message.data.set_left(drive_controller.get_left_speed());
 				speed_message.data.set_right(drive_controller.get_right_speed());
