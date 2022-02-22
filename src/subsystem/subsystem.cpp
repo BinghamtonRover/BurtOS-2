@@ -12,6 +12,9 @@
 DriveController drive_controller;
 boost::asio::io_context ctx;
 
+std::chrono::steady_clock::time_point last_heartbeat_sent{};
+int heartbeat_interval_ms;
+
 uint16_t subsystem_receive_port;
 
 void read_subsystem_config(const std::string& fname) {
@@ -25,6 +28,8 @@ void read_subsystem_config(const std::string& fname) {
 		std::cerr << "Warning: Using default config after error reading config file: "
 				<< err.message() << " (" << err.filename() << ":" << err.line() << ")" << std::endl;
 	}
+	
+	heartbeat_interval_ms = subsystem_cfg.get<int>("subsystem.heartbeat_interval_ms", 300);
 }
 
 // Try to deinitialize critical systems (like the ODrives) after the program has encountered a critical error
@@ -100,6 +105,13 @@ int main() {
 
 			ctx.poll();
 			drive_controller.update_motor_acceleration();
+			
+			auto time_now = std::chrono::steady_clock::now();
+			std::chrono::duration<double, std::milli> time_passed = time_now - last_heartbeat_sent;
+			if (time_passed.count() > heartbeat_interval_ms) {
+				can_send(Node::CONTROL_TEENSY, Command::DRIVE_HEARTBEAT_MESSAGE, 0);
+				last_heartbeat_sent = time_now;
+			}
 
 		}
 	} catch (const std::exception& err) {
