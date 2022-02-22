@@ -2,9 +2,10 @@
 
 #include <nanogui/nanogui.h>
 
-gui::SimpleRowLayout::SimpleRowLayout(int margin, int spacing) :
+gui::SimpleRowLayout::SimpleRowLayout(int margin, int spacing, VerticalAnchor anchor) :
 	m_margin(margin),
-	m_spacing(spacing) {}
+	m_spacing(spacing),
+	m_anchor(anchor) {}
 
 nanogui::Vector2i gui::SimpleRowLayout::preferred_size(NVGcontext* ctx, const nanogui::Widget* container_widget) const {
 	int height = 0;
@@ -28,10 +29,11 @@ void gui::SimpleRowLayout::perform_layout(NVGcontext* ctx, nanogui::Widget* cont
 		c_fixed_size.y() ? c_fixed_size.y() : container_widget->height()
 	);
 
+	int height = 0;
 	int spare_width = container_size.x() - 2 * m_margin - m_spacing * (container_widget->children().size() - 1);
 	int unsized_widgets = 0;
 
-	// First pass: figure out the spare width (total size - fixed-size widgets)
+	// First pass: figure out the spare width (total size - fixed-size widgets) and container height
 	for (nanogui::Widget* w : container_widget->children()) {
 		if (!w->visible())
 			continue;
@@ -41,6 +43,14 @@ void gui::SimpleRowLayout::perform_layout(NVGcontext* ctx, nanogui::Widget* cont
 		else
 			++unsized_widgets;
 
+		height = std::max(height, w->fixed_height() ? w->fixed_height() : w->preferred_size(ctx).y());
+	}
+
+	// If this container is a window, we must shift widgets down to avoid writing over the header
+	// Fixing this in layouts seems like a hack, but it is how the nanogui layouts do it...
+	int y_offset = 0;
+	if (dynamic_cast<nanogui::Window*>(container_widget)) {
+		y_offset = container_widget->theme()->m_window_header_height;
 	}
 
 	int offset = m_margin;
@@ -51,9 +61,8 @@ void gui::SimpleRowLayout::perform_layout(NVGcontext* ctx, nanogui::Widget* cont
 			continue;
 		
 		nanogui::Vector2i preferred_sz = w->preferred_size(ctx);
+		nanogui::Vector2i new_pos(offset, y_offset);
 
-		w->set_position(nanogui::Vector2i(offset, 0));
-		
 		if (w->fixed_width() > 0) {
 			// If the widget has a fixed width, use that width
 			w->set_width(w->fixed_width());
@@ -69,12 +78,33 @@ void gui::SimpleRowLayout::perform_layout(NVGcontext* ctx, nanogui::Widget* cont
 			offset += use_width;
 		}
 		offset += m_spacing;
-							
-		if (w->fixed_height() > 0) {
+		
+		if (m_anchor == VerticalAnchor::STRETCH) {
+			w->set_height(height);
+		} else if (w->fixed_height() > 0) {
 			w->set_height(w->fixed_height());
 		} else {
 			w->set_height(preferred_sz.y());
 		}
+
+		int y_pos = 0;
+		switch (m_anchor) {
+			case VerticalAnchor::CENTER:
+				y_pos = (height - w->height()) / 2;
+				break;
+			case VerticalAnchor::TOP:
+				y_pos = 0;
+				break;
+			case VerticalAnchor::BOTTOM:
+				y_pos = height - w->height();
+				break;
+			case VerticalAnchor::STRETCH:
+				y_pos = 0;
+				break;
+		}
+		new_pos.y() += y_pos;
+		w->set_position(new_pos);
+
 	}
 	
 	
