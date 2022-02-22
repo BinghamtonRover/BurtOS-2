@@ -19,7 +19,7 @@
 #include "constants.hpp"
 
 //Max time allowed for reading (in seconds)
-constexpr double MAX_READ_TIME = 0.1;
+constexpr double MAX_READ_TIME = 0.6;
 
 //Overloads for can_send
 int can_send(Node device, Command command, unsigned int data);
@@ -35,11 +35,11 @@ int can_request(Node device, Command command);
 //Request to read a CAN message
 float can_read_float(Node device, Command command);
 int can_read_int(Node device, Command command);
-long can_read_long(Node device, Command command);
+long long can_read_long(Node device, Command command);
 
 //Recieve a CAN message
 unsigned int can_receive(Node device, Command command);
-long can_receive_long(Node device, Command command);
+long long can_receive_long(Node device, Command command);
 
 //Recieve a CAN frame and check it's ID
 bool can_check_hearbeat(Node device);
