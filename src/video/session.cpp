@@ -271,3 +271,31 @@ void Session::send_frames() {
         }
 }
 
+void Session::changeValues(string devID, int height, int width, int frameInterval){
+    std::array<char, 13> device_name_buffer; 
+    for(int i = 0; i < MAX_STREAMS; i++){
+        
+            camera::CaptureSession* cs = new camera::CaptureSession;
+            if(this->streams[i]->dev_video_id == devID){
+                int file = streams[i]->fd;
+                camera::close(this->streams[i]);
+                camera::Error err = camera::open(cs, fd, width, height, devID, &global_clock, frameInterval);
+                err = camera::start(cs);
+                this->streams[i] = cs;
+
+                if (err != camera::Error::OK) {
+                    camerasFound[i] = -1;
+                    logger::log(logger::DEBUG, "Camera %d errored while opening", cs->dev_video_id);
+                    delete cs;
+                    continue;
+                }
+            }
+            
+            
+
+    }  
+
+
+
+}
+

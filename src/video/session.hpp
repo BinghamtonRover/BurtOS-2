@@ -65,6 +65,7 @@ public:
 
     int update_available_streams();
     void send_frames();
+    void changeValues(string devID, int height, int width, int frameInterval);
 };
 
 #endif
