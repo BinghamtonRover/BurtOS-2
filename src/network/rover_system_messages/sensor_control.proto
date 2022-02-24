@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package sensor;
+
+message Battery {
+    float battery_voltage = 1;
+    float battery_current = 2;
+}
+
+message PowerSupply12V {
+	float v12_supply_voltage = 1;
+    float v12_supply_current = 2;
+    float v12_supply_temperature = 3;
+}
+
+message PowerSupply5V {
+	float v5_supply_voltage = 1;
+    float v5_supply_current = 2;
+    float v5_supply_temperature = 3;
+}
+
+message Odrive {
+    float odrive0_current = 1;
+    float odrive1_current = 2;
+    float odrive2_current = 3;
+}

@@ -99,82 +99,68 @@ float rc::Drive::get_actual_right_speed() {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-rc::Control::Control(net::MessageSender& ms)
+rc::Sensor::Sensor(net::MessageSender& ms)
 	: sender(ms) {
 }
 
-void rc::Control::register_listen_handlers(net::MessageReceiver& m) {
-	m.register_handler<control_msg::Main>([this](const uint8_t buf[], std::size_t len) {
-		control::Main msg;
+void rc::Sensor::register_listen_handlers(net::MessageReceiver& m) {
+	m.register_handler<sensor_msg::Battery>([this](const uint8_t buf[], std::size_t len) {
+		sensor::Battery msg;
 		if (msg.ParseFromArray(buf, len)) {
 			last_update_received = std::chrono::steady_clock::now();
-			if (msg.ps_batt() != ps_batt || msg.main_curr() != main_curr) {
-				ps_batt = msg.ps_batt();
-				main_curr = msg.main_curr();
-				EVENT_MAIN_CONTROL(ps_batt, main_curr);
+			if (msg.battery_voltage() != battery_voltage || msg.battery_current() != battery_current) {
+				battery_voltage = msg.battery_voltage();
+				battery_current = msg.battery_current();
+				EVENT_BATTERY_SENSOR(battery_voltage, battery_current);
 			}
 		}
 	});
-	m.register_handler<control_msg::PS12>([this](const uint8_t buf[], std::size_t len) {
-		control::PS12 msg;
+	m.register_handler<sensor_msg::PowerSupply12V>([this](const uint8_t buf[], std::size_t len) {
+		sensor::PowerSupply12V msg;
 		if (msg.ParseFromArray(buf, len)) {
 			last_update_received = std::chrono::steady_clock::now();
-			if (msg.ps12_volt() != ps12_volt || msg.ps12_curr() != ps12_curr || msg.temp12() != temp12) {
-				ps12_volt = msg.ps12_volt();
-				ps12_curr = msg.ps12_curr();
-				temp12 = msg.temp12();
-				EVENT_PS12_CONTROL(ps12_volt, ps12_curr, temp12);
+			if (msg.v12_supply_voltage() != v12_supply_voltage || msg.v12_supply_current() != v12_supply_current || msg.v12_supply_temperature() != v12_supply_temperature) {
+				v12_supply_voltage = msg.v12_supply_voltage();
+				v12_supply_current = msg.v12_supply_current();
+				v12_supply_temperature = msg.v12_supply_temperature();
+				EVENT_POWERSUPPLY12V_SENSOR(v12_supply_voltage, v12_supply_current, v12_supply_temperature);
 			}
 		}
 	});
-	m.register_handler<control_msg::PS5>([this](const uint8_t buf[], std::size_t len) {
-		control::PS5 msg;
+	m.register_handler<sensor_msg::PowerSupply5V>([this](const uint8_t buf[], std::size_t len) {
+		sensor::PowerSupply5V msg;
 		if (msg.ParseFromArray(buf, len)) {
 			last_update_received = std::chrono::steady_clock::now();
-			if (msg.ps5_volt() != ps5_volt || msg.ps5_curr() != ps5_curr || msg.temp5() != temp5) {
-				ps5_volt = msg.ps5_volt();
-				ps5_curr = msg.ps5_curr();
-				temp5 = msg.temp5();
-				EVENT_PS5_CONTROL(ps5_volt, ps5_curr, temp5);
+			if (msg.v5_supply_voltage() != v5_supply_voltage || msg.v5_supply_current() != v5_supply_current || msg.v5_supply_temperature() != v5_supply_temperature) {
+				v5_supply_voltage = msg.v5_supply_voltage();
+				v5_supply_current = msg.v5_supply_current();
+				v5_supply_temperature = msg.v5_supply_temperature();
+				EVENT_POWERSUPPLY5V_SENSOR(v5_supply_voltage, v5_supply_current, v5_supply_temperature);
 			}
 		}
 	});
-	m.register_handler<control_msg::Odrv>([this](const uint8_t buf[], std::size_t len) {
-		control::Odrv msg;
+	m.register_handler<sensor_msg::Odrive>([this](const uint8_t buf[], std::size_t len) {
+		sensor::Odrive msg;
 		if (msg.ParseFromArray(buf, len)) {
 			last_update_received = std::chrono::steady_clock::now();
-			if (msg.odrv0_curr() != odrv0_curr || msg.odrv1_curr() != odrv1_curr || msg.odrv2_curr() != odrv2_curr) {
-				odrv0_curr = msg.odrv0_curr();
-				odrv1_curr = msg.odrv1_curr();
-				odrv2_curr = msg.odrv2_curr();
-				EVENT_ODRV_CONTROL(odrv0_curr, odrv1_curr, odrv2_curr);
+			if (msg.odrive0_current() != odrive0_current || msg.odrive1_current() != odrive1_current || msg.odrive2_current() != odrive2_current) {
+				odrive0_current = msg.odrive0_current();
+				odrive1_current = msg.odrive1_current();
+				odrive2_current = msg.odrive2_current();
+				EVENT_ODRIVE_SENSOR(odrive0_current, odrive1_current, odrive2_current);
 			}
 		}
 	});
 }
 
-float rc::Control::get_ps_batt() { return ps_batt; }
-float rc::Control::get_main_curr() { return main_curr; }
-float rc::Control::get_ps12_volt() { return ps12_volt; }
-float rc::Control::get_ps12_curr() { return ps12_curr; }
-float rc::Control::get_temp12() { return temp12; }
-float rc::Control::get_ps5_volt() { return ps5_volt; }
-float rc::Control::get_ps5_curr() { return ps5_curr; }
-float rc::Control::get_temp5() { return temp5; }
-float rc::Control::get_odrv0_curr() { return odrv0_curr; }
-float rc::Control::get_odrv1_curr() { return odrv1_curr; }
-float rc::Control::get_odrv2_curr() { return odrv2_curr; }
+float rc::Sensor::get_battery_voltage() { return battery_voltage; }
+float rc::Sensor::get_battery_current() { return battery_current; }
+float rc::Sensor::get_v12_supply_voltage() { return v12_supply_voltage; }
+float rc::Sensor::get_v12_supply_current() { return v12_supply_current; }
+float rc::Sensor::get_v12_supply_temperature() { return v12_supply_temperature; }
+float rc::Sensor::get_v5_supply_voltage() { return v5_supply_voltage; }
+float rc::Sensor::get_v5_supply_current() { return v5_supply_current; }
+float rc::Sensor::get_v5_supply_temperature() { return v5_supply_temperature; }
+float rc::Sensor::get_odrive0_current() { return odrive0_current; }
+float rc::Sensor::get_odrive1_current() { return odrive1_current; }
+float rc::Sensor::get_odrive2_current() { return odrive2_current; }

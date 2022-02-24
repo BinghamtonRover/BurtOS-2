@@ -155,27 +155,28 @@ int main() {
 
 				ControlInformation control_information = get_control_information();
 
-				control_msg::Main main_message;
-				main_message.data.set_ps_batt(control_information.ps_batt);
-				main_message.data.set_main_curr(control_information.main_curr);
-				sender.send_message(main_message);
+				sensor_msg::Battery battery_message;
+				//battery_message.data.set_battery_voltage(control_information.ps_batt);
+				battery_message.data.set_battery_voltage(can_read_float(Node::DRIVE_AXIS_0, Command::GET_VBUS_VOLTAGE));
+				battery_message.data.set_battery_current(control_information.main_curr);
+				sender.send_message(battery_message);
 
-				control_msg::PS12 ps12_message;
-				ps12_message.data.set_ps12_volt(control_information.ps12_volt);
-				ps12_message.data.set_ps12_curr(control_information.ps12_curr);
-				ps12_message.data.set_temp12(control_information.temp12);
+				sensor_msg::PowerSupply12V ps12_message;
+				ps12_message.data.set_v12_supply_voltage(control_information.ps12_volt);
+				ps12_message.data.set_v12_supply_current(control_information.ps12_curr);
+				ps12_message.data.set_v12_supply_temperature(control_information.temp12);
 				sender.send_message(ps12_message);
 
-				control_msg::PS5 ps5_message;
-				ps5_message.data.set_ps5_volt(control_information.ps5_volt);
-				ps5_message.data.set_ps5_curr(control_information.ps5_curr);
-				ps5_message.data.set_temp5(control_information.temp5);
+				sensor_msg::PowerSupply5V ps5_message;
+				ps5_message.data.set_v5_supply_voltage(control_information.ps5_volt);
+				ps5_message.data.set_v5_supply_current(control_information.ps5_curr);
+				ps5_message.data.set_v5_supply_temperature(control_information.temp5);
 				sender.send_message(ps5_message);
 
-				control_msg::Odrv odrv_message;
-				odrv_message.data.set_odrv0_curr(control_information.odrv0_curr);
-				odrv_message.data.set_odrv1_curr(control_information.odrv1_curr);
-				odrv_message.data.set_odrv2_curr(control_information.odrv2_curr);
+				sensor_msg::Odrive odrv_message;
+				odrv_message.data.set_odrive0_current(control_information.odrv0_curr);
+				odrv_message.data.set_odrive1_current(control_information.odrv1_curr);
+				odrv_message.data.set_odrive2_current(control_information.odrv2_curr);
 				sender.send_message(odrv_message);
 
 				last_message_sent = std::chrono::steady_clock::now();

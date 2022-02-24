@@ -47,47 +47,47 @@ class Drive {
 		std::chrono::steady_clock::time_point last_update_received{};
 };
 
-class Control {
+class Sensor {
 	public:
-		Control(net::MessageSender& ms);
+		Sensor(net::MessageSender& ms);
 
 		void register_listen_handlers(net::MessageReceiver& m);
 
-		float get_ps_batt();
-		float get_main_curr();
-		float get_ps12_volt();
-		float get_ps12_curr();
-		float get_temp12();
-		float get_ps5_volt();
-		float get_ps5_curr();
-		float get_temp5();
-		float get_odrv0_curr();
-		float get_odrv1_curr();
-		float get_odrv2_curr();
+		float get_battery_voltage();
+		float get_battery_current();
+		float get_v12_supply_voltage();
+		float get_v12_supply_current();
+		float get_v12_supply_temperature();
+		float get_v5_supply_voltage();
+		float get_v5_supply_current();
+		float get_v5_supply_temperature();
+    	float get_odrive0_current();
+    	float get_odrive1_current();
+    	float get_odrive2_current();
 
 		inline const std::chrono::steady_clock::time_point& get_last_update_received() const { return last_update_received; }
 
-		event::Emitter<float, float> EVENT_MAIN_CONTROL;
-		event::Emitter<float, float, float> EVENT_PS12_CONTROL;
-		event::Emitter<float, float, float> EVENT_PS5_CONTROL;
-		event::Emitter<float, float, float> EVENT_ODRV_CONTROL;
+		event::Emitter<float, float> EVENT_BATTERY_SENSOR;
+		event::Emitter<float, float, float> EVENT_POWERSUPPLY12V_SENSOR;
+		event::Emitter<float, float, float> EVENT_POWERSUPPLY5V_SENSOR;
+		event::Emitter<float, float, float> EVENT_ODRIVE_SENSOR;
 
 	private:
 		net::MessageSender& sender;
 
 		std::chrono::steady_clock::time_point last_update_received{};
 
-		float ps_batt = 0.0F;
-		float main_curr = 0.0F;
-		float ps12_volt = 0.0F;
-		float ps12_curr = 0.0F;
-		float temp12 = 0.0F;
-		float ps5_volt = 0.0F;
-		float ps5_curr = 0.0F;
-		float temp5 = 0.0F;
-		float odrv0_curr = 0.0F;
-		float odrv1_curr = 0.0F;
-		float odrv2_curr = 0.0F;
+		float battery_voltage = 0.0F;
+		float battery_current = 0.0F;
+		float v12_supply_voltage = 0.0F;
+		float v12_supply_current = 0.0F;
+		float v12_supply_temperature = 0.0F;
+		float v5_supply_voltage = 0.0F;
+		float v5_supply_current = 0.0F;
+		float v5_supply_temperature = 0.0F;
+    	float odrive0_current = 0.0F;
+    	float odrive1_current = 0.0F;
+    	float odrive2_current = 0.0F;
 };
 
 } // namespace rc
