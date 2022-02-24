@@ -153,6 +153,31 @@ int main() {
 				mode_message.data.set_mode(new_mode);
 				sender.send_message(mode_message);
 
+				ControlInformation control_information = get_control_information();
+
+				control_msg::Main main_message;
+				main_message.data.set_ps_batt(control_information.ps_batt);
+				main_message.data.set_main_curr(control_information.main_curr);
+				sender.send_message(main_message);
+
+				control_msg::PS12 ps12_message;
+				ps12_message.data.set_ps12_volt(control_information.ps12_volt);
+				ps12_message.data.set_ps12_curr(control_information.ps12_curr);
+				ps12_message.data.set_temp12(control_information.temp12);
+				sender.send_message(ps12_message);
+
+				control_msg::PS5 ps5_message;
+				ps5_message.data.set_ps5_volt(control_information.ps5_volt);
+				ps5_message.data.set_ps5_curr(control_information.ps5_curr);
+				ps5_message.data.set_temp5(control_information.temp5);
+				sender.send_message(ps5_message);
+
+				control_msg::Odrv odrv_message;
+				odrv_message.data.set_odrv0_curr(control_information.odrv0_curr);
+				odrv_message.data.set_odrv1_curr(control_information.odrv1_curr);
+				odrv_message.data.set_odrv2_curr(control_information.odrv2_curr);
+				sender.send_message(odrv_message);
+
 				last_message_sent = std::chrono::steady_clock::now();
 			}
 
