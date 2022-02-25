@@ -8,13 +8,18 @@
 
 Basestation* Basestation::main_instance = nullptr;
 
-Basestation::Basestation() {
+Basestation::Basestation() :
+	video_feed_receiver(main_thread_ctx)
+{
 	if (main_instance != nullptr) {
 		throw std::runtime_error("Basestation::Basestation: duplicate instance not allowed");
 	}
 	main_instance = this;
 
 	controller_mgr.init();
+
+    //TODO: Dynamically get port number (maybe from config file)
+    video_feed_receiver.set_listen_port(22202);
 
 	Console::add_setup_routine([](Console& new_console) {
 		new_console.load_library("ctrl", lua_ctrl_lib::open);
@@ -50,7 +55,8 @@ BasestationScreen* Basestation::get_focused_screen() const {
 void Basestation::mainloop() {
 	while (continue_operating) {
 		glfwPollEvents();
-		
+		main_thread_ctx.poll();
+
 		controller_mgr.update_controls();
 
 		{

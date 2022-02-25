@@ -7,6 +7,7 @@
 #include <rover_lua.hpp>
 #include <basestation_screen.hpp>
 #include <controls/controller_manager.hpp>
+#include "../network/stream.hpp"
 
 /*
 	Container class for the main instance of the base station
@@ -55,8 +56,15 @@ class Basestation {
 			static void open(lua_State*);
 		};
 
+        inline void set_video_callback(std::function<void(int stream, net::Frame& frame)> handler) {
+            video_feed_receiver.on_frame_received(handler);
+        }
+
 	private:
 		ControllerManager controller_mgr;
+		boost::asio::io_context main_thread_ctx;
+		net::StreamReceiver video_feed_receiver;
+
 
 		std::vector<BasestationScreen*> screens;
 
