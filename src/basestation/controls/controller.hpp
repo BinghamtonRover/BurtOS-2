@@ -4,6 +4,7 @@
 #include <string>
 #include <functional>
 #include <nanogui/opengl.h>
+#include <array>
 
 class AxisAction {
 	private:
