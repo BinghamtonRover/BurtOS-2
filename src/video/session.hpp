@@ -1,10 +1,10 @@
 #ifndef SESSION
 #define SESSION
 
-#include <roversystem/logger.hpp>
-#include <roversystem/util.hpp>
-#include <network.hpp>
-#include <stream.hpp>
+#include "roversystem_utils/include/roversystem/logger.hpp"
+#include "roversystem_utils/include/roversystem/util.hpp"
+#include "../network/network.hpp"
+#include "../network/stream.hpp"
 
 #include "camera.hpp"
 

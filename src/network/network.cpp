@@ -16,7 +16,7 @@ void net::MessageSender::send_message(msg::Message& message) {
 	bool success = false;
 
 	// Ensure size isn't larger than supported by the header
-	if (message.data_p->ByteSizeLong() <= msg::Header::MAX_MSG_SIZE) {
+	if (message.data_p->ByteSize() <= msg::Header::MAX_MSG_SIZE) {
 		uint8_t* block = buf.create_block(message.data_p->GetCachedSize() + msg::Header::HDR_SIZE);
 		
 		success = message.data_p->SerializeWithCachedSizesToArray(&block[msg::Header::HDR_SIZE]);

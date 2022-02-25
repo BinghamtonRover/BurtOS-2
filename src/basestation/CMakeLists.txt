@@ -9,7 +9,7 @@ set(MODULE_HDR
 )
 set(MODULE_SRC
 	modules/console.cpp
-    modules/video_feeed_viewer.cpp
+	modules/video_feed_viewer.cpp
     modules/video_decoder/decoder.cpp
 	modules/input_config/controller_config.cpp
 	modules/input_config/controller_calibration_popup.cpp
@@ -54,7 +54,7 @@ else()
 				)
 
 		target_include_directories(basestation PUBLIC nanogui roverlua network video ${CMAKE_CURRENT_SOURCE_DIR})
-		target_link_libraries(basestation nanogui ${NANOGUI_EXTRA_LIBS} roverlua network video PkgConfig::PKG_LIBJPEG_TURBO)
+		target_link_libraries(basestation nanogui ${NANOGUI_EXTRA_LIBS} roverlua network PkgConfig::PKG_LIBJPEG_TURBO)
 
 		# NanoGUI requires C++17
 		target_compile_features(basestation PUBLIC cxx_std_17)

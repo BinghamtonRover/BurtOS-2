@@ -9,7 +9,7 @@
 #include <google/protobuf/message.h>
 #include <boost/asio.hpp>
 #include <boost/array.hpp>
-#include <messages.hpp>
+#include "messages.hpp"
 
 namespace net {
 
