@@ -45,6 +45,12 @@ float DriveController::get_right_speed() {
 }
 
 void DriveController::update_motor_acceleration() {
+	//completely skip motor acceleration when calibrating
+	if (current_mode == DriveMode::CALIBRATING) {
+		update_motor_calibration();
+		return;
+	}
+
 	auto time_now = std::chrono::steady_clock::now();
 
 	std::chrono::duration<double> inactive_time = time_now - last_active_time;
@@ -93,7 +99,8 @@ DriveController::DriveMode DriveController::get_drive_mode() {
 }
 
 void DriveController::set_drive_mode(DriveMode mode) {
-	if (mode < DriveMode::COUNT) {
+	//Make sure mode is valid, and cannot change mode in the middle of calibrating
+	if (mode < DriveMode::COUNT && current_mode != DriveMode::CALIBRATING) {
 		last_active_time = std::chrono::steady_clock::now();
 		current_mode = mode;
 		update_motor_acceleration();
@@ -101,26 +108,28 @@ void DriveController::set_drive_mode(DriveMode mode) {
 }
 
 //Initialize the drive (CAN bus initialization commands)
-bool DriveController::drive_init() {
-	for (int i = static_cast<int>(Node::DRIVE_AXIS_0); i <= static_cast<int>(Node::DRIVE_AXIS_5); i++) {
-		can_send(static_cast<Node>(i), Command::SET_AXIS_REQUESTED_STATE, 3); //START INIT SEQUENCE
+void DriveController::update_motor_calibration() {
+	auto time_now = std::chrono::steady_clock::now();
+	if (calibration_stage == -1) { time_can_updated = time_now; }
+	std::chrono::duration<double> time_difference = time_now - time_can_updated;
 
-		std::chrono::steady_clock::time_point start_time = std::chrono::steady_clock::now();
-		std::chrono::duration<double> delta_time = start_time - start_time;
-
-		bool working = false;
-		while (delta_time.count() <= 20.0) { 
-        	delta_time = std::chrono::steady_clock::now() - start_time;
-			if (can_check_hearbeat(static_cast<Node>(i))) { working = true; }
+	if (calibration_stage != (int)(time_difference.count() / CALIBRATION_TIME)) {
+		calibration_stage++;
+		//Start calibration sequence
+		if (calibration_stage <= 5) {
+			can_send(static_cast<Node>(calibration_stage), Command::SET_AXIS_REQUESTED_STATE, 3); //START INIT SEQUENCE
 		}
 
-		if (!working) { return false; }
-
-		//Set motors settings
-		can_send(static_cast<Node>(i), Command::SET_AXIS_REQUESTED_STATE, 8); //AXIS_STATE_CLOSED_LOOP_CONTROL
-		can_send(static_cast<Node>(i), Command::SET_CONTROLLER_MODES, 2);     //CONTROL_MODE_VELOCITY_CONTROL
+		//Set motors settings of previously calibrated motor
+		if (calibration_stage > 0) {
+			can_send(static_cast<Node>(calibration_stage - 1), Command::SET_AXIS_REQUESTED_STATE, 8); //AXIS_STATE_CLOSED_LOOP_CONTROL
+			can_send(static_cast<Node>(calibration_stage - 1), Command::SET_CONTROLLER_MODES, 2);     //CONTROL_MODE_VELOCITY_CONTROL
+		}
 	}
 
-    //Successfully initialized
-	return true;
+	if (calibration_stage == 6) {
+		current_mode = DriveMode::NEUTRAL;
+		time_can_updated = std::chrono::steady_clock::now();
+		calibration_stage = -1;
+	}
 }
