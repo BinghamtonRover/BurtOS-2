@@ -36,7 +36,7 @@ void VideoFeedViewer::update_frame(int stream, net::Frame& frame) {
     nanogui::Texture* next_frame = new nanogui::Texture(
         nanogui::Texture::PixelFormat::RGB,
         nanogui::Texture::ComponentFormat::UInt8,
-        nanogui::Vector2i(1280,730),
+        nanogui::Vector2i(CAMERA_WIDTH,CAMERA_HEIGHT),
         nanogui::Texture::InterpolationMode::Bilinear,
         nanogui::Texture::InterpolationMode::Nearest,
         nanogui::Texture::WrapMode::ClampToEdge,
@@ -45,6 +45,7 @@ void VideoFeedViewer::update_frame(int stream, net::Frame& frame) {
         false
     );
 
+    next_frame->upload((uint8_t *) next_frame_buffer);
     video_widget->set_image(next_frame);
 }
 

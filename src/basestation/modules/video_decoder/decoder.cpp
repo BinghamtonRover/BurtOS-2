@@ -12,9 +12,9 @@ Decoder::~Decoder() {
 void Decoder::decode_frame( net::Frame& frame, uint8_t* out_buffer) {
     if (tjDecompress2(
             jpeg_decompressor,
-            (unsigned char *)frame.data(),
+            frame.data(),
             (long unsigned int)frame.size(),
-            (unsigned char *)out_buffer,
+            out_buffer,
             CAMERA_WIDTH,
             3 * CAMERA_WIDTH,
             CAMERA_HEIGHT,
