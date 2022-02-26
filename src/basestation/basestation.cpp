@@ -1,6 +1,7 @@
 #include <basestation.hpp>
 #include <modules/console.hpp>
 #include <controls/lua_ctrl_lib.hpp>
+#include "../video/session.hpp"
 
 
 #include <stdexcept>
@@ -20,7 +21,14 @@ Basestation::Basestation() :
 	controller_mgr.init();
 
     //TODO: Dynamically get port number (maybe from config file)
-    video_feed_receiver.set_listen_port(22202);
+    boost::asio::ip::udp::endpoint vid_address(
+            boost::asio::ip::address_v4::from_string("239.255.123.123"),
+            22202
+    );
+    video_feed_receiver.subscribe(vid_address);
+    for (int i = 0; i < MAX_STREAMS; i++) {
+        video_feed_receiver.open_stream(i);
+    }
 
 	Console::add_setup_routine([](Console& new_console) {
 		new_console.load_library("ctrl", lua_ctrl_lib::open);

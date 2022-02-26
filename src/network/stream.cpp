@@ -37,8 +37,8 @@ void net::StreamSender::send_frame(int stream, uint8_t* data, std::size_t len) {
 
 	hdr.write(header_buffer);
 
+
 	while (len > 0) {
-		
 		std::size_t n_sent = (len > max_section_size) ? max_section_size : len;
 		hdr.write_new_section(header_buffer);
 

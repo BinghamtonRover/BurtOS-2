@@ -97,10 +97,9 @@ bool BasestationScreen::keyboard_event(int key, int scancode, int action, int mo
 	} else if (key == GLFW_KEY_N && action == GLFW_PRESS && (mods & GLFW_MOD_CONTROL)) {
 		Basestation::get().add_screen(new BasestationScreen());
 		handled = true;
-	} else if (key == GLFW_KEY_C) {
-        auto feed_view = new VideoFeedViewer(this);
+	} else if (key == GLFW_KEY_C && action == GLFW_PRESS) {
+        new VideoFeedViewer(this);
         Basestation::get().set_video_callback(VideoFeedViewer::update_frame_STATIC);
-
         handled = true;
     }
 

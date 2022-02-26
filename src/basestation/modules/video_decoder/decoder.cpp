@@ -10,7 +10,7 @@ Decoder::~Decoder() {
 }
 
 void Decoder::decode_frame( net::Frame& frame, uint8_t* out_buffer) {
-    if (!tjDecompress2(
+    if (tjDecompress2(
             jpeg_decompressor,
             (unsigned char *)frame.data(),
             (long unsigned int)frame.size(),
@@ -22,6 +22,6 @@ void Decoder::decode_frame( net::Frame& frame, uint8_t* out_buffer) {
             TJFLAG_NOREALLOC
             )) {
         out_buffer = nullptr;
-        throw std::runtime_error("Decoder::frame_decoder: Couldn't decode incoming frame");
+        throw std::runtime_error(tjGetErrorStr());
     }
 }

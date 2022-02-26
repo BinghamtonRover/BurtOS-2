@@ -8,6 +8,7 @@
 #include <basestation_screen.hpp>
 #include <controls/controller_manager.hpp>
 #include "../network/stream.hpp"
+#include <iostream>
 
 
 /*
@@ -58,6 +59,7 @@ class Basestation {
 		};
 
         inline void set_video_callback(std::function<void(int stream, net::Frame& frame)> handler) {
+            std::cout << "In callback setter" << std::endl;
             video_feed_receiver.on_frame_received(handler);
         }
 

@@ -7,9 +7,15 @@ VideoFeedViewer::VideoFeedViewer(nanogui::Screen *screen) :
     nanogui::Window(screen, "Rover Feed"),
     decoder()
 {
-    video_widget = new nanogui::ImageView(this);
-    perform_layout(screen->nvg_context());
     vid_feed = this;
+
+    set_position(nanogui::Vector2i(15,15));
+    set_layout(new nanogui::GroupLayout());
+    set_fixed_size(nanogui::Vector2i(864,490));
+
+    video_widget = new nanogui::ImageView(this);
+
+    perform_layout(screen->nvg_context());
 }
 
 void VideoFeedViewer::update_frame_STATIC(int stream, net::Frame& frame){
@@ -28,9 +34,16 @@ void VideoFeedViewer::update_frame(int stream, net::Frame& frame) {
     }
 
     nanogui::Texture* next_frame = new nanogui::Texture(
-            nanogui::Texture::PixelFormat::RGB,
-            nanogui::Texture::ComponentFormat::UInt8,
-            nanogui::Vector2i(CAMERA_WIDTH, CAMERA_HEIGHT));
+        nanogui::Texture::PixelFormat::RGB,
+        nanogui::Texture::ComponentFormat::UInt8,
+        nanogui::Vector2i(1280,730),
+        nanogui::Texture::InterpolationMode::Bilinear,
+        nanogui::Texture::InterpolationMode::Nearest,
+        nanogui::Texture::WrapMode::ClampToEdge,
+        (uint8_t) 1,
+        nanogui::Texture::TextureFlags::ShaderRead,
+        false
+    );
 
     video_widget->set_image(next_frame);
 }
