@@ -11,9 +11,10 @@ VideoFeedViewer::VideoFeedViewer(nanogui::Screen *screen) :
 
     set_position(nanogui::Vector2i(15,15));
     set_layout(new nanogui::GroupLayout());
-    set_fixed_size(nanogui::Vector2i(864,490));
+    set_size(nanogui::Vector2i(866, 528));
 
     video_widget = new nanogui::ImageView(this);
+    video_widget->set_size(nanogui::Vector2i(856,480));
 
     perform_layout(screen->nvg_context());
 }
@@ -47,5 +48,7 @@ void VideoFeedViewer::update_frame(int stream, net::Frame& frame) {
 
     next_frame->upload((uint8_t *) next_frame_buffer);
     video_widget->set_image(next_frame);
+    video_widget->center();
+    video_widget->set_scale((float)856/CAMERA_WIDTH);
 }
 
