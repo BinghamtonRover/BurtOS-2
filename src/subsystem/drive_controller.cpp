@@ -113,12 +113,12 @@ void DriveController::update_motor_calibration() {
 	if (calibration_stage == -1) { time_can_updated = time_now; }
 	std::chrono::duration<double> time_difference = time_now - time_can_updated;
 
-	if (calibration_stage != (int)(time_difference.count() / CALIBRATION_TIME)) {
+	if (calibration_stage < (int)(time_difference.count() / CALIBRATION_TIME)) {
 		calibration_stage++;
 		//Start calibration sequence
 		if (calibration_stage <= 5) {
 			can_send(static_cast<Node>(calibration_stage), Command::SET_AXIS_REQUESTED_STATE, 3); //START INIT SEQUENCE
-		}
+        }
 
 		//Set motors settings of previously calibrated motor
 		if (calibration_stage > 0) {
