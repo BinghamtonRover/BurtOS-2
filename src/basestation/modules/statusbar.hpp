@@ -7,6 +7,7 @@
 #pragma once
 
 #include <widgets/toolbar.hpp>
+#include <chrono>
 
 namespace gui {
 
@@ -16,8 +17,14 @@ namespace gui {
 class Statusbar : public gui::Toolbar {
 	public:
 		Statusbar(nanogui::Widget* parent);
+
+		virtual void draw(NVGcontext* ctx) override;
+
 	private:
 		void place_in_right_corner(nanogui::Window* wnd);
+
+		nanogui::Button* network_button;
+		std::chrono::steady_clock::time_point next_net_animation;
 };
 
 }

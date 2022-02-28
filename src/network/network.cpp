@@ -191,8 +191,11 @@ void net::MessageReceiver::listen() {
 	socket.async_receive_from(boost::asio::buffer(recv_buffer), remote, [this](boost::system::error_code ec, std::size_t bytes_transferred) {
 		read_messages(recv_buffer.data(), bytes_transferred);
 
-		if (ec && ec != boost::asio::error::operation_aborted) {
-			error_emitter(ec);
+		if (ec) {
+			if (ec != boost::asio::error::operation_aborted)
+				error_emitter(ec);
+		} else {
+			last_activity = std::chrono::system_clock::now();
 		}
 
 		listen();
