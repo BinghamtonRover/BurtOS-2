@@ -249,6 +249,7 @@ const struct luaL_Reg Basestation::lua_basestation_lib::lib[] = {
 	{"new_screen", new_screen},
 	{"new_module", open_module},
 	{"set_throttle", set_throttle},
+	{"initialize_drive", initialize_drive},
 	{NULL, NULL}
 };
 
@@ -318,4 +319,9 @@ int Basestation::lua_basestation_lib::new_screen(lua_State*) {
 
 void Basestation::lua_basestation_lib::open(lua_State* L) {
 	luaL_newlib(L, lib);
+}
+
+int Basestation::lua_basestation_lib::initialize_drive(lua_State* L) {
+	Basestation::get().remote_drive().set_drive_mode(drive::DriveMode_Mode_CALIBRATING);
+	return 0;
 }
