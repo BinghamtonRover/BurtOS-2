@@ -70,6 +70,7 @@ class Basestation {
 			static int new_screen(lua_State*);
 			static int open_module(lua_State*);
 			static int set_throttle(lua_State*);
+			static int initialize_drive(lua_State*);
 
 			static void open(lua_State*);
 		};
