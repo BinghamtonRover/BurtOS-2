@@ -7,8 +7,7 @@
 #include <rover_lua.hpp>
 #include <basestation_screen.hpp>
 #include <controls/controller_manager.hpp>
-#include "../network/stream.hpp"
-#include <iostream>
+#include <stream.hpp>
 
 
 /*
@@ -58,10 +57,9 @@ class Basestation {
 			static void open(lua_State*);
 		};
 
-        inline void set_video_callback(std::function<void(int stream, net::Frame& frame)> handler) {
-            std::cout << "In callback setter" << std::endl;
-            video_feed_receiver.on_frame_received(handler);
-        }
+		inline void set_video_callback(const std::function<void(int stream, net::Frame& frame)>& handler) {
+			video_feed_receiver.on_frame_received(handler);
+		}
 
 	private:
 		ControllerManager controller_mgr;

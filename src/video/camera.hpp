@@ -6,7 +6,7 @@
 
 #include <linux/videodev2.h>
 
-#include "roversystem_utils/include/roversystem/util.hpp"
+#include <roversystem/util.hpp>
 
 /*
     This library uses the Video4Linux kernel library to grab camera frames.

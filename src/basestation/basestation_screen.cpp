@@ -98,10 +98,10 @@ bool BasestationScreen::keyboard_event(int key, int scancode, int action, int mo
 		Basestation::get().add_screen(new BasestationScreen());
 		handled = true;
 	} else if (key == GLFW_KEY_C && action == GLFW_PRESS) {
-        new VideoFeedViewer(this);
-        Basestation::get().set_video_callback(VideoFeedViewer::update_frame_STATIC);
-        handled = true;
-    }
+		new VideoFeedViewer(this);
+		Basestation::get().set_video_callback(VideoFeedViewer::update_frame_STATIC);
+		handled = true;
+	}
 
 	return handled;
 }
