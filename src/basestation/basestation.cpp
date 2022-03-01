@@ -41,6 +41,7 @@ Basestation::Basestation(const boost::property_tree::ptree& config)
 			22202
 	);
 	video_feed_receiver.subscribe(vid_address);
+	video_feed_receiver.open();
 
 	//TODO: Add commands or GUI window to open streams. Also do not use 9 fixed like this...
 	for (int i = 0; i < 9; i++) {

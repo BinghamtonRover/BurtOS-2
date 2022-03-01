@@ -12,6 +12,7 @@
 #include <functional>
 #include <stdexcept>
 #include <memory>
+#include <events.hpp>
 #include <boost/asio.hpp>
 
 namespace net {
@@ -135,12 +136,25 @@ public:
 
 	StreamReceiver(boost::asio::io_context& io_context);
 
-	// Regular Mode
-	void set_listen_port(uint16_t port);
-	void begin(uint16_t port);
+	// Set the listen port and turn multicast off
+	void set_listen_port(uint_least16_t port);
 
-	// Multicast Mode
-	void subscribe(boost::asio::ip::udp::endpoint& feed);
+	// Set the listen endpoint and enable multicast
+	void subscribe(const boost::asio::ip::udp::endpoint& mcast_feed);
+
+	// Set the listen endpoint but do not change multicast setting
+	void set_listen_endpoint(const boost::asio::ip::udp::endpoint&);
+
+	void set_multicast(bool on);
+
+	inline bool is_multicast() const { return use_multicast; }
+	inline int listen_port() const { return listen_ep.port(); }
+	inline const boost::asio::ip::udp::endpoint& listen_endpoint() const { return listen_ep; }
+
+	void open();
+	void close();
+	inline bool opened() const { return socket.is_open(); }
+	inline event::Emitter<const boost::system::error_code&>& receive_error_emitter() { return m_error_emitter; }
 
 	// Open stream and allocate buffers if needed
 	void open_stream(int stream);
@@ -172,9 +186,14 @@ private:
 	boost::asio::io_context& ctx;
 	boost::asio::ip::udp::socket socket;
 	boost::asio::ip::udp::endpoint remote;
+	boost::asio::ip::udp::endpoint listen_ep;
+	event::Emitter<const boost::system::error_code&> m_error_emitter;
+	bool use_multicast = false;
+
 	std::unique_ptr<uint8_t> recv_buffer;
 	// start with default size; allocates on write
 	std::size_t recv_buffer_size = 2048;
+
 	std::vector<Stream> streams;
 	// Reader-writer lock: stream vector cannot be reallocated while being read
 	std::shared_mutex streams_lock;
@@ -182,7 +201,7 @@ private:
 	// Default size: 4MB
 	unsigned _frame_buffer_size = 4 * 1024 * 1024;
 	unsigned _frame_buffer_level = 3;
-	uint16_t port;
+
 	void receive();
 
 };
