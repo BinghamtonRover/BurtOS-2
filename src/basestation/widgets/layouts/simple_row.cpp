@@ -109,6 +109,7 @@ void gui::SimpleRowLayout::perform_layout(NVGcontext* ctx, nanogui::Widget* cont
 		}
 		new_pos.y() += y_pos;
 		w->set_position(new_pos);
+		w->perform_layout(ctx);
 
 	}
 	

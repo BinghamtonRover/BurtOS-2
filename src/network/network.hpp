@@ -6,6 +6,7 @@
 #include <mutex>
 #include <cstdint>
 #include <limits>
+#include <chrono>
 #include <google/protobuf/message.h>
 #include <boost/asio.hpp>
 #include <boost/array.hpp>
@@ -85,7 +86,9 @@ class MessageReceiver : public msg::Receiver {
 		inline bool opened() const { return socket.is_open(); }
 		inline Destination& remote_sender() { return remote; }
 		inline event::Emitter<const boost::system::error_code&>& event_receive_error() { return error_emitter; }
+		inline std::chrono::system_clock::time_point latest_activity_time() const { return last_activity; }
 	private:
+		std::chrono::system_clock::time_point last_activity{};
 		boost::asio::ip::udp::socket socket;
 		Destination remote;
 		boost::asio::ip::udp::endpoint listen_ep;
