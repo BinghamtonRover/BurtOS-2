@@ -21,10 +21,14 @@ class DriveController {
 		DriveMode get_drive_mode();
 		void set_drive_mode(DriveMode mode);
 
+		bool drive_init();
+		static float to_rps(float mps);
+		static float to_mps(float rps);
+
 	private:
 		constexpr static float GEARBOX_RATIO = 6.923F;
 		constexpr static float WHEEL_DIAMETER_METERS = 0.271F;
-		constexpr static float MAX_SPEED = 6.1F;
+		constexpr static float MAX_SPEED = 2.1F;
 
 		// Desired movement parameters for primary drive mode
 		float target_velocity_mps = 0.0F;
@@ -39,10 +43,13 @@ class DriveController {
 		float left_speed = 0.0F;
 		float right_speed = 0.0F;
 
+		//Clock 
+		std::chrono::time_point<std::chrono::steady_clock> time_can_updated{};
+
 		// Call whenever target_angle or target_velocity changes
 		void update_target_velocity();
 
 		DriveMode current_mode = DriveMode::NEUTRAL;
 
-		std::chrono::steady_clock::time_point last_active_time = std::chrono::steady_clock::now();
+		std::chrono::steady_clock::time_point last_active_time{};
 };

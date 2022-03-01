@@ -1,6 +1,8 @@
 set(MODULE_HDR
 	modules/console.hpp
-	modules/console.hpp
+	modules/network_settings.cpp
+	modules/drive_stats.hpp
+	modules/statusbar.hpp
 	modules/input_config/controller_config.hpp
 	modules/input_config/controller_calibration_popup.hpp
 	modules/input_config/controller_binding_popup.hpp
@@ -9,18 +11,31 @@ set(MODULE_HDR
 set(MODULE_SRC
 	modules/console.cpp
 	modules/video_feed_viewer.cpp
+	modules/network_settings.cpp
+	modules/drive_stats.cpp
+	modules/statusbar.cpp
 	modules/input_config/controller_config.cpp
 	modules/input_config/controller_calibration_popup.cpp
 	modules/input_config/controller_binding_popup.cpp
 )
 
 set(WIDGET_HDR
+	widgets/window.hpp
 	widgets/textarea.hpp
 	widgets/functionbox.hpp
+	widgets/tray.hpp
+	widgets/toolbar.hpp
+	widgets/layouts/simple_row.hpp
+	widgets/layouts/simple_column.hpp
 )
 set(WIDGET_SRC
+	widgets/window.cpp
 	widgets/textarea.cpp
 	widgets/functionbox.cpp
+	widgets/tray.cpp
+	widgets/toolbar.cpp
+	widgets/layouts/simple_row.cpp
+	widgets/layouts/simple_column.cpp
 )
 
 find_package(PkgConfig)
@@ -32,6 +47,8 @@ else()
 	if (NOT PKG_LIBJPEG_TURBO_FOUND)
 		message(STATUS "basestation: libjpeg-turbo unavailable.")
 	else()
+
+		find_package(Boost COMPONENTS program_options REQUIRED)
 
 		add_executable(basestation
 			main.cpp
@@ -45,6 +62,8 @@ else()
 			controls/controller.cpp
 			controls/lua_ctrl_lib.hpp
 			controls/lua_ctrl_lib.cpp
+			controls/drive_input.hpp
+			controls/drive_input.cpp
 			video_decoder/decoder.hpp
 			video_decoder/decoder.cpp
 			${MODULE_HDR}
@@ -53,8 +72,8 @@ else()
 			${WIDGET_SRC}
 		)
 
-		target_include_directories(basestation PUBLIC nanogui roverlua network ${CMAKE_CURRENT_SOURCE_DIR})
-		target_link_libraries(basestation nanogui ${NANOGUI_EXTRA_LIBS} roverlua network PkgConfig::PKG_LIBJPEG_TURBO)
+		target_include_directories(basestation PUBLIC nanogui roverlua network rover_control ${CMAKE_CURRENT_SOURCE_DIR} Boost::headers)
+		target_link_libraries(basestation nanogui ${NANOGUI_EXTRA_LIBS} roverlua rover_control network PkgConfig::PKG_LIBJPEG_TURBO Boost::program_options)
 
 		# NanoGUI requires C++17
 		target_compile_features(basestation PUBLIC cxx_std_17)

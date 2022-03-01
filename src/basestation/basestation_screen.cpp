@@ -3,6 +3,7 @@
 
 #include <modules/console.hpp>
 #include <modules/video_feed_viewer.hpp>
+#include <modules/statusbar.hpp>
 
 ScreenPositioning::ScreenPositioning(const nanogui::Vector2i& size, const nanogui::Vector2i& window_pos, int monitor, bool use_fullscreen) :
 	size(size),
@@ -15,6 +16,14 @@ ScreenPositioning::ScreenPositioning(const nanogui::Vector2i& size, const nanogu
 BasestationScreen::BasestationScreen(const ScreenPositioning& pos)
 	: nanogui::Screen(pos.size, "Base Station - Binghamton University Rover Team", true, pos.use_fullscreen),
 	position(pos) {
+
+	// Theme Constants
+	// Future: When fancy dynamic themes are supported, remove this section
+	m_theme->m_window_drop_shadow_size = 0;
+	m_theme->m_window_fill_focused.a() = 1.0F;
+	m_theme->m_window_fill_unfocused.a() = 1.0F;
+
+	new gui::Statusbar(this);
 
 	perform_layout();
 	draw_all();
@@ -64,6 +73,24 @@ void BasestationScreen::set_windowed(int w, int h) {
 	glfwSetWindowMonitor(m_glfw_window, nullptr, position.window_pos.x(), position.window_pos.y(), w, h, GLFW_DONT_CARE);
 	m_fullscreen = false;
 	resize_callback_event(w, h);
+}
+
+bool BasestationScreen::fullscreen() const {
+	return window_idx() >= 0;
+}
+
+int BasestationScreen::window_idx() const {
+	int count;
+	GLFWmonitor** monitors = glfwGetMonitors(&count);
+
+	GLFWmonitor* wnd = glfwGetWindowMonitor(m_glfw_window);
+
+	while (count--) {
+		if (wnd == monitors[count]) {
+			return count;
+		}
+	}
+	return -1;
 }
 
 bool BasestationScreen::keyboard_event(int key, int scancode, int action, int mods) {
@@ -118,6 +145,8 @@ bool BasestationScreen::resize_event(const nanogui::Vector2i& size) {
 	if (!m_fullscreen) {
 		position.size = m_size;
 	}
+
+	perform_layout();
 
 	return ret;
 }
