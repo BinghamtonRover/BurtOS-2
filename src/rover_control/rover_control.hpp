@@ -61,9 +61,9 @@ class Sensor {
 		float get_v5_supply_voltage();
 		float get_v5_supply_current();
 		float get_v5_supply_temperature();
-    	float get_odrive0_current();
-    	float get_odrive1_current();
-    	float get_odrive2_current();
+		float get_odrive0_current();
+		float get_odrive1_current();
+		float get_odrive2_current();
 
 		inline const std::chrono::steady_clock::time_point& get_last_update_received() const { return last_update_received; }
 
@@ -85,9 +85,9 @@ class Sensor {
 		float v5_supply_voltage = 0.0F;
 		float v5_supply_current = 0.0F;
 		float v5_supply_temperature = 0.0F;
-    	float odrive0_current = 0.0F;
-    	float odrive1_current = 0.0F;
-    	float odrive2_current = 0.0F;
+		float odrive0_current = 0.0F;
+		float odrive1_current = 0.0F;
+		float odrive2_current = 0.0F;
 };
 
 } // namespace rc
