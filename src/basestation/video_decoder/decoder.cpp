@@ -1,4 +1,4 @@
-#include <modules/video_decoder/decoder.hpp>
+#include <video_decoder/decoder.hpp>
 
 Decoder::Decoder() {
 	jpeg_decompressor = tjInitDecompress();

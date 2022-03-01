@@ -1,6 +1,6 @@
 #pragma once
 
-#include <modules/video_decoder/decoder.hpp>
+#include <video_decoder/decoder.hpp>
 #include <nanogui/window.h>
 
 class VideoFeedViewer : public nanogui::Window {
