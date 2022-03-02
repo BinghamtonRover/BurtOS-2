@@ -7,8 +7,17 @@
 #include <basestation.hpp>
 #include <modules/console.hpp>
 #include <modules/network_settings.hpp>
+#include <modules/electrical_info.hpp>
 
 gui::Statusbar::Statusbar(nanogui::Widget* parent) : gui::Toolbar(parent) {
+	{
+		auto battery_button = new nanogui::ToolButton(right_tray(), FA_BATTERY_FULL);
+		battery_button->set_flags(nanogui::Button::NormalButton);
+		battery_button->set_callback([this] {
+			auto wnd = new gui::ElectricalInfo(screen());
+			place_in_right_corner(wnd);
+		});
+	}
 	{
 		auto term_button = new nanogui::ToolButton(right_tray(), FA_TERMINAL);
 		term_button->set_flags(nanogui::Button::NormalButton);

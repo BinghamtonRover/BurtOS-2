@@ -1,3 +1,5 @@
+#pragma once
+
 #include <network.hpp>
 #include <rover_system_messages.hpp>
 #include <events.hpp>
@@ -49,7 +51,6 @@ class Drive {
 
 class Sensor {
 	public:
-		Sensor(net::MessageSender& ms);
 
 		void register_listen_handlers(net::MessageReceiver& m);
 
@@ -73,7 +74,6 @@ class Sensor {
 		event::Emitter<float, float, float> EVENT_ODRIVE_SENSOR;
 
 	private:
-		net::MessageSender& sender;
 
 		std::chrono::steady_clock::time_point last_update_received{};
 

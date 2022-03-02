@@ -51,6 +51,9 @@ class Basestation {
 		inline DriveInput& remote_drive() {
 			return m_remote_drive;
 		}
+		inline rc::Sensor& remote_sensors() {
+			return m_remote_sensors;
+		}
 
 		void schedule(const std::function<void(Basestation&)>& callback);
 		
@@ -80,6 +83,7 @@ class Basestation {
 		net::MessageSender m_subsystem_sender;
 		net::MessageReceiver m_subsystem_feed;
 		DriveInput m_remote_drive;
+		rc::Sensor m_remote_sensors;
 
 		event::Handler log_feed_error;
 		event::Handler log_sender_error;

@@ -98,11 +98,6 @@ float rc::Drive::get_actual_right_speed() {
 }
 
 
-
-rc::Sensor::Sensor(net::MessageSender& ms)
-	: sender(ms) {
-}
-
 void rc::Sensor::register_listen_handlers(net::MessageReceiver& m) {
 	m.register_handler<sensor_msg::Battery>([this](const uint8_t buf[], std::size_t len) {
 		sensor::Battery msg;

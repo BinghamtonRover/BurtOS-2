@@ -3,6 +3,7 @@ set(MODULE_HDR
 	modules/network_settings.cpp
 	modules/drive_stats.hpp
 	modules/statusbar.hpp
+	modules/electrical_info.hpp
 	modules/input_config/controller_config.hpp
 	modules/input_config/controller_calibration_popup.hpp
 	modules/input_config/controller_binding_popup.hpp
@@ -12,6 +13,7 @@ set(MODULE_SRC
 	modules/network_settings.cpp
 	modules/drive_stats.cpp
 	modules/statusbar.cpp
+	modules/electrical_info.cpp
 	modules/input_config/controller_config.cpp
 	modules/input_config/controller_calibration_popup.cpp
 	modules/input_config/controller_binding_popup.cpp
