@@ -33,6 +33,7 @@ Basestation::Basestation(const boost::property_tree::ptree& config)
 		}
 	}
 	m_remote_drive.register_listen_handlers(m_subsystem_feed);
+	m_remote_sensors.register_listen_handlers(m_subsystem_feed);
 
 	Console::add_setup_routine([](Console& new_console) {
 		new_console.load_library("ctrl", lua_ctrl_lib::open);
