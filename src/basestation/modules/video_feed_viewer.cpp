@@ -2,23 +2,31 @@
 
 #include <nanogui/nanogui.h>
 #include <iostream>
+#include <widgets/layouts/simple_column.hpp>
+#include <widgets/layouts/simple_row.hpp>
 
 VideoFeedViewer* vid_feed = nullptr;
 
-VideoFeedViewer::VideoFeedViewer(nanogui::Screen *screen) :
-	nanogui::Window(screen, "Rover Feed"),
+nanogui::Vector2i VideoFeedViewer::preferred_size(NVGcontext* ctx) const {
+	return nanogui::Vector2i(
+		m_fixed_size.x() ? m_fixed_size.x() : m_size.x(),
+		m_fixed_size.y() ? m_fixed_size.y() : m_size.y()
+	);
+}
+
+VideoFeedViewer::VideoFeedViewer(nanogui::Widget* parent) :
+	gui::Window(parent, "Rover Feed", true),
 	decoder()
 {
 	vid_feed = this;
 
-	set_position(nanogui::Vector2i(15,15));
-	set_layout(new nanogui::GroupLayout());
-	set_size(nanogui::Vector2i(866, 528));
+	set_layout(new gui::SimpleColumnLayout(6, 6, 6, gui::SimpleColumnLayout::HorizontalAnchor::STRETCH));
 
 	video_widget = new nanogui::ImageView(this);
-	video_widget->set_size(nanogui::Vector2i(856,480));
-
-	perform_layout(screen->nvg_context());
+	
+	set_size(nanogui::min(nanogui::Vector2i(1280, 720), parent->size() - 100));
+	parent->perform_layout(screen()->nvg_context());
+	center();
 }
 
 void VideoFeedViewer::update_frame_STATIC(int stream, net::Frame& frame){
@@ -50,7 +58,5 @@ void VideoFeedViewer::update_frame(int stream, net::Frame& frame) {
 
 	next_frame->upload((uint8_t *) next_frame_buffer);
 	video_widget->set_image(next_frame);
-	video_widget->center();
-	video_widget->set_scale((float)856/Decoder::CAMERA_WIDTH);
 }
 
