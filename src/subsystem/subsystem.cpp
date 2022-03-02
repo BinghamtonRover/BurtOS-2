@@ -22,6 +22,8 @@ std::string subsystem_update_ip;
 std::chrono::steady_clock::time_point last_message_sent{};
 int message_interval_ms;
 
+ControlInformation rover_sensor_information;
+
 void read_subsystem_config(const std::string& fname) {
 	namespace ptree = boost::property_tree;
 	ptree::ptree subsystem_cfg;
@@ -140,6 +142,19 @@ int main() {
 				last_heartbeat_sent = time_now;
 			}
 
+			can_read_all([] (can_frame* frame) {
+				std::cout << "Got frame with id: " << frame->can_id << std::endl;
+
+				switch (frame->can_id) {
+					case can_id(Node::CONTROL_TEENSY, Command::TEENSY_DATA_PACKET_1):
+						parse_control_p1(rover_sensor_information, canframe_get_u64(frame));
+						break;
+					case can_id(Node::CONTROL_TEENSY, Command::TEENSY_DATA_PACKET_2):
+						parse_control_p2(rover_sensor_information, canframe_get_u64(frame));
+						break;
+				}
+			});
+
 			std::chrono::duration<double, std::milli> message_time_passed = time_now - last_message_sent;
 
 			if (message_time_passed.count() >= message_interval_ms) {
@@ -153,30 +168,28 @@ int main() {
 				mode_message.data.set_mode(new_mode);
 				sender.send_message(mode_message);
 
-				ControlInformation control_information = get_control_information();
-
 				sensor_msg::Battery battery_message;
 				//battery_message.data.set_battery_voltage(control_information.ps_batt);
 				battery_message.data.set_battery_voltage(can_read_float(Node::DRIVE_AXIS_0, Command::GET_VBUS_VOLTAGE));
-				battery_message.data.set_battery_current(control_information.main_curr);
+				battery_message.data.set_battery_current(rover_sensor_information.main_curr);
 				sender.send_message(battery_message);
 
 				sensor_msg::PowerSupply12V ps12_message;
-				ps12_message.data.set_v12_supply_voltage(control_information.ps12_volt);
-				ps12_message.data.set_v12_supply_current(control_information.ps12_curr);
-				ps12_message.data.set_v12_supply_temperature(control_information.temp12);
+				ps12_message.data.set_v12_supply_voltage(rover_sensor_information.ps12_volt);
+				ps12_message.data.set_v12_supply_current(rover_sensor_information.ps12_curr);
+				ps12_message.data.set_v12_supply_temperature(rover_sensor_information.temp12);
 				sender.send_message(ps12_message);
 
 				sensor_msg::PowerSupply5V ps5_message;
-				ps5_message.data.set_v5_supply_voltage(control_information.ps5_volt);
-				ps5_message.data.set_v5_supply_current(control_information.ps5_curr);
-				ps5_message.data.set_v5_supply_temperature(control_information.temp5);
+				ps5_message.data.set_v5_supply_voltage(rover_sensor_information.ps5_volt);
+				ps5_message.data.set_v5_supply_current(rover_sensor_information.ps5_curr);
+				ps5_message.data.set_v5_supply_temperature(rover_sensor_information.temp5);
 				sender.send_message(ps5_message);
 
 				sensor_msg::Odrive odrv_message;
-				odrv_message.data.set_odrive0_current(control_information.odrv0_curr);
-				odrv_message.data.set_odrive1_current(control_information.odrv1_curr);
-				odrv_message.data.set_odrive2_current(control_information.odrv2_curr);
+				odrv_message.data.set_odrive0_current(rover_sensor_information.odrv0_curr);
+				odrv_message.data.set_odrive1_current(rover_sensor_information.odrv1_curr);
+				odrv_message.data.set_odrive2_current(rover_sensor_information.odrv2_curr);
 				sender.send_message(odrv_message);
 
 				last_message_sent = std::chrono::steady_clock::now();

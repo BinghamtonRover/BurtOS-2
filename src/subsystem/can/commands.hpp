@@ -2,6 +2,7 @@
 
 #include <cstring>
 #include <chrono>
+#include <functional>
 #include <fcntl.h>
 
 #ifdef ONBOARD_CAN_BUS
@@ -13,7 +14,14 @@
 #include <linux/can.h>
 #include <linux/can/raw.h>
 #else
+
 #warning Compiling rover_can in offline mode
+
+// Declare that can_frame exists so offline devices can still compile
+extern "C" {
+	struct can_frame;
+}
+
 #endif
 
 #include "constants.hpp"
@@ -36,6 +44,13 @@ int can_request(Node device, Command command);
 float can_read_float(Node device, Command command);
 int can_read_int(Node device, Command command);
 long long can_read_long(Node device, Command command);
+void can_read_all(const std::function<void(can_frame*)>& read_callback);
+
+constexpr int can_id(Node device, Command command) {
+	return command | (device << 5);
+}
+
+uint64_t canframe_get_u64(can_frame* frame);
 
 //Recieve a CAN message
 unsigned int can_receive(Node device, Command command);
@@ -46,6 +61,10 @@ bool can_check_hearbeat(Node device);
 
 //Receive all the vital information from each specific teensy
 ControlInformation get_control_information();
+void parse_control_information(ControlInformation& write_to, uint64_t p1, uint64_t p2);
+void parse_control_p1(ControlInformation& write_to, uint64_t p1);
+void parse_control_p2(ControlInformation& write_to, uint64_t p2);
+
 ArmInformation get_arm_information();
 GripperInformation get_gripper_information();
 EAInformation get_environmental_analysis_information();

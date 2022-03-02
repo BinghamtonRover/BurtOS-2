@@ -168,6 +168,23 @@ unsigned int can_receive(Node device, Command command) {
     return return_value;
 }
 
+void can_read_all(const std::function<void(can_frame*)>& callback) {
+    if (socket_open) {
+        can_frame received_frame;
+        
+        while (read(can_socket, &received_frame, sizeof(can_frame)) > 0) {
+            callback(&received_frame);
+        }
+    }
+}
+
+uint64_t canframe_get_u64(can_frame* frame) {
+    uint64_t x = 0;
+    for (int i = 0; i < 8; i++) {
+        x |= ((uint64_t)(frame->data[i]) << (8 * (-i + 7)));
+    }
+    return x;
+}
 //receive a CAN message
 long long can_receive_long(Node device, Command command) {
     //Define return value
@@ -277,6 +294,28 @@ ControlInformation get_control_information() {
     ret.main_curr = (float((0x000000FF00000000l & p2) >> 32)) / 10.0f;
     status = CAN_Status::SUCCESS;
     return ret;
+}
+
+void parse_control_information(ControlInformation& write_to, uint64_t p1, uint64_t p2) {
+    parse_control_p1(write_to, p1);
+    parse_control_p2(write_to, p2);
+}
+
+void parse_control_p1(ControlInformation& write_to, uint64_t p1) {
+    write_to.ps_batt = (float(((0xFF00000000000000l & p1) >> 56) | ((0x00FF000000000000l & p1) >> 40))) / 10.0f;
+    write_to.ps12_volt = (float((0x0000FF0000000000l & p1) >> 40)) / 10.0f;
+    write_to.ps5_volt = (float((0x000000FF00000000l & p1) >> 32)) / 10.0f;
+    write_to.ps12_curr = (float((0x00000000FF000000l & p1) >> 24)) / 10.0f;
+    write_to.ps5_curr = (float((0x0000000000FF0000l & p1) >> 16)) / 10.0f;
+    write_to.temp12 = (float((0x000000000000FF00l & p1) >> 8)) / 10.0f;
+    write_to.temp5 = (float(0x00000000000000FFl & p1)) / 10.0f;   
+}
+
+void parse_control_p2(ControlInformation& write_to, uint64_t p2) {
+    write_to.odrv0_curr = (float((0xFF00000000000000l & p2) >> 56)) / 10.0f;
+    write_to.odrv1_curr = (float((0x00FF000000000000l & p2) >> 48)) / 10.0f;
+    write_to.odrv2_curr = (float((0x0000FF0000000000l & p2) >> 40)) / 10.0f;
+    write_to.main_curr = (float((0x000000FF00000000l & p2) >> 32)) / 10.0f;
 }
 
 //Receive all the information from the arm
