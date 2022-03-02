@@ -2,6 +2,7 @@
 #include <basestation.hpp>
 
 #include <modules/console.hpp>
+#include <modules/statusbar.hpp>
 
 ScreenPositioning::ScreenPositioning(const nanogui::Vector2i& size, const nanogui::Vector2i& window_pos, int monitor, bool use_fullscreen) :
 	size(size),
@@ -14,6 +15,14 @@ ScreenPositioning::ScreenPositioning(const nanogui::Vector2i& size, const nanogu
 BasestationScreen::BasestationScreen(const ScreenPositioning& pos)
 	: nanogui::Screen(pos.size, "Base Station - Binghamton University Rover Team", true, pos.use_fullscreen),
 	position(pos) {
+
+	// Theme Constants
+	// Future: When fancy dynamic themes are supported, remove this section
+	m_theme->m_window_drop_shadow_size = 0;
+	m_theme->m_window_fill_focused.a() = 1.0F;
+	m_theme->m_window_fill_unfocused.a() = 1.0F;
+
+	new gui::Statusbar(this);
 
 	perform_layout();
 	draw_all();
@@ -131,6 +140,8 @@ bool BasestationScreen::resize_event(const nanogui::Vector2i& size) {
 	if (!m_fullscreen) {
 		position.size = m_size;
 	}
+
+	perform_layout();
 
 	return ret;
 }

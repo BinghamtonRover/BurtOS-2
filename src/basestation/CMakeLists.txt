@@ -2,6 +2,7 @@ set(MODULE_HDR
 	modules/console.hpp
 	modules/network_settings.cpp
 	modules/drive_stats.hpp
+	modules/statusbar.hpp
 	modules/input_config/controller_config.hpp
 	modules/input_config/controller_calibration_popup.hpp
 	modules/input_config/controller_binding_popup.hpp
@@ -10,6 +11,7 @@ set(MODULE_SRC
 	modules/console.cpp
 	modules/network_settings.cpp
 	modules/drive_stats.cpp
+	modules/statusbar.cpp
 	modules/input_config/controller_config.cpp
 	modules/input_config/controller_calibration_popup.cpp
 	modules/input_config/controller_binding_popup.cpp
@@ -19,6 +21,8 @@ set(WIDGET_HDR
 	widgets/window.hpp
 	widgets/textarea.hpp
 	widgets/functionbox.hpp
+	widgets/tray.hpp
+	widgets/toolbar.hpp
 	widgets/layouts/simple_row.hpp
 	widgets/layouts/simple_column.hpp
 )
@@ -26,6 +30,8 @@ set(WIDGET_SRC
 	widgets/window.cpp
 	widgets/textarea.cpp
 	widgets/functionbox.cpp
+	widgets/tray.cpp
+	widgets/toolbar.cpp
 	widgets/layouts/simple_row.cpp
 	widgets/layouts/simple_column.cpp
 )

@@ -101,6 +101,7 @@ void Basestation::read_settings(const boost::property_tree::ptree& settings_tree
 
 			try {
 				m_subsystem_feed.set_listen_endpoint(feed_ep);
+				m_subsystem_feed.set_multicast(use_multicast);
 
 				if (enable && (ip || !use_multicast) && port && !m_subsystem_feed.opened()) {
 					m_subsystem_feed.open();
