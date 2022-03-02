@@ -178,6 +178,15 @@ void net::StreamReceiver::close() {
 		socket.close();
 }
 
+void net::StreamReceiver::set_multicast(bool on) {
+	if (on != use_multicast) {
+		use_multicast = on;
+		if (socket.is_open()) {
+			open();
+		}
+	}
+}
+
 void net::StreamReceiver::set_listen_port(uint_least16_t port) {
 	use_multicast = false;
 	listen_ep.port(port);
@@ -260,10 +269,13 @@ void net::StreamReceiver::receive() {
 				}
 
 			}
-		} else if (error && error != boost::asio::error::operation_aborted) {
-			m_error_emitter(error);
 		}
-		receive();
+		// If the socket was closed, silently exit
+		if (error != boost::asio::error::operation_aborted) {
+			if (error)
+				m_error_emitter(error);
+			receive();
+		}
 	});
 }
 

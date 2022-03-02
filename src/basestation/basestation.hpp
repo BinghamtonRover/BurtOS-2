@@ -48,6 +48,9 @@ class Basestation {
 		inline net::MessageReceiver& subsystem_feed() {
 			return m_subsystem_feed;
 		}
+		inline net::StreamReceiver& video_stream_feed() {
+			return video_feed_receiver;
+		}
 		inline DriveInput& remote_drive() {
 			return m_remote_drive;
 		}
