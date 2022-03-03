@@ -28,7 +28,7 @@ Basestation::Basestation(const boost::property_tree::ptree& config)
 	for (auto& dev : controller_mgr.devices()) {
 		if (dev.present() && dev.is_gamepad()) {
 			dev.get_gamepad_axis(gamepad::right_trigger).set_action(controller_mgr.find_action("Accelerate"));
-			dev.get_gamepad_axis(gamepad::left_x).set_action(controller_mgr.find_action("Steer"));
+			dev.get_gamepad_axis(gamepad::left_x).set_action(controller_mgr.find_action("Steer (180)"));
 			dev.get_gamepad_axis(gamepad::left_trigger).set_action(controller_mgr.find_action("Reverse"));
 		}
 	}

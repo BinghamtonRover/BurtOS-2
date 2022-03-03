@@ -9,8 +9,26 @@
 #include <modules/console.hpp>
 #include <modules/network_settings.hpp>
 #include <modules/electrical_info.hpp>
+#include <modules/drive_stats.hpp>
+#include <modules/input_config/controller_config.hpp>
 
 gui::Statusbar::Statusbar(nanogui::Widget* parent) : gui::Toolbar(parent) {
+	{
+		auto controller_button = new nanogui::ToolButton(left_tray(), FA_GAMEPAD);
+		controller_button->set_flags(nanogui::Button::NormalButton);
+		controller_button->set_callback([this] {
+			auto wnd = new ControllerConfig(screen(), Basestation::get().controller_manager());
+			wnd->center();
+		});
+	}
+	{
+		auto drive_button = new nanogui::ToolButton(right_tray(), FA_COGS);
+		drive_button->set_flags(nanogui::Button::NormalButton);
+		drive_button->set_callback([this] {
+			auto wnd = new DriveStats(screen());
+			wnd->center();
+		});
+	}
 	{
 		battery_button = new nanogui::ToolButton(right_tray(), FA_BATTERY_FULL);
 		battery_button->set_flags(nanogui::Button::NormalButton);
