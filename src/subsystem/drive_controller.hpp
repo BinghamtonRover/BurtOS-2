@@ -29,7 +29,7 @@ class DriveController {
 		constexpr static float GEARBOX_RATIO = 6.923F;
 		constexpr static float WHEEL_DIAMETER_METERS = 0.271F;
 		constexpr static float MAX_SPEED = 2.1F;
-		constexpr static double CALIBRATION_TIME = 15.0;
+		constexpr static double CALIBRATION_TIME = 20.0;
 
 		// Desired movement parameters for primary drive mode
 		float target_velocity_mps = 0.0F;
