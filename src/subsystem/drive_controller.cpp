@@ -69,12 +69,12 @@ void DriveController::update_motor_acceleration() {
 		left_speed = target_left_speed;
 		right_speed = target_right_speed;
 	}
-	can_send(Node::DRIVE_AXIS_5, Command::SET_INPUT_VEL, right_speed);
-	can_send(Node::DRIVE_AXIS_4, Command::SET_INPUT_VEL, left_speed);
-	can_send(Node::DRIVE_AXIS_3, Command::SET_INPUT_VEL, right_speed);
-	can_send(Node::DRIVE_AXIS_2, Command::SET_INPUT_VEL, left_speed);
-	can_send(Node::DRIVE_AXIS_1, Command::SET_INPUT_VEL, right_speed);
-	can_send(Node::DRIVE_AXIS_0, Command::SET_INPUT_VEL, left_speed);
+	can_send(Node::DRIVE_AXIS_5, Command::SET_INPUT_VEL, -left_speed);
+	can_send(Node::DRIVE_AXIS_4, Command::SET_INPUT_VEL, right_speed);
+	can_send(Node::DRIVE_AXIS_3, Command::SET_INPUT_VEL, -left_speed);
+	can_send(Node::DRIVE_AXIS_2, Command::SET_INPUT_VEL, right_speed);
+	can_send(Node::DRIVE_AXIS_1, Command::SET_INPUT_VEL, -left_speed);
+	can_send(Node::DRIVE_AXIS_0, Command::SET_INPUT_VEL, right_speed);
 
 	time_can_updated = std::chrono::steady_clock::now();
 }
