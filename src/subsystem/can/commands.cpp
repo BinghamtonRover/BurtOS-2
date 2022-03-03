@@ -302,7 +302,7 @@ void parse_control_information(ControlInformation& write_to, uint64_t p1, uint64
 }
 
 void parse_control_p1(ControlInformation& write_to, uint64_t p1) {
-    write_to.ps_batt = (float(((0xFF00000000000000l & p1) >> 56) | ((0x00FF000000000000l & p1) >> 40))) / 10.0f;
+    //write_to.ps_batt = (float(((0xFF00000000000000l & p1) >> 56) | ((0x00FF000000000000l & p1) >> 40))) / 10.0f;
     write_to.ps12_volt = (float((0x0000FF0000000000l & p1) >> 40)) / 10.0f;
     write_to.ps5_volt = (float((0x000000FF00000000l & p1) >> 32)) / 10.0f;
     write_to.ps12_curr = (float((0x00000000FF000000l & p1) >> 24)) / 10.0f;
