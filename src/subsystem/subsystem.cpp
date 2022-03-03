@@ -143,8 +143,6 @@ int main() {
 			}
 
 			can_read_all([] (can_frame* frame) {
-				std::cout << "Got frame with id: " << frame->can_id << std::endl;
-
 				switch (frame->can_id) {
 					case can_id(Node::CONTROL_TEENSY, Command::TEENSY_DATA_PACKET_1):
 						parse_control_p1(rover_sensor_information, canframe_get_u64(frame));
@@ -160,7 +158,6 @@ int main() {
 						union { unsigned int ul; float fl; } conv = { .ul = v };
 						rover_sensor_information.ps_batt = conv.fl;
 						break;
-
 				}
 			});
 
