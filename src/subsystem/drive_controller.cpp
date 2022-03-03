@@ -117,13 +117,13 @@ void DriveController::update_motor_calibration() {
 		calibration_stage++;
 		//Start calibration sequence
 		if (calibration_stage <= 5) {
-			can_send(static_cast<Node>(calibration_stage), Command::SET_AXIS_REQUESTED_STATE, 3); //START INIT SEQUENCE
+			can_send(static_cast<Node>(calibration_stage + 1), Command::SET_AXIS_REQUESTED_STATE, 3); //START INIT SEQUENCE
 		}
 
 		//Set motors settings of previously calibrated motor
 		if (calibration_stage > 0) {
-			can_send(static_cast<Node>(calibration_stage - 1), Command::SET_AXIS_REQUESTED_STATE, 8); //AXIS_STATE_CLOSED_LOOP_CONTROL
-			can_send(static_cast<Node>(calibration_stage - 1), Command::SET_CONTROLLER_MODES, 2);     //CONTROL_MODE_VELOCITY_CONTROL
+			can_send(static_cast<Node>(calibration_stage), Command::SET_AXIS_REQUESTED_STATE, 8); //AXIS_STATE_CLOSED_LOOP_CONTROL
+			can_send(static_cast<Node>(calibration_stage), Command::SET_CONTROLLER_MODES, 2);     //CONTROL_MODE_VELOCITY_CONTROL
 		}
 	}
 
