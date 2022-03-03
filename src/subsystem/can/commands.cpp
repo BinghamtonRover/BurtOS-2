@@ -437,7 +437,7 @@ bool can_open_socket() {
 
     //Set socket to "non-blocking" (for reading)
     int flags = fcntl(can_socket, F_GETFL);
-    flags |= ~(O_NONBLOCK);
+    flags |= O_NONBLOCK;
     fcntl(can_socket, F_SETFL, flags);
 
     //Disable receive filter, then open socket
