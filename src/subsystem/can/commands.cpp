@@ -54,7 +54,7 @@ int can_send(Node device, Command command, int num_bytes, unsigned int data) {
 }
 
 //Send out a can request read message
-int can_request(Node device, Command command) {
+int can_request(Node device, Command command, float f) {
     //Set status to unset
     status = CAN_Status::UNSET;
 
@@ -64,7 +64,7 @@ int can_request(Node device, Command command) {
     
     //Create the frame
     can_frame frame;
-    frame = get_can_request_frame(0, device, command);
+    frame = get_can_request_frame(0, device, command, f);
 
     //Write the frame
     if (write(can_socket, &frame, 16) != 16) {
@@ -135,7 +135,7 @@ unsigned int can_receive(Node device, Command command) {
 
     //Request the frame (odrive only)
     if (is_odrive_device(device)) {
-        can_request(device, command);
+        can_request(device, command, 0.0f);
         if (!can_status_success()) {
             return 0;
         }
@@ -168,6 +168,23 @@ unsigned int can_receive(Node device, Command command) {
     return return_value;
 }
 
+void can_read_all(const std::function<void(can_frame*)>& callback) {
+    if (socket_open) {
+        can_frame received_frame;
+
+        while (read(can_socket, &received_frame, sizeof(can_frame)) > 0) {
+            callback(&received_frame);
+        }
+    }
+}
+
+uint64_t canframe_get_u64(can_frame* frame) {
+    uint64_t x = 0;
+    for (int i = 0; i < 8; i++) {
+        x |= ((uint64_t)(frame->data[i]) << (8 * (-i + 7)));
+    }
+    return x;
+}
 //receive a CAN message
 long long can_receive_long(Node device, Command command) {
     //Define return value
@@ -279,6 +296,28 @@ ControlInformation get_control_information() {
     return ret;
 }
 
+void parse_control_information(ControlInformation& write_to, uint64_t p1, uint64_t p2) {
+    parse_control_p1(write_to, p1);
+    parse_control_p2(write_to, p2);
+}
+
+void parse_control_p1(ControlInformation& write_to, uint64_t p1) {
+    //write_to.ps_batt = (float(((0xFF00000000000000l & p1) >> 56) | ((0x00FF000000000000l & p1) >> 40))) / 10.0f;
+    write_to.ps12_volt = (float((0x0000FF0000000000l & p1) >> 40)) / 10.0f;
+    write_to.ps5_volt = (float((0x000000FF00000000l & p1) >> 32)) / 10.0f;
+    write_to.ps12_curr = (float((0x00000000FF000000l & p1) >> 24)) / 10.0f;
+    write_to.ps5_curr = (float((0x0000000000FF0000l & p1) >> 16)) / 10.0f;
+    write_to.temp12 = (float((0x000000000000FF00l & p1) >> 8)) / 10.0f;
+    write_to.temp5 = (float(0x00000000000000FFl & p1)) / 10.0f;   
+}
+
+void parse_control_p2(ControlInformation& write_to, uint64_t p2) {
+    write_to.odrv0_curr = (float((0xFF00000000000000l & p2) >> 56)) / 10.0f;
+    write_to.odrv1_curr = (float((0x00FF000000000000l & p2) >> 48)) / 10.0f;
+    write_to.odrv2_curr = (float((0x0000FF0000000000l & p2) >> 40)) / 10.0f;
+    write_to.main_curr = (float((0x000000FF00000000l & p2) >> 32)) / 10.0f;
+}
+
 //Receive all the information from the arm
 ArmInformation get_arm_information() {
     //return information
@@ -354,13 +393,20 @@ can_frame get_can_frame(int modifier, Node device, Command command, int num_byte
 }
 
 //Create a frame for receiving
-can_frame get_can_request_frame(int modifier, Node device, Command command) {
+can_frame get_can_request_frame(int modifier, Node device, Command command, float f) {
     can_frame frame;
     frame.can_id = (0x40000000) | command | (device << 5) | (modifier << 8);
     frame.can_dlc = 0;
     frame.__pad = 0;
     frame.__res0 = 0;
     frame.__res1 = 0;
+    union { unsigned int ul; float fl; } conv = { .fl = f };
+    for (int i = 0; i < 4; i++) {
+        frame.data[i] = (conv.ul >> (8 * (3 - i))) & 0xFF;
+    }
+    for (int i = 4; i < 8; i++) {
+        frame.data[i] = 0;
+    }
     return frame;
 }
 #endif
@@ -398,7 +444,7 @@ bool can_open_socket() {
 
     //Set socket to "non-blocking" (for reading)
     int flags = fcntl(can_socket, F_GETFL);
-    flags |= ~(O_NONBLOCK);
+    flags |= O_NONBLOCK;
     fcntl(can_socket, F_SETFL, flags);
 
     //Disable receive filter, then open socket

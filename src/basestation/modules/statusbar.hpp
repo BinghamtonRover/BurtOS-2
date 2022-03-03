@@ -7,6 +7,7 @@
 #pragma once
 
 #include <widgets/toolbar.hpp>
+#include <events.hpp>
 #include <chrono>
 
 namespace gui {
@@ -24,7 +25,12 @@ class Statusbar : public gui::Toolbar {
 		void place_in_right_corner(nanogui::Window* wnd);
 
 		nanogui::Button* network_button;
+		nanogui::Button* battery_button;
 		std::chrono::steady_clock::time_point next_net_animation;
+
+		event::Handler battery_event;
+		// Start with true so the initial value won't send a notification
+		bool low_battery_notified = true;
 };
 
 }
