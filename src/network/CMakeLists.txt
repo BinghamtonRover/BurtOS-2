@@ -1,7 +1,7 @@
 find_package(Protobuf REQUIRED)
 add_library(network network.hpp network.cpp network_util.hpp messages.hpp messages.cpp stream.hpp stream.cpp)
 
-find_package(Boost 1.71.0 REQUIRED)
+find_package(Boost REQUIRED)
 if (WIN32)
 	message(STATUS "Boost target is WIN32")
 	target_link_libraries(network PUBLIC wsock32 ws2_32)
