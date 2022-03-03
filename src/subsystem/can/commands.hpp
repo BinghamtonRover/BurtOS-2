@@ -38,7 +38,7 @@ int can_send(Node device, Command command, float data);
 int can_send(Node device, Command command, int num_bytes, unsigned int data);
 
 //Send out a can request read message
-int can_request(Node device, Command command);
+int can_request(Node device, Command command, float f);
 
 //Request to read a CAN message
 float can_read_float(Node device, Command command);
@@ -72,7 +72,7 @@ EAInformation get_environmental_analysis_information();
 #ifdef ONBOARD_CAN_BUS
 //Create a can frame
 can_frame get_can_frame(int modifier, Node device, Command command, int num_bytes, unsigned int data);
-can_frame get_can_request_frame(int modifier, Node device, Command command);
+can_frame get_can_request_frame(int modifier, Node device, Command command, float f);
 #endif
 
 //Converts unsigned int to big endian

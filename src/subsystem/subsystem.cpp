@@ -152,6 +152,15 @@ int main() {
 					case can_id(Node::CONTROL_TEENSY, Command::TEENSY_DATA_PACKET_2):
 						parse_control_p2(rover_sensor_information, canframe_get_u64(frame));
 						break;
+					case can_id(Node::DRIVE_AXIS_0, Command::GET_VBUS_VOLTAGE):
+						unsigned int v = 0;
+						for (int i = 0; i < 4; i++) {
+							v |= ((unsigned int)frame->data[i] << (8 * i));
+						}
+						union { unsigned int ul; float fl; } conv = { .ul = v };
+						rover_sensor_information.ps_batt = conv.fl;
+						break;
+
 				}
 			});
 
@@ -169,8 +178,9 @@ int main() {
 				sender.send_message(mode_message);
 
 				sensor_msg::Battery battery_message;
-				//battery_message.data.set_battery_voltage(control_information.ps_batt);
-				battery_message.data.set_battery_voltage(can_read_float(Node::DRIVE_AXIS_0, Command::GET_VBUS_VOLTAGE));
+				battery_message.data.set_battery_voltage(rover_sensor_information.ps_batt);
+				can_request(Node::DRIVE_AXIS_0, Command::GET_VBUS_VOLTAGE, rover_sensor_information.ps_batt);
+				//battery_message.data.set_battery_voltage(can_read_float(Node::DRIVE_AXIS_0, Command::GET_VBUS_VOLTAGE));
 				battery_message.data.set_battery_current(rover_sensor_information.main_curr);
 				sender.send_message(battery_message);
 

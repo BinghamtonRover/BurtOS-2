@@ -54,7 +54,7 @@ int can_send(Node device, Command command, int num_bytes, unsigned int data) {
 }
 
 //Send out a can request read message
-int can_request(Node device, Command command) {
+int can_request(Node device, Command command, float f) {
     //Set status to unset
     status = CAN_Status::UNSET;
 
@@ -64,7 +64,7 @@ int can_request(Node device, Command command) {
     
     //Create the frame
     can_frame frame;
-    frame = get_can_request_frame(0, device, command);
+    frame = get_can_request_frame(0, device, command, f);
 
     //Write the frame
     if (write(can_socket, &frame, 16) != 16) {
@@ -135,7 +135,7 @@ unsigned int can_receive(Node device, Command command) {
 
     //Request the frame (odrive only)
     if (is_odrive_device(device)) {
-        can_request(device, command);
+        can_request(device, command, 0.0f);
         if (!can_status_success()) {
             return 0;
         }
@@ -171,7 +171,7 @@ unsigned int can_receive(Node device, Command command) {
 void can_read_all(const std::function<void(can_frame*)>& callback) {
     if (socket_open) {
         can_frame received_frame;
-        
+
         while (read(can_socket, &received_frame, sizeof(can_frame)) > 0) {
             callback(&received_frame);
         }
@@ -393,13 +393,20 @@ can_frame get_can_frame(int modifier, Node device, Command command, int num_byte
 }
 
 //Create a frame for receiving
-can_frame get_can_request_frame(int modifier, Node device, Command command) {
+can_frame get_can_request_frame(int modifier, Node device, Command command, float f) {
     can_frame frame;
     frame.can_id = (0x40000000) | command | (device << 5) | (modifier << 8);
     frame.can_dlc = 0;
     frame.__pad = 0;
     frame.__res0 = 0;
     frame.__res1 = 0;
+    union { unsigned int ul; float fl; } conv = { .fl = f };
+    for (int i = 0; i < 4; i++) {
+        frame.data[i] = (conv.ul >> (8 * (3 - i))) & 0xFF;
+    }
+    for (int i = 4; i < 8; i++) {
+        frame.data[i] = 0;
+    }
     return frame;
 }
 #endif
