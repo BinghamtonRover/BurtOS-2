@@ -33,7 +33,11 @@ void DriveInput::add_controller_actions(ControllerManager& m) {
 		controller_rev_speed = JoystickAxis::axis_to_percent(x) * controller_speed_cap;
 	}, -1.0F);
 
-	m.add_axis_action("Steer", [this](float x) {
+	m.add_axis_action("Steer (90)", [this](float x) {
 		controller_angle = x * 90.0F;
+	}, 0.0F);
+
+	m.add_axis_action("Steer (180)", [this](float x) {
+		controller_angle = x * 180.0F;
 	}, 0.0F);
 }

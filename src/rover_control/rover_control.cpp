@@ -96,3 +96,66 @@ float rc::Drive::get_actual_right_speed() {
 ::drive::DriveMode_Mode rc::Drive::get_actual_drive_mode() {
 	return actual_drive_mode;
 }
+
+
+void rc::Sensor::register_listen_handlers(net::MessageReceiver& m) {
+	m.register_handler<sensor_msg::Battery>([this](const uint8_t buf[], std::size_t len) {
+		sensor::Battery msg;
+		if (msg.ParseFromArray(buf, len)) {
+			last_update_received = std::chrono::steady_clock::now();
+			if (msg.battery_voltage() != battery_voltage || msg.battery_current() != battery_current) {
+				battery_voltage = msg.battery_voltage();
+				battery_current = msg.battery_current();
+				EVENT_BATTERY_SENSOR(battery_voltage, battery_current);
+			}
+		}
+	});
+	m.register_handler<sensor_msg::PowerSupply12V>([this](const uint8_t buf[], std::size_t len) {
+		sensor::PowerSupply12V msg;
+		if (msg.ParseFromArray(buf, len)) {
+			last_update_received = std::chrono::steady_clock::now();
+			if (msg.v12_supply_voltage() != v12_supply_voltage || msg.v12_supply_current() != v12_supply_current || msg.v12_supply_temperature() != v12_supply_temperature) {
+				v12_supply_voltage = msg.v12_supply_voltage();
+				v12_supply_current = msg.v12_supply_current();
+				v12_supply_temperature = msg.v12_supply_temperature();
+				EVENT_POWERSUPPLY12V_SENSOR(v12_supply_voltage, v12_supply_current, v12_supply_temperature);
+			}
+		}
+	});
+	m.register_handler<sensor_msg::PowerSupply5V>([this](const uint8_t buf[], std::size_t len) {
+		sensor::PowerSupply5V msg;
+		if (msg.ParseFromArray(buf, len)) {
+			last_update_received = std::chrono::steady_clock::now();
+			if (msg.v5_supply_voltage() != v5_supply_voltage || msg.v5_supply_current() != v5_supply_current || msg.v5_supply_temperature() != v5_supply_temperature) {
+				v5_supply_voltage = msg.v5_supply_voltage();
+				v5_supply_current = msg.v5_supply_current();
+				v5_supply_temperature = msg.v5_supply_temperature();
+				EVENT_POWERSUPPLY5V_SENSOR(v5_supply_voltage, v5_supply_current, v5_supply_temperature);
+			}
+		}
+	});
+	m.register_handler<sensor_msg::Odrive>([this](const uint8_t buf[], std::size_t len) {
+		sensor::Odrive msg;
+		if (msg.ParseFromArray(buf, len)) {
+			last_update_received = std::chrono::steady_clock::now();
+			if (msg.odrive0_current() != odrive0_current || msg.odrive1_current() != odrive1_current || msg.odrive2_current() != odrive2_current) {
+				odrive0_current = msg.odrive0_current();
+				odrive1_current = msg.odrive1_current();
+				odrive2_current = msg.odrive2_current();
+				EVENT_ODRIVE_SENSOR(odrive0_current, odrive1_current, odrive2_current);
+			}
+		}
+	});
+}
+
+float rc::Sensor::get_battery_voltage() { return battery_voltage; }
+float rc::Sensor::get_battery_current() { return battery_current; }
+float rc::Sensor::get_v12_supply_voltage() { return v12_supply_voltage; }
+float rc::Sensor::get_v12_supply_current() { return v12_supply_current; }
+float rc::Sensor::get_v12_supply_temperature() { return v12_supply_temperature; }
+float rc::Sensor::get_v5_supply_voltage() { return v5_supply_voltage; }
+float rc::Sensor::get_v5_supply_current() { return v5_supply_current; }
+float rc::Sensor::get_v5_supply_temperature() { return v5_supply_temperature; }
+float rc::Sensor::get_odrive0_current() { return odrive0_current; }
+float rc::Sensor::get_odrive1_current() { return odrive1_current; }
+float rc::Sensor::get_odrive2_current() { return odrive2_current; }

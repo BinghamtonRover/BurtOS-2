@@ -20,7 +20,8 @@ message DriveMode {
 	enum Mode {
 		NEUTRAL = 0;
 		DRIVE = 1;
-		COUNT = 2;
+		CALIBRATING = 2;
+		COUNT = 3;
 	}
 
 	Mode mode = 1;

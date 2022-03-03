@@ -29,11 +29,12 @@ Basestation::Basestation(const boost::property_tree::ptree& config)
 	for (auto& dev : controller_mgr.devices()) {
 		if (dev.present() && dev.is_gamepad()) {
 			dev.get_gamepad_axis(gamepad::right_trigger).set_action(controller_mgr.find_action("Accelerate"));
-			dev.get_gamepad_axis(gamepad::left_x).set_action(controller_mgr.find_action("Steer"));
+			dev.get_gamepad_axis(gamepad::left_x).set_action(controller_mgr.find_action("Steer (180)"));
 			dev.get_gamepad_axis(gamepad::left_trigger).set_action(controller_mgr.find_action("Reverse"));
 		}
 	}
 	m_remote_drive.register_listen_handlers(m_subsystem_feed);
+	m_remote_sensors.register_listen_handlers(m_subsystem_feed);
 
 	//TODO: Dynamically get port number (maybe from config file)
 	boost::asio::ip::udp::endpoint vid_address(
@@ -264,6 +265,7 @@ const struct luaL_Reg Basestation::lua_basestation_lib::lib[] = {
 	{"new_screen", new_screen},
 	{"new_module", open_module},
 	{"set_throttle", set_throttle},
+	{"initialize_drive", initialize_drive},
 	{NULL, NULL}
 };
 
@@ -333,4 +335,9 @@ int Basestation::lua_basestation_lib::new_screen(lua_State*) {
 
 void Basestation::lua_basestation_lib::open(lua_State* L) {
 	luaL_newlib(L, lib);
+}
+
+int Basestation::lua_basestation_lib::initialize_drive(lua_State* L) {
+	Basestation::get().remote_drive().set_drive_mode(drive::DriveMode_Mode_CALIBRATING);
+	return 0;
 }

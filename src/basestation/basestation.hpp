@@ -54,6 +54,9 @@ class Basestation {
 		inline DriveInput& remote_drive() {
 			return m_remote_drive;
 		}
+		inline rc::Sensor& remote_sensors() {
+			return m_remote_sensors;
+		}
 
 		void schedule(const std::function<void(Basestation&)>& callback);
 		
@@ -73,6 +76,7 @@ class Basestation {
 			static int new_screen(lua_State*);
 			static int open_module(lua_State*);
 			static int set_throttle(lua_State*);
+			static int initialize_drive(lua_State*);
 
 			static void open(lua_State*);
 		};
@@ -87,6 +91,7 @@ class Basestation {
 		net::MessageReceiver m_subsystem_feed;
 		net::StreamReceiver video_feed_receiver;
 		DriveInput m_remote_drive;
+		rc::Sensor m_remote_sensors;
 
 		event::Handler log_feed_error;
 		event::Handler log_sender_error;
