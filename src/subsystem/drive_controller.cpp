@@ -131,5 +131,6 @@ void DriveController::update_motor_calibration() {
 		current_mode = DriveMode::NEUTRAL;
 		time_can_updated = std::chrono::steady_clock::now();
 		calibration_stage = -1;
+		last_active_time = std::chrono::steady_clock::now();
 	}
 }
