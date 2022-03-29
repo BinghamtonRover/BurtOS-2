@@ -154,7 +154,7 @@ void net::MessageReceiver::bind() {
 		throw std::runtime_error("MessageReceiver::bind: multicast not implemented");
 	} else {
 		socket.open(listen_ep.protocol());
-		socket.bind(listen_ep);
+		socket.bind(boost::asio::ip::udp::endpoint(listen_ep.protocol(), listen_ep.port()));
 		std::cout << "bind complete\n";
 	}
 	listen();
