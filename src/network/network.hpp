@@ -44,9 +44,8 @@ class MessageSender {
 		inline bool enabled() const { return !pause_sending; }
 		inline event::Emitter<const boost::system::error_code&>& event_send_error() { return error_emitter; }
 
-		// Close and reopen the socket
-		void reset();
 	private:
+		// This socket will be opened automatically when a destination endpoint is provided
 		boost::asio::ip::udp::socket socket;
 		Destination dest;
 		DoubleBuffer<uint8_t> msg_buffer;

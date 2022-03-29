@@ -83,25 +83,31 @@ void net::MessageSender::disable() {
 net::MessageSender::MessageSender(boost::asio::io_context& io_context, const Destination& device_ip)
 		: socket(io_context), dest(device_ip), destination_provided(true) {
 
-	socket.open(boost::asio::ip::udp::v4());
+	socket.open(device_ip.protocol());
 }
 
 net::MessageSender::MessageSender(boost::asio::io_context& io_context)
-		: socket(io_context), destination_provided(false) {
-
-	socket.open(boost::asio::ip::udp::v4());
-}
+		: socket(io_context), destination_provided(false) {}
 
 void net::MessageSender::set_destination_endpoint(const Destination& endpoint) {
+	// Reopen the socket with the new protocol if they don't match
+	bool reopen = dest.protocol() != endpoint.protocol();
+
+	// Endpoint assignment is not atomic, so make sure sending cannot restart until this is finished
+	std::lock_guard lock(async_start_lock);
 	dest = endpoint;
 	destination_provided = true;
+
+	if (reopen || !socket.is_open()) {
+
+		if (socket.is_open())
+			socket.close();
+
+		socket.open(dest.protocol());
+	}
+
 }
 
-void net::MessageSender::reset() {
-	disable();
-	socket.close();
-	socket.open(boost::asio::ip::udp::v4());
-}
 
 net::MessageReceiver::MessageReceiver(boost::asio::io_context& io_context)
 	: socket(io_context),
