@@ -40,8 +40,8 @@ class MessageSender {
 
 		// Stops messages from being queued by send_message(). Clears queues but does not stop dispatched jobs
 		void disable();
-		inline void enable() { _disable = false; }
-		inline bool enabled() const { return !_disable; }
+		inline void enable() { pause_sending = false; }
+		inline bool enabled() const { return !pause_sending; }
 		inline event::Emitter<const boost::system::error_code&>& event_send_error() { return error_emitter; }
 
 		// Close and reopen the socket
@@ -53,7 +53,7 @@ class MessageSender {
 		std::mutex async_start_lock;
 		event::Emitter<const boost::system::error_code&> error_emitter;
 		bool async_send_active = false;
-		bool _disable = false;
+		bool pause_sending = false;
 		bool destination_provided;
 
 		void begin_sending();

@@ -5,21 +5,19 @@
 void net::MessageSender::send_message(msg::Message& message) {
 	// Do not allow sending to start while writing to the active buffer
 	// A positive side effect is thread safety for concurrent send_message() calls
-	async_start_lock.lock();
+	std::lock_guard lock(async_start_lock);
 
-	if (_disable || !destination_provided) {
-		async_start_lock.unlock();
+	if (pause_sending || !destination_provided) {
 		return;
 	}
 
-	auto& buf = msg_buffer.write_buffer(); 
-	bool success = false;
-
-	// Ensure size isn't larger than supported by the header
+	// Ensure the serialized data size can fit in the header.
 	if (message.data_p->ByteSizeLong() <= msg::Header::MAX_MSG_SIZE) {
+		auto& buf = msg_buffer.write_buffer(); 
+
 		uint8_t* block = buf.create_block(message.data_p->GetCachedSize() + msg::Header::HDR_SIZE);
 		
-		success = message.data_p->SerializeWithCachedSizesToArray(&block[msg::Header::HDR_SIZE]);
+		bool success = message.data_p->SerializeWithCachedSizesToArray(&block[msg::Header::HDR_SIZE]);
 
 		// On failure, mark the type as NONE and send the invalid data
 		// Block deallocation will be impossible if we allow concurrent writers (planned feature)
@@ -27,6 +25,7 @@ void net::MessageSender::send_message(msg::Message& message) {
 		msg::type_t use_type = message.type;
 		if (!success) use_type = msg::TYPE_NONE;
 
+		// Write the message header at the beginning of the block
 		msg::Header hdr(use_type, message.data_p->GetCachedSize());
 		hdr.write(block);
 
@@ -35,8 +34,6 @@ void net::MessageSender::send_message(msg::Message& message) {
 	if (!async_send_active) {
 		begin_sending();
 	}
-
-	async_start_lock.unlock();
 
 }
 
@@ -50,12 +47,13 @@ void net::MessageSender::begin_sending() {
 		// On send finished:
 
 		msg_buffer.read_only_buffer().clear();
-		async_start_lock.lock();
-		async_send_active = false;
-		if (msg_buffer.write_buffer().usage() > 0) {
-			begin_sending();
+		{
+			std::lock_guard lock(async_start_lock);
+			async_send_active = false;
+			if (msg_buffer.write_buffer().usage() > 0) {
+				begin_sending();
+			}
 		}
-		async_start_lock.unlock();
 
 		if (ec) {
 			error_emitter(ec);
@@ -75,12 +73,11 @@ void net::MessageSender::wait_finish(boost::asio::io_context& io_context) {
 }
 
 void net::MessageSender::disable() {
-	async_start_lock.lock();
+	std::lock_guard lock(async_start_lock);
 
-	_disable = true;
+	pause_sending = true;
 	msg_buffer.write_buffer().clear();
 
-	async_start_lock.unlock();
 }
 
 net::MessageSender::MessageSender(boost::asio::io_context& io_context, const Destination& device_ip)
