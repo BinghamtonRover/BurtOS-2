@@ -65,12 +65,6 @@ class MessageReceiver : public msg::Receiver {
 		MessageReceiver(boost::asio::io_context& io_context, uint_least16_t listen_port, bool open = true);
 		MessageReceiver(boost::asio::io_context& io_context, const boost::asio::ip::udp::endpoint& mcast_feed, bool open = true);
 
-		// Set the listen port and turn multicast off
-		void set_listen_port(uint_least16_t port);
-
-		// Set the listen endpoint and enable multicast
-		void subscribe(const boost::asio::ip::udp::endpoint& mcast_feed);
-
 		// Set the listen endpoint but does not affect the multicast status
 		void set_listen_endpoint(const boost::asio::ip::udp::endpoint&);
 
@@ -94,10 +88,12 @@ class MessageReceiver : public msg::Receiver {
 		event::Emitter<const boost::system::error_code&> error_emitter;
 		bool use_multicast;
 		bool listening = false;
+		bool enable_open_socket = false;
 		
 		boost::array<uint8_t, 2048> recv_buffer;
 
 		void listen();
+		void bind();
 		
 };
 

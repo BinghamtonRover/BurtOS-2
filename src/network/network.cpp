@@ -1,6 +1,7 @@
 #include "network.hpp"
 
 #include <boost/bind/bind.hpp>
+#include <iostream>
 
 void net::MessageSender::send_message(msg::Message& message) {
 	// Do not allow sending to start while writing to the active buffer
@@ -120,7 +121,7 @@ net::MessageReceiver::MessageReceiver(boost::asio::io_context& io_context, uint_
 	listen_ep(boost::asio::ip::address_v4(), listen_port),
 	use_multicast(false) {
 	
-	if (open) this->open();
+	if (open) bind();
 }
 
 net::MessageReceiver::MessageReceiver(boost::asio::io_context& io_context, const boost::asio::ip::udp::endpoint& mcast_feed, bool open)
@@ -128,85 +129,69 @@ net::MessageReceiver::MessageReceiver(boost::asio::io_context& io_context, const
 	listen_ep(mcast_feed),
 	use_multicast(true) {
 	
-	if (open) this->open();
-}
-
-void net::MessageReceiver::set_listen_port(uint_least16_t port) {
-	use_multicast = false;
-	listen_ep.port(port);
-
-	if (socket.is_open()) {
-		open();
-	}
-}
-
-void net::MessageReceiver::subscribe(const boost::asio::ip::udp::endpoint& mcast_feed) {
-	use_multicast = true;
-	listen_ep = mcast_feed;
-
-	if (socket.is_open()) {
-		open();
-	}
+	if (open) bind();
 }
 
 void net::MessageReceiver::set_listen_endpoint(const boost::asio::ip::udp::endpoint& ep) {
 	listen_ep = ep;
-
-	if (socket.is_open()) {
-		open();
-	}
+	bind();
 }
 
 void net::MessageReceiver::set_multicast(bool on) {
 	if (on != use_multicast) {
 		use_multicast = on;
-		if (socket.is_open()) {
-			open();
-		}
+		bind();
 	}
 }
 
-void net::MessageReceiver::open() {
-	close();
+void net::MessageReceiver::bind() {
+	if (!enable_open_socket)
+		return;
+	
+	socket.close();
 
 	if (use_multicast) {
-		socket.open(listen_ep.protocol());
-		socket.set_option(boost::asio::ip::udp::socket::reuse_address(true));
-		socket.bind(boost::asio::ip::udp::endpoint(
-			boost::asio::ip::address_v4::from_string("0.0.0.0"),
-			listen_ep.port()
-		));
-		socket.set_option(boost::asio::ip::multicast::join_group(listen_ep.address()));
+		throw std::runtime_error("MessageReceiver::bind: multicast not implemented");
 	} else {
-		socket.open(boost::asio::ip::udp::v4());
-		socket.bind(boost::asio::ip::udp::endpoint(boost::asio::ip::udp::v4(), listen_ep.port()));
+		socket.open(listen_ep.protocol());
+		socket.bind(listen_ep);
+		std::cout << "bind complete\n";
 	}
-	if (!listening)
-		listen();
+	listen();
+}
+
+void net::MessageReceiver::open() {
+	enable_open_socket = true;
+	bind();
+}
+
+void net::MessageReceiver::close() {
+	enable_open_socket = false;
+	socket.close();
 }
 
 void net::MessageReceiver::listen() {
 	if (!socket.is_open()) {
 		listening = false;
+		std::cout << "Not listening on socket (socket is closed)\n";
 		return;
 	}
-	listening = true;
-	socket.async_receive_from(boost::asio::buffer(recv_buffer), remote, [this](boost::system::error_code ec, std::size_t bytes_transferred) {
-		read_messages(recv_buffer.data(), bytes_transferred);
+	if (!listening) {
+		std::cout << "Starting to listen on socket\n";
+		socket.async_receive_from(boost::asio::buffer(recv_buffer), remote, [this](boost::system::error_code ec, std::size_t bytes_transferred) {
+			read_messages(recv_buffer.data(), bytes_transferred);
+			std::cout << "Read " << bytes_transferred << " bytes (error code: " << ec.message() << ")\n";
 
-		if (ec) {
-			if (ec != boost::asio::error::operation_aborted)
-				error_emitter(ec);
-		} else {
-			last_activity = std::chrono::system_clock::now();
-		}
+			if (ec) {
+				if (ec != boost::asio::error::operation_aborted)
+					error_emitter(ec);
+			} else {
+				last_activity = std::chrono::system_clock::now();
+			}
 
-		listen();
-	});
-}
-
-void net::MessageReceiver::close() {
-	if (socket.is_open()) {
-		socket.close();
+			listening = false;
+			listen();
+		});
+		listening = true;
 	}
 }
