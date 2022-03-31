@@ -77,97 +77,6 @@ int can_request(Node device, Command command, float f) {
     return 0;
 }
 
-//Request to read a CAN message, with a float output
-float can_read_float(Node device, Command command) {
-    //Read value
-    unsigned int received = 0;
-    received = can_receive(device, command);
-
-    //Convert convert from big endian (conversion is symmetrical) if not from an odrive
-    if (!is_odrive_device(device)) { received = get_big_endian(received); }
-    
-    //Convert unsigned int back to float, then return
-    union { unsigned int ul; float f; } conv = { .ul = received };
-    return conv.f;
-}
-
-//Request to read a CAN message, with an int output
-int can_read_int(Node device, Command command) {
-    //Read value
-    unsigned int received = 0;
-    received = can_receive(device, command);
-
-    //Convert convert from big endian (conversion is symmetrical) if not from an odrive, and return
-    if (!is_odrive_device(device)) { received = get_big_endian(received); }
-    return (int)received;
-}
-
-//Request to read a CAN message, with an long long output
-long long can_read_long(Node device, Command command) {
-    //Do not allow odrive to read longs (this can be changed in the future if needed)
-    if (is_odrive_device(device)) { 
-        status = CAN_Status::FAILED_READ;
-        return 0ul;
-    }
-
-    //Read value
-    long long received = 0;
-    received = can_receive_long(device, command);
-    return received;
-}
-
-//receive a CAN message
-unsigned int can_receive(Node device, Command command) {
-    //Define return value
-    unsigned int return_value = 0;
-
-    //Set status to unset
-    status = CAN_Status::UNSET;
-
-#ifdef ONBOARD_CAN_BUS
-    //Socket is not open, nothing can read
-    if (!socket_open) { return 1; }
-    
-    //Create the frame
-    can_frame frame;
-    int expected_can_id = command | (device << 5);
-    frame = get_can_frame(0, device, command, 0, 0);
-
-    //Request the frame (odrive only)
-    if (is_odrive_device(device)) {
-        can_request(device, command, 0.0f);
-        if (!can_status_success()) {
-            return 0;
-        }
-    }
-
-    //Read the frame
-    int read_size = -1;
-    std::chrono::steady_clock::time_point start_time = std::chrono::steady_clock::now();
-	std::chrono::duration<double> delta_time = start_time - start_time;
-    
-    while ((read_size <= 0 || frame.can_id != expected_can_id) && delta_time.count() <= MAX_READ_TIME) {
-        read_size = read(can_socket, &frame, sizeof(struct can_frame));
-        delta_time = std::chrono::steady_clock::now() - start_time;
-    }
-
-    //Check if invalid read
-    if (read_size <= 0 || frame.can_id != expected_can_id) {
-        status = CAN_Status::FAILED_READ;
-        return 0;
-    }
-
-    //Put data into unsigned integer
-    for (int i = 0; i < 4; i++) {
-        return_value |= ((unsigned int)(frame.data[i]) << (8 * i));
-    }
-    
-#endif
-    //Successfully read
-    status = CAN_Status::SUCCESS;
-    return return_value;
-}
-
 void can_read_all(const std::function<void(can_frame*)>& callback) {
     if (socket_open) {
         can_frame received_frame;
@@ -184,116 +93,6 @@ uint64_t canframe_get_u64(can_frame* frame) {
         x |= ((uint64_t)(frame->data[i]) << (8 * (-i + 7)));
     }
     return x;
-}
-//receive a CAN message
-long long can_receive_long(Node device, Command command) {
-    //Define return value
-    long long return_value = 0;
-
-    //Set status to unset
-    status = CAN_Status::UNSET;
-
-#ifdef ONBOARD_CAN_BUS
-    //Socket is not open, nothing can read
-    if (!socket_open) { return 1; }
-    
-    //Create the frame
-    can_frame frame;
-    frame.can_id = 0;
-    int expected_can_id = command | (device << 5);
-    frame = get_can_frame(0, device, command, 0, 0);
-
-    //Read the frame
-    int read_size = -1;
-    std::chrono::steady_clock::time_point start_time = std::chrono::steady_clock::now();
-	std::chrono::duration<double> delta_time = start_time - start_time;
-    
-    while ((read_size <= 0 || frame.can_id != expected_can_id) && delta_time.count() <= MAX_READ_TIME) {
-        read_size = read(can_socket, &frame, sizeof(struct can_frame));
-        delta_time = std::chrono::steady_clock::now() - start_time;
-    }
-
-    //Check if invalid read
-    if (read_size <= 0 || frame.can_id != expected_can_id) {
-        status = CAN_Status::FAILED_READ;
-        return 0;
-    }
-
-    //Check if invalid read
-    if (read_size <= 0) {
-        status = CAN_Status::FAILED_READ;
-        return 0;
-    }
-
-    //Put data into long long
-    for (int i = 0; i < 8; i++) {
-        return_value |= ((long long)(frame.data[i]) << (8 * (-i + 7)));
-    }
-    
-#endif
-    //Successfully read
-    status = CAN_Status::SUCCESS;
-    return return_value;
-}
-
-//Recieve a CAN frame and check it's ID (for now, this only works for odrives)
-bool can_check_hearbeat(Node device) {
-    //Set status to unset
-    status = CAN_Status::UNSET;
-    bool return_value = true;
-
-#ifdef ONBOARD_CAN_BUS
-    //Socket is not open, nothing can read
-    if (!socket_open) { return 1; }
-    
-    //Create a frame
-    can_frame frame;
-
-    //Read current frame
-    int expected_can_id = (Command::DRIVE_HEARTBEAT_MESSAGE) || (device << 5);
-    int read_size = read(can_socket, &frame, sizeof(struct can_frame));
-
-    //Check if invalid read
-    if (read_size < 0) {
-        status = CAN_Status::FAILED_READ;
-        return 0;
-    }
-    
-    //Set return value
-    return_value = (frame.can_id == expected_can_id);
-
-#endif
-    //Successfully read
-    status = CAN_Status::SUCCESS;
-    return return_value;
-}
-
-//Receive all the vital information from the control teensy
-ControlInformation get_control_information() {
-    //return information
-    ControlInformation ret;
-    status = CAN_Status::UNSET;
-
-    //fetch information
-    long long p1 = can_read_long(Node::CONTROL_TEENSY, Command::TEENSY_DATA_PACKET_1);
-    if (!can_status_success()) { return ret; }
-    long long p2 = can_read_long(Node::CONTROL_TEENSY, Command::TEENSY_DATA_PACKET_2);
-    if (!can_status_success()) { return ret; }
-
-    //after successful reads, interpret the data
-    ret.ps_batt = (float(((0xFF00000000000000l & p1) >> 56) | ((0x00FF000000000000l & p1) >> 40))) / 10.0f;
-    ret.ps12_volt = (float((0x0000FF0000000000l & p1) >> 40)) / 10.0f;
-    ret.ps5_volt = (float((0x000000FF00000000l & p1) >> 32)) / 10.0f;
-    ret.ps12_curr = (float((0x00000000FF000000l & p1) >> 24)) / 10.0f;
-    ret.ps5_curr = (float((0x0000000000FF0000l & p1) >> 16)) / 10.0f;
-    ret.temp12 = (float((0x000000000000FF00l & p1) >> 8)) / 10.0f;
-    ret.temp5 = (float(0x00000000000000FFl & p1)) / 10.0f;
-    ret.odrv0_curr = (float((0xFF00000000000000l & p2) >> 56)) / 10.0f;
-    ret.odrv1_curr = (float((0x00FF000000000000l & p2) >> 48)) / 10.0f;
-    ret.odrv2_curr = (float((0x0000FF0000000000l & p2) >> 40)) / 10.0f;
-    ret.main_curr = (float((0x000000FF00000000l & p2) >> 32)) / 10.0f;
-    status = CAN_Status::SUCCESS;
-    return ret;
 }
 
 void parse_control_information(ControlInformation& write_to, uint64_t p1, uint64_t p2) {
@@ -318,60 +117,30 @@ void parse_control_p2(ControlInformation& write_to, uint64_t p2) {
     write_to.main_curr = (float((0x000000FF00000000l & p2) >> 32)) / 10.0f;
 }
 
-//Receive all the information from the arm
-ArmInformation get_arm_information() {
-    //return information
-    ArmInformation ret;
+void parse_arm_information(ArmInformation& write_to, uint64_t p) {
+    write_to.temp1 = (float((0xFF00000000000000l & p) >> 56)) / 10.0f;
+    write_to.temp2 = (float((0x00FF000000000000l & p) >> 48)) / 10.0f;
+    write_to.temp3 = (float((0x0000FF0000000000l & p) >> 40)) / 10.0f;
+    write_to.gyro_x = (float((0x000000FF00000000l & p) >> 32)) / 10.0f;
+    write_to.gyro_y = (float((0x00000000FF000000l & p) >> 24)) / 10.0f;
+    write_to.gyro_z = (float((0x0000000000FF0000l & p) >> 16)) / 10.0f;
+}
 
-    //fetch information
-    long long p = can_read_long(Node::ARM_TEENSY, Command::TEENSY_DATA_PACKET_1);
-    if (!can_status_success()) { return ret; }
-
-    //after a successful read, interpret the data
+void parse_gripper_information(GripperInformation& write_to, uint64_t p) {
     ret.temp1 = (float((0xFF00000000000000l & p) >> 56)) / 10.0f;
     ret.temp2 = (float((0x00FF000000000000l & p) >> 48)) / 10.0f;
     ret.temp3 = (float((0x0000FF0000000000l & p) >> 40)) / 10.0f;
     ret.gyro_x = (float((0x000000FF00000000l & p) >> 32)) / 10.0f;
     ret.gyro_y = (float((0x00000000FF000000l & p) >> 24)) / 10.0f;
     ret.gyro_z = (float((0x0000000000FF0000l & p) >> 16)) / 10.0f;
-    return ret;
 }
 
-//Receive all the information from the gripper
-GripperInformation get_gripper_information() {
-    //return information
-    GripperInformation ret;
-
-    //fetch information
-    long long p = can_read_long(Node::GRIPPER_TEENSY, Command::TEENSY_DATA_PACKET_1);
-    if (!can_status_success()) { return ret; }
-
-    //after a successful read, interpret the data
-    ret.temp1 = (float((0xFF00000000000000l & p) >> 56)) / 10.0f;
-    ret.temp2 = (float((0x00FF000000000000l & p) >> 48)) / 10.0f;
-    ret.temp3 = (float((0x0000FF0000000000l & p) >> 40)) / 10.0f;
-    ret.gyro_x = (float((0x000000FF00000000l & p) >> 32)) / 10.0f;
-    ret.gyro_y = (float((0x00000000FF000000l & p) >> 24)) / 10.0f;
-    ret.gyro_z = (float((0x0000000000FF0000l & p) >> 16)) / 10.0f;
-    return ret;
-}
-
-//Receive all the information for environmental analysis
-EAInformation get_environmental_analysis_information() {
-    //return information
-    EAInformation ret;
-
-    //fetch information
-    long long p = can_read_long(Node::EA_TEENSY, Command::TEENSY_DATA_PACKET_1);
-    if (!can_status_success()) { return ret; }
-
-    //after a successful read, interpret the data
-    ret.temp = (float((0xFF00000000000000l & p) >> 56)) / 10.0f;
-    ret.methane = (float((0x00FF000000000000l & p) >> 48)) / 10.0f;
-    ret.c02 = (float((0x0000FF0000000000l & p) >> 40)) / 10.0f;
-    ret.ph = (float((0x000000FF00000000l & p) >> 32)) / 10.0f;
-    ret.humidity = (float((0x00000000FF000000l & p) >> 24)) / 10.0f;
-    return ret;
+void get_environmental_analysis_information(EAInformation& write_to, uint64_t p) {
+    write_to.temp = (float((0xFF00000000000000l & p) >> 56)) / 10.0f;
+    write_to.methane = (float((0x00FF000000000000l & p) >> 48)) / 10.0f;
+    write_to.c02 = (float((0x0000FF0000000000l & p) >> 40)) / 10.0f;
+    write_to.ph = (float((0x000000FF00000000l & p) >> 32)) / 10.0f;
+    write_to.humidity = (float((0x00000000FF000000l & p) >> 24)) / 10.0f;
 }
 
 #ifdef ONBOARD_CAN_BUS

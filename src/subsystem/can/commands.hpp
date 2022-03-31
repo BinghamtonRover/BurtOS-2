@@ -26,9 +26,6 @@ extern "C" {
 
 #include "constants.hpp"
 
-//Max time allowed for reading (in seconds)
-constexpr double MAX_READ_TIME = 0.6;
-
 //Overloads for can_send
 int can_send(Node device, Command command, unsigned int data);
 int can_send(Node device, Command command, int data);
@@ -41,9 +38,6 @@ int can_send(Node device, Command command, int num_bytes, unsigned int data);
 int can_request(Node device, Command command, float f);
 
 //Request to read a CAN message
-float can_read_float(Node device, Command command);
-int can_read_int(Node device, Command command);
-long long can_read_long(Node device, Command command);
 void can_read_all(const std::function<void(can_frame*)>& read_callback);
 
 constexpr int can_id(Node device, Command command) {
@@ -52,18 +46,14 @@ constexpr int can_id(Node device, Command command) {
 
 uint64_t canframe_get_u64(can_frame* frame);
 
-//Recieve a CAN message
-unsigned int can_receive(Node device, Command command);
-long long can_receive_long(Node device, Command command);
-
-//Recieve a CAN frame and check it's ID
-bool can_check_hearbeat(Node device);
-
 //Receive all the vital information from each specific teensy
 ControlInformation get_control_information();
 void parse_control_information(ControlInformation& write_to, uint64_t p1, uint64_t p2);
 void parse_control_p1(ControlInformation& write_to, uint64_t p1);
 void parse_control_p2(ControlInformation& write_to, uint64_t p2);
+void parse_arm_information(ArmInformation& write_to, uint64_t p);
+void parse_gripper_information(GripperInformation& write_to, uint64_t p);
+void get_environmental_analysis_information(EAInformation& write_to, uint64_t p);
 
 ArmInformation get_arm_information();
 GripperInformation get_gripper_information();
