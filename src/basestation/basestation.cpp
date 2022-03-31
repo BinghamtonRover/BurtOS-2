@@ -36,12 +36,7 @@ Basestation::Basestation(const boost::property_tree::ptree& config)
 	m_remote_drive.register_listen_handlers(m_subsystem_feed);
 	m_remote_sensors.register_listen_handlers(m_subsystem_feed);
 
-	//TODO: Dynamically get port number (maybe from config file)
-	boost::asio::ip::udp::endpoint vid_address(
-			boost::asio::ip::address_v4::from_string("239.255.123.123"),
-			22202
-	);
-	video_feed_receiver.subscribe(vid_address);
+	video_feed_receiver.set_listen_port(22202);
 	video_feed_receiver.open();
 
 	//TODO: Add commands or GUI window to open streams. Also do not use 9 fixed like this...
