@@ -127,12 +127,12 @@ void parse_arm_information(ArmInformation& write_to, uint64_t p) {
 }
 
 void parse_gripper_information(GripperInformation& write_to, uint64_t p) {
-    ret.temp1 = (float((0xFF00000000000000l & p) >> 56)) / 10.0f;
-    ret.temp2 = (float((0x00FF000000000000l & p) >> 48)) / 10.0f;
-    ret.temp3 = (float((0x0000FF0000000000l & p) >> 40)) / 10.0f;
-    ret.gyro_x = (float((0x000000FF00000000l & p) >> 32)) / 10.0f;
-    ret.gyro_y = (float((0x00000000FF000000l & p) >> 24)) / 10.0f;
-    ret.gyro_z = (float((0x0000000000FF0000l & p) >> 16)) / 10.0f;
+    write_to.temp1 = (float((0xFF00000000000000l & p) >> 56)) / 10.0f;
+    write_to.temp2 = (float((0x00FF000000000000l & p) >> 48)) / 10.0f;
+    write_to.temp3 = (float((0x0000FF0000000000l & p) >> 40)) / 10.0f;
+    write_to.gyro_x = (float((0x000000FF00000000l & p) >> 32)) / 10.0f;
+    write_to.gyro_y = (float((0x00000000FF000000l & p) >> 24)) / 10.0f;
+    write_to.gyro_z = (float((0x0000000000FF0000l & p) >> 16)) / 10.0f;
 }
 
 void get_environmental_analysis_information(EAInformation& write_to, uint64_t p) {
