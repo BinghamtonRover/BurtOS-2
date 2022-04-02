@@ -135,7 +135,7 @@ void parse_gripper_information(GripperInformation& write_to, uint64_t p) {
     write_to.gyro_z = (float((0x0000000000FF0000l & p) >> 16)) / 10.0f;
 }
 
-void get_environmental_analysis_information(EAInformation& write_to, uint64_t p) {
+void parse_environmental_analysis_information(EAInformation& write_to, uint64_t p) {
     write_to.temp = (float((0xFF00000000000000l & p) >> 56)) / 10.0f;
     write_to.methane = (float((0x00FF000000000000l & p) >> 48)) / 10.0f;
     write_to.c02 = (float((0x0000FF0000000000l & p) >> 40)) / 10.0f;

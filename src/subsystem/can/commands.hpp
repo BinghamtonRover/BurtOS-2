@@ -53,7 +53,7 @@ void parse_control_p1(ControlInformation& write_to, uint64_t p1);
 void parse_control_p2(ControlInformation& write_to, uint64_t p2);
 void parse_arm_information(ArmInformation& write_to, uint64_t p);
 void parse_gripper_information(GripperInformation& write_to, uint64_t p);
-void get_environmental_analysis_information(EAInformation& write_to, uint64_t p);
+void parse_environmental_analysis_information(EAInformation& write_to, uint64_t p);
 
 ArmInformation get_arm_information();
 GripperInformation get_gripper_information();
