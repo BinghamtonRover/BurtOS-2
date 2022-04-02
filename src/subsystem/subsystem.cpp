@@ -115,9 +115,6 @@ int main() {
 		panic_shutdown();
 	});
 	
-	// Open can socket
-	can_open_socket();
-
 	// Open the CAN Socket
 	if (!can_open_socket()) {
 		std::cout << "Warning: Unable to open CAN socket\n";
