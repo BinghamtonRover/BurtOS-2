@@ -46,18 +46,12 @@ constexpr int can_id(Node device, Command command) {
 
 uint64_t canframe_get_u64(can_frame* frame);
 
-//Receive all the vital information from each specific teensy
-ControlInformation get_control_information();
 void parse_control_information(ControlInformation& write_to, uint64_t p1, uint64_t p2);
 void parse_control_p1(ControlInformation& write_to, uint64_t p1);
 void parse_control_p2(ControlInformation& write_to, uint64_t p2);
 void parse_arm_information(ArmInformation& write_to, uint64_t p);
 void parse_gripper_information(GripperInformation& write_to, uint64_t p);
 void parse_environmental_analysis_information(EAInformation& write_to, uint64_t p);
-
-ArmInformation get_arm_information();
-GripperInformation get_gripper_information();
-EAInformation get_environmental_analysis_information();
 
 #ifdef ONBOARD_CAN_BUS
 //Create a can frame
