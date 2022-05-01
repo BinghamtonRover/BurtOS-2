@@ -15,3 +15,4 @@ target_compile_features(network PUBLIC cxx_std_17)
 
 add_subdirectory(apps)
 add_subdirectory(rover_system_messages)
+add_subdirectory(rover_service_discovery)

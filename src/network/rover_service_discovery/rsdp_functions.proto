@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package rsdp;
+
+message Service {
+	string service_name = 1;
+
+	string provider_hostname = 2;
+	string provider_ip = 3; 
+	uint32 provider_port = 4;
+}
+
+message MsgPacket {
+	enum Function {
+		None = 0;
+		Advertise = 1;
+		Inquire = 2;		
+	}
+
+	Function rsdp_function = 1;
+	bytes data = 2;
+}
