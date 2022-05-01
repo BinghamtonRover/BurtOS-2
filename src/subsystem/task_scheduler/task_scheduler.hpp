@@ -64,6 +64,7 @@ class Task {
 
 	public:
 		Task(const std::function<void(Task&)>& callback);
+		~Task();
 
 		void set_next_occurrence(const std::chrono::steady_clock::time_point& p);
 		void cancel();

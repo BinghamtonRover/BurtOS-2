@@ -2,6 +2,10 @@
 
 Task::Task(const std::function<void(Task&)>& callback) : event_callback(callback) {}
 
+Task::~Task() {
+	cancel();
+}
+
 std::chrono::steady_clock::time_point TaskScheduler::get_next_dispatch_time() const {
 	if (tasks.empty())
 		return std::chrono::steady_clock::time_point{};
