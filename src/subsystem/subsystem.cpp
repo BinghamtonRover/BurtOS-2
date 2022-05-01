@@ -140,7 +140,7 @@ int main() {
 			}
 
 			can_read_all([] (can_frame* frame) {
-				switch (frame->can_id) {
+				switch (can_frame_get_can_id(frame)) {
 					case can_id(Node::CONTROL_TEENSY, Command::TEENSY_DATA_PACKET_1):
 						parse_control_p1(rover_sensor_information, canframe_get_u64(frame));
 						break;
@@ -150,7 +150,7 @@ int main() {
 					case can_id(Node::DRIVE_AXIS_0, Command::GET_VBUS_VOLTAGE):
 						unsigned int v = 0;
 						for (int i = 0; i < 4; i++) {
-							v |= ((unsigned int)frame->data[i] << (8 * i));
+							v |= (static_cast<uint32_t>(can_frame_get_data(frame)[i]) << (8 * i));
 						}
 						union { unsigned int ul; float fl; } conv = { .ul = v };
 						rover_sensor_information.ps_batt = conv.fl;

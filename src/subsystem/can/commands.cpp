@@ -1,5 +1,14 @@
 #include "commands.hpp"
 
+#ifdef ROVER_CAN_AVAIL
+    #include <unistd.h>
+    #include <net/if.h>
+    #include <sys/ioctl.h>
+    #include <sys/socket.h>
+    #include <linux/can.h>
+    #include <linux/can/raw.h>
+#endif
+
 //Can socket number
 static int can_socket = 0;
 static bool socket_open = false;
@@ -29,7 +38,7 @@ int can_send(Node device, Command command, int num_bytes, unsigned int data) {
     //Set status to unset
     status = CAN_Status::UNSET;
 
-#ifdef ONBOARD_CAN_BUS
+    #ifdef ROVER_CAN_AVAIL
     //Socket is not open, nothing can send
     if (!socket_open) { return 1; }
     
@@ -47,7 +56,7 @@ int can_send(Node device, Command command, int num_bytes, unsigned int data) {
         status = CAN_Status::FAILED_WRITE;
         return 1;
     }
-#endif
+    #endif
     //Successfully sent
     status = CAN_Status::SUCCESS;
     return 0;
@@ -58,7 +67,7 @@ int can_request(Node device, Command command, float f) {
     //Set status to unset
     status = CAN_Status::UNSET;
 
-#ifdef ONBOARD_CAN_BUS
+    #ifdef ROVER_CAN_AVAIL
     //Socket is not open, nothing can send
     if (!socket_open) { return 1; }
     
@@ -71,13 +80,14 @@ int can_request(Node device, Command command, float f) {
         status = CAN_Status::FAILED_REQUEST;
         return 1;
     }
-#endif
+    #endif
     //Successfully sent
     status = CAN_Status::SUCCESS;
     return 0;
 }
 
 void can_read_all(const std::function<void(can_frame*)>& callback) {
+    #ifdef ROVER_CAN_AVAIL
     if (socket_open) {
         can_frame received_frame;
 
@@ -85,12 +95,13 @@ void can_read_all(const std::function<void(can_frame*)>& callback) {
             callback(&received_frame);
         }
     }
+    #endif
 }
 
 uint64_t canframe_get_u64(can_frame* frame) {
     uint64_t x = 0;
     for (int i = 0; i < 8; i++) {
-        x |= ((uint64_t)(frame->data[i]) << (8 * (-i + 7)));
+        x |= ((uint64_t)(can_frame_get_data(frame)[i]) << (8 * (-i + 7)));
     }
     return x;
 }
@@ -143,9 +154,10 @@ void parse_environmental_analysis_information(EAInformation& write_to, uint64_t 
     write_to.humidity = (float((0x00000000FF000000l & p) >> 24)) / 10.0f;
 }
 
-#ifdef ONBOARD_CAN_BUS
+// Exclude these internal functions entirely if CAN isn't available
+#ifdef ROVER_CAN_AVAIL
 //Create a can frame
-can_frame get_can_frame(int modifier, Node device, Command command, int num_bytes, unsigned int data) {
+static can_frame get_can_frame(int modifier, Node device, Command command, int num_bytes, unsigned int data) {
     can_frame frame;
     frame.can_id = command | (device << 5) | (modifier << 8);
     frame.can_dlc = num_bytes;
@@ -162,7 +174,7 @@ can_frame get_can_frame(int modifier, Node device, Command command, int num_byte
 }
 
 //Create a frame for receiving
-can_frame get_can_request_frame(int modifier, Node device, Command command, float f) {
+static can_frame get_can_request_frame(int modifier, Node device, Command command, float f) {
     can_frame frame;
     frame.can_id = (0x40000000) | command | (device << 5) | (modifier << 8);
     frame.can_dlc = 0;
@@ -187,7 +199,7 @@ unsigned int get_big_endian(unsigned int u) {
 
 //Open can socket
 bool can_open_socket() {
-#ifdef ONBOARD_CAN_BUS
+    #ifdef ROVER_CAN_AVAIL
     //Get socket number
     can_socket = socket(PF_CAN, SOCK_RAW, CAN_RAW);
     if (can_socket < 0) { return false; }
@@ -218,17 +230,21 @@ bool can_open_socket() {
 
     //Disable receive filter, then open socket
     if (bind(can_socket, (struct sockaddr *)&addr, sizeof(addr)) < 0) { return false; }
-#endif
     //Socket has been successfully opened
     socket_open = true;
     return true;
+
+    #else
+    return false;
+    #endif
 }
 
 //Close can socket
 void can_close_socket() {
-#ifdef ONBOARD_CAN_BUS
+
+    #ifdef ROVER_CAN_AVAIL
     close(can_socket);
-#endif
+    #endif
     socket_open = false;
 }
 
