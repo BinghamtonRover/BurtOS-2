@@ -1,4 +1,5 @@
 add_subdirectory(can)
+add_subdirectory(task_scheduler)
 
 find_package(Boost COMPONENTS system)
 if (Boost_FOUND AND Boost_system_FOUND)

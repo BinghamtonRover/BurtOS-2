@@ -1,0 +1,3 @@
+add_library(task_scheduler task_scheduler.hpp task_scheduler.cpp)
+target_include_directories(task_scheduler PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_compile_features(task_scheduler PUBLIC cxx_std_14)
