@@ -27,6 +27,7 @@ set(WIDGET_HDR
 	widgets/toolbar.hpp
 	widgets/layouts/simple_row.hpp
 	widgets/layouts/simple_column.hpp
+	widgets/layouts/grid_layout.hpp
 )
 set(WIDGET_SRC
 	widgets/window.cpp
@@ -36,6 +37,7 @@ set(WIDGET_SRC
 	widgets/toolbar.cpp
 	widgets/layouts/simple_row.cpp
 	widgets/layouts/simple_column.cpp
+	widgets/layouts/grid_layout.cpp
 )
 
 add_executable(basestation
