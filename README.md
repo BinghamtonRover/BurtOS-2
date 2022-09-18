@@ -44,6 +44,9 @@ While you are not locked to a specific toolchain, the process suggested below wi
   * You need at least Boost 1.71. Older versions will not work.
 * Install Protocol Buffers: `sudo apt install protobuf-compiler`
 * Install Lua: `sudo apt-get install lua5.3-dev`
+* Install libxinerama: 'sudo apt-get install -y libxinerama-dev'
+* Install libxcursor: 'sudo apt-get install libxcursor-dev'
+* Installlibxi: 'sudo apt-get install -y libxi-dev'
 
 <p id="build-ubuntu"></p>
 
