@@ -100,7 +100,7 @@ gui::NetworkSettings::NetworkSettings(nanogui::Screen* screen) :
 	feed_mcast_mode_box->callback()(subsys_feed_mcast);
 
 	
-	subsys_feed_enable = Basestation::get().subsystem_feed().is_multicast();
+	subsys_feed_enable = Basestation::get().subsystem_feed().opened();
 	auto feed_enable_box = form->add_variable("Open", subsys_feed_enable);
 	feed_enable_box->set_callback([this](bool checked) {
 		try {

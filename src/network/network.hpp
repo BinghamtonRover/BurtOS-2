@@ -40,20 +40,19 @@ class MessageSender {
 
 		// Stops messages from being queued by send_message(). Clears queues but does not stop dispatched jobs
 		void disable();
-		inline void enable() { _disable = false; }
-		inline bool enabled() const { return !_disable; }
+		inline void enable() { pause_sending = false; }
+		inline bool enabled() const { return !pause_sending; }
 		inline event::Emitter<const boost::system::error_code&>& event_send_error() { return error_emitter; }
 
-		// Close and reopen the socket
-		void reset();
 	private:
+		// This socket will be opened automatically when a destination endpoint is provided
 		boost::asio::ip::udp::socket socket;
 		Destination dest;
 		DoubleBuffer<uint8_t> msg_buffer;
 		std::mutex async_start_lock;
 		event::Emitter<const boost::system::error_code&> error_emitter;
 		bool async_send_active = false;
-		bool _disable = false;
+		bool pause_sending = false;
 		bool destination_provided;
 
 		void begin_sending();
@@ -65,12 +64,6 @@ class MessageReceiver : public msg::Receiver {
 		MessageReceiver(boost::asio::io_context& io_context);
 		MessageReceiver(boost::asio::io_context& io_context, uint_least16_t listen_port, bool open = true);
 		MessageReceiver(boost::asio::io_context& io_context, const boost::asio::ip::udp::endpoint& mcast_feed, bool open = true);
-
-		// Set the listen port and turn multicast off
-		void set_listen_port(uint_least16_t port);
-
-		// Set the listen endpoint and enable multicast
-		void subscribe(const boost::asio::ip::udp::endpoint& mcast_feed);
 
 		// Set the listen endpoint but does not affect the multicast status
 		void set_listen_endpoint(const boost::asio::ip::udp::endpoint&);
@@ -95,10 +88,12 @@ class MessageReceiver : public msg::Receiver {
 		event::Emitter<const boost::system::error_code&> error_emitter;
 		bool use_multicast;
 		bool listening = false;
+		bool enable_open_socket = false;
 		
 		boost::array<uint8_t, 2048> recv_buffer;
 
 		void listen();
+		void bind();
 		
 };
 
