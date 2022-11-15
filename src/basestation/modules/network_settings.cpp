@@ -34,7 +34,7 @@ gui::NetworkSettings::NetworkSettings(nanogui::Screen* screen) :
 		Section: Subsystem Link settings
 	*/
 
-	form->add_group("Subsystem Update Feed");
+	form->add_group("Subsystem Update Feed (Incoming)");
 
 	auto feed_ip_entry = form->add_variable("Feed IP Address", mcast_feed_str);
 	// This terrifying regex for IP validation was provided by:
@@ -100,7 +100,7 @@ gui::NetworkSettings::NetworkSettings(nanogui::Screen* screen) :
 	feed_mcast_mode_box->callback()(subsys_feed_mcast);
 
 	
-	subsys_feed_enable = Basestation::get().subsystem_feed().is_multicast();
+	subsys_feed_enable = Basestation::get().subsystem_feed().opened();
 	auto feed_enable_box = form->add_variable("Open", subsys_feed_enable);
 	feed_enable_box->set_callback([this](bool checked) {
 		try {
@@ -114,7 +114,11 @@ gui::NetworkSettings::NetworkSettings(nanogui::Screen* screen) :
 		subsys_feed_enable = Basestation::get().subsystem_feed().opened();
 	});
 
-	form->add_group("Subsystem Device Link");
+	/*
+		Section: Outgoing Subsystem Link
+	*/
+
+	form->add_group("Subsystem Device Link (Outgoing)");
 	
 	auto ip_entry = form->add_variable("Device IP Address", ip_str);
 
@@ -180,10 +184,87 @@ gui::NetworkSettings::NetworkSettings(nanogui::Screen* screen) :
 	});
 
 	/*
-		(TODO) Section: Video Link settings
-		
-		(This section is a placeholder)
+		Section: Video Link settings	
 	*/
+	form->add_group("Video Stream Feed (Incoming)");
+
+	auto stream_ip_entry = form->add_variable("Feed IP Address", video_stream_ip_str);
+	// This terrifying regex for IP validation was provided by:
+	// https://stackoverflow.com/a/36760050
+	stream_ip_entry->set_format("^((25[0-5]|(2[0-4]|1\\d|[1-9]|)\\d)(\\.(?!$)|$)){4}$");
+	stream_ip_entry->set_value(Basestation::get().video_stream_feed().listen_endpoint().address().to_string());
+	stream_ip_entry->set_fixed_width(text_entry_width);
+	stream_ip_entry->set_callback([this](const std::string& str) {
+		auto& feed = Basestation::get().video_stream_feed();
+		if (str.size() != 0) {
+			try {
+				auto ep = feed.listen_endpoint();
+				ep.address(boost::asio::ip::address_v4::from_string(str));
+				feed.set_listen_endpoint(ep);
+				return true;
+			} catch (const std::exception& err) {
+				open_error_popup(err);
+			}
+		}
+		video_stream_ip_str = feed.listen_endpoint().address().to_string();
+		return false;
+	});
+
+	video_stream_port = Basestation::get().video_stream_feed().listen_endpoint().port();
+
+	auto stream_port_entry = form->add_variable("Feed Port", video_stream_port);
+	// Regex: https://3widgets.com/, range: 0 - 65535
+	stream_port_entry->set_format("(\\d|[1-9]\\d{1,3}|[1-5]\\d{4}|6[0-4]\\d{3}|65[0-4]\\d{2}|655[0-2]\\d|6553[0-5])");
+	stream_port_entry->set_fixed_width(text_entry_width);
+	stream_port_entry->set_callback([this](int set_port) {
+		auto& feed = Basestation::get().video_stream_feed();
+		try {
+			if (set_port >= 0 && set_port <= std::numeric_limits<uint16_t>().max()) {
+				auto ep = feed.listen_endpoint();
+				ep.port(set_port);
+				feed.set_listen_endpoint(ep);
+				return true;
+			}
+		} catch (const std::exception& e) {
+			open_error_popup(e);
+		}
+		video_stream_port = feed.listen_endpoint().port();
+		return false;
+	});
+
+	video_stream_multicast = Basestation::get().video_stream_feed().is_multicast();
+	auto stream_mcast_mode_box = form->add_variable("Multicast", video_stream_multicast);
+	stream_mcast_mode_box->set_callback([this, stream_ip_entry](bool checked) {
+		auto& feed = Basestation::get().video_stream_feed();
+		try {
+			stream_ip_entry->set_editable(checked);
+			if (checked) {
+				stream_ip_entry->set_value(feed.listen_endpoint().address().to_string());
+			} else {
+				stream_ip_entry->set_value("");
+			}
+			feed.set_multicast(checked);
+		} catch (const std::exception& err) {
+			open_error_popup(err);
+		}
+		video_stream_multicast = feed.is_multicast();
+	});
+	stream_mcast_mode_box->callback()(video_stream_multicast);
+
+	
+	video_stream_enable = Basestation::get().video_stream_feed().opened();
+	auto stream_enable_box = form->add_variable("Open", video_stream_enable);
+	stream_enable_box->set_callback([this](bool checked) {
+		try {
+			if (checked)
+				Basestation::get().video_stream_feed().open();
+			else
+				Basestation::get().video_stream_feed().close();
+		} catch (const std::exception& err) {
+			open_error_popup(err);
+		}
+		video_stream_enable = Basestation::get().video_stream_feed().opened();
+	});
 
 	set_position(15);
 	set_visible(true);

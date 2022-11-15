@@ -11,6 +11,7 @@
 #include <modules/electrical_info.hpp>
 #include <modules/drive_stats.hpp>
 #include <modules/input_config/controller_config.hpp>
+#include <modules/video_feed_viewer.hpp>
 
 gui::Statusbar::Statusbar(nanogui::Widget* parent) : gui::Toolbar(parent) {
 	{
@@ -18,6 +19,12 @@ gui::Statusbar::Statusbar(nanogui::Widget* parent) : gui::Toolbar(parent) {
 		controller_button->set_flags(nanogui::Button::NormalButton);
 		controller_button->set_callback([this] {
 			auto wnd = new ControllerConfig(screen(), Basestation::get().controller_manager());
+			wnd->center();
+		});
+		auto video_player_button = new nanogui::ToolButton(left_tray(), FA_VIDEO);
+		video_player_button->set_flags(nanogui::Button::NormalButton);
+		video_player_button->set_callback([this] {
+			auto wnd = new VideoFeedViewer(screen());
 			wnd->center();
 		});
 	}

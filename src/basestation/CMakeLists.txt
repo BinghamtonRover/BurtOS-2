@@ -7,9 +7,11 @@ set(MODULE_HDR
 	modules/input_config/controller_config.hpp
 	modules/input_config/controller_calibration_popup.hpp
 	modules/input_config/controller_binding_popup.hpp
+	modules/video_feed_viewer.hpp
 )
 set(MODULE_SRC
 	modules/console.cpp
+	modules/video_feed_viewer.cpp
 	modules/network_settings.cpp
 	modules/drive_stats.cpp
 	modules/statusbar.cpp
@@ -38,34 +40,51 @@ set(WIDGET_SRC
 	widgets/layouts/simple_column.cpp
 )
 
-add_executable(basestation
-	main.cpp
-	basestation.hpp
-	basestation.cpp
-	basestation_screen.hpp
-	basestation_screen.cpp
-	controls/controller_manager.hpp
-	controls/controller_manager.cpp
-	controls/controller.hpp
-	controls/controller.cpp
-	controls/lua_ctrl_lib.hpp
-	controls/lua_ctrl_lib.cpp
-	controls/drive_input.hpp
-	controls/drive_input.cpp
-	${MODULE_HDR}
-	${MODULE_SRC}
-	${WIDGET_HDR}
-	${WIDGET_SRC} 
-)
+find_package(PkgConfig)
+if (NOT PKG_CONFIG_FOUND)
+	message(STATUS "basestation: pkg-config unavailable.")
+else()
+	pkg_search_module(PKG_LIBJPEG_TURBO IMPORTED_TARGET libturbojpeg)
 
-find_package(Boost COMPONENTS program_options REQUIRED)
+	if (NOT PKG_LIBJPEG_TURBO_FOUND)
+		message(STATUS "basestation: libjpeg-turbo unavailable.")
+	else()
 
-target_include_directories(basestation PUBLIC nanogui roverlua ${CMAKE_CURRENT_SOURCE_DIR} rover_control Boost::headers)
-target_link_libraries(basestation nanogui ${NANOGUI_EXTRA_LIBS} roverlua rover_control Boost::program_options)
+		find_package(Boost COMPONENTS program_options REQUIRED)
 
-# NanoGUI requires C++17
-target_compile_features(basestation PUBLIC cxx_std_17)
+		add_executable(basestation
+			main.cpp
+			basestation.hpp
+			basestation.cpp
+			basestation_screen.hpp
+			basestation_screen.cpp
+			controls/controller_manager.hpp
+			controls/controller_manager.cpp
+			controls/controller.hpp
+			controls/controller.cpp
+			controls/lua_ctrl_lib.hpp
+			controls/lua_ctrl_lib.cpp
+			controls/drive_input.hpp
+			controls/drive_input.cpp
+			video_decoder/decoder.hpp
+			video_decoder/decoder.cpp
+			${MODULE_HDR}
+			${MODULE_SRC}
+			${WIDGET_HDR}
+			${WIDGET_SRC}
+		)
 
-if (APPLE)
-	target_link_libraries(basestation "-framework OpenGL")
+		target_include_directories(basestation PUBLIC nanogui roverlua network rover_control ${CMAKE_CURRENT_SOURCE_DIR} Boost::headers)
+		target_link_libraries(basestation nanogui ${NANOGUI_EXTRA_LIBS} roverlua rover_control network PkgConfig::PKG_LIBJPEG_TURBO Boost::program_options)
+
+		# NanoGUI requires C++17
+		target_compile_features(basestation PUBLIC cxx_std_17)
+
+		if (APPLE)
+			target_link_libraries(basestation "-framework OpenGL")
+		endif()
+
+	endif()
 endif()
+
+

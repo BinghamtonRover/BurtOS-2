@@ -154,36 +154,64 @@ net::StreamReceiver::StreamReceiver(boost::asio::io_context& io_context) : ctx(i
 	streams.reserve(8);
 }
 
-void net::StreamReceiver::set_listen_port(uint16_t port) {
-	this->port = port;
-	if (socket.is_open()) {
+void net::StreamReceiver::open() {
+	if (socket.is_open())
 		socket.close();
-		begin(port);
+	
+	if (use_multicast) {
+		socket.open(listen_ep.protocol());
+		socket.set_option(boost::asio::ip::udp::socket::reuse_address(true));
+		socket.bind(boost::asio::ip::udp::endpoint(
+			boost::asio::ip::address_v4::from_string("0.0.0.0"),
+			listen_ep.port()
+		));
+		socket.set_option(boost::asio::ip::multicast::join_group(listen_ep.address()));
+	} else {
+		socket.open(listen_ep.protocol());
+		socket.bind(boost::asio::ip::udp::endpoint(listen_ep.protocol(), listen_ep.port()));
 	}
-}
-
-void net::StreamReceiver::begin(uint16_t port) {
-	socket.open(boost::asio::ip::udp::v4());
-	socket.bind(boost::asio::ip::udp::endpoint(boost::asio::ip::udp::v4(), port));
-
 	receive();
 }
 
-void net::StreamReceiver::subscribe(boost::asio::ip::udp::endpoint& ep) {
-	if (socket.is_open()) {
+void net::StreamReceiver::close() {
+	if (socket.is_open())
 		socket.close();
+}
+
+void net::StreamReceiver::set_multicast(bool on) {
+	if (on != use_multicast) {
+		use_multicast = on;
+		if (socket.is_open()) {
+			open();
+		}
 	}
+}
 
-	socket.open(ep.protocol());
-	socket.set_option(boost::asio::ip::udp::socket::reuse_address(true));
-	socket.bind(boost::asio::ip::udp::endpoint(
-		boost::asio::ip::address_v4::from_string("0.0.0.0"),
-		ep.port()
-	));
+void net::StreamReceiver::set_listen_port(uint_least16_t port) {
+	use_multicast = false;
+	listen_ep.port(port);
 
-	socket.set_option(boost::asio::ip::multicast::join_group(ep.address()));
+	if (socket.is_open()) {
+		open();
+	}
+	
+}
 
-	receive();
+void net::StreamReceiver::subscribe(const boost::asio::ip::udp::endpoint& ep) {
+	use_multicast = true;
+	listen_ep = ep;
+
+	if (socket.is_open()) {
+		open();
+	}
+}
+
+void net::StreamReceiver::set_listen_endpoint(const boost::asio::ip::udp::endpoint& ep) {
+	listen_ep = ep;
+
+	if (socket.is_open()) {
+		open();
+	}
 }
 
 void net::StreamReceiver::receive() {
@@ -242,7 +270,12 @@ void net::StreamReceiver::receive() {
 
 			}
 		}
-		receive();
+		// If the socket was closed, silently exit
+		if (error != boost::asio::error::operation_aborted) {
+			if (error)
+				m_error_emitter(error);
+			receive();
+		}
 	});
 }
 
@@ -300,7 +333,7 @@ void net::StreamReceiver::set_section_buffer_size(std::size_t size) {
 	recv_buffer.reset(new uint8_t[recv_buffer_size]);
 
 	if (reopen)
-		begin(port);
+		open();
 
 }
 

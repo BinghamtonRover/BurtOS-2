@@ -16,6 +16,7 @@ Basestation::Basestation() : Basestation(boost::property_tree::ptree()) {}
 Basestation::Basestation(const boost::property_tree::ptree& config)
 	: m_subsystem_sender(main_thread_ctx),
 	m_subsystem_feed(main_thread_ctx),
+	video_feed_receiver(main_thread_ctx),
 	m_remote_drive(m_subsystem_sender) {
 
 	if (main_instance != nullptr) {
@@ -34,6 +35,14 @@ Basestation::Basestation(const boost::property_tree::ptree& config)
 	}
 	m_remote_drive.register_listen_handlers(m_subsystem_feed);
 	m_remote_sensors.register_listen_handlers(m_subsystem_feed);
+
+	video_feed_receiver.set_listen_port(22202);
+	video_feed_receiver.open();
+
+	//TODO: Add commands or GUI window to open streams. Also do not use 9 fixed like this...
+	for (int i = 0; i < 9; i++) {
+	    video_feed_receiver.open_stream(i);
+	}
 
 	Console::add_setup_routine([](Console& new_console) {
 		new_console.load_library("ctrl", lua_ctrl_lib::open);

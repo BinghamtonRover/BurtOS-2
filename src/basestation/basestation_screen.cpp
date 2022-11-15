@@ -2,6 +2,7 @@
 #include <basestation.hpp>
 
 #include <modules/console.hpp>
+#include <modules/video_feed_viewer.hpp>
 #include <modules/statusbar.hpp>
 
 ScreenPositioning::ScreenPositioning(const nanogui::Vector2i& size, const nanogui::Vector2i& window_pos, int monitor, bool use_fullscreen) :
@@ -122,6 +123,10 @@ bool BasestationScreen::keyboard_event(int key, int scancode, int action, int mo
 		handled = true;
 	} else if (key == GLFW_KEY_N && action == GLFW_PRESS && (mods & GLFW_MOD_CONTROL)) {
 		Basestation::get().add_screen(new BasestationScreen());
+		handled = true;
+	} else if (key == GLFW_KEY_C && action == GLFW_PRESS) {
+		new VideoFeedViewer(this);
+		Basestation::get().set_video_callback(VideoFeedViewer::update_frame_STATIC);
 		handled = true;
 	}
 

@@ -7,11 +7,11 @@
 #include <boost/property_tree/ptree.hpp>
 
 #include <network.hpp>
-
 #include <rover_lua.hpp>
 #include <basestation_screen.hpp>
 #include <controls/controller_manager.hpp>
 #include <controls/drive_input.hpp>
+#include <stream.hpp>
 
 /*
 	Container class for the main instance of the base station
@@ -48,6 +48,9 @@ class Basestation {
 		inline net::MessageReceiver& subsystem_feed() {
 			return m_subsystem_feed;
 		}
+		inline net::StreamReceiver& video_stream_feed() {
+			return video_feed_receiver;
+		}
 		inline DriveInput& remote_drive() {
 			return m_remote_drive;
 		}
@@ -78,10 +81,15 @@ class Basestation {
 			static void open(lua_State*);
 		};
 
+		inline void set_video_callback(const std::function<void(int stream, net::Frame& frame)>& handler) {
+			video_feed_receiver.on_frame_received(handler);
+		}
+
 	private:
 		boost::asio::io_context main_thread_ctx;
 		net::MessageSender m_subsystem_sender;
 		net::MessageReceiver m_subsystem_feed;
+		net::StreamReceiver video_feed_receiver;
 		DriveInput m_remote_drive;
 		rc::Sensor m_remote_sensors;
 
